@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Status - T2K Coffee</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/status.css">
+</head>
+
+<body>
+  <div id="app">
+    <!-- Header will be injected here -->
+    <main class="status-page">
+      <div class="container">
+        <h1>Order Status</h1>
+
+        <div class="status-container">
+          <div class="order-card" id="currentOrder">
+            <h3>Current Order</h3>
+            <div class="order-details">
+              <p><strong>Order ID:</strong> <span id="orderId">#12345</span></p>
+              <p><strong>Table:</strong> <span id="orderTable">Table 5</span></p>
+              <p><strong>Status:</strong> <span class="status-badge" id="orderStatus">Preparing</span></p>
+              <p><strong>Estimated Time:</strong> <span id="estimatedTime">15 minutes</span></p>
+            </div>
+
+            <div class="order-items">
+              <h4>Items:</h4>
+              <ul id="orderItemsList">
+                <!-- Order items will be loaded here -->
+              </ul>
+            </div>
+          </div>
+
+          <div class="order-history">
+            <h3>Order History</h3>
+            <div class="history-list" id="orderHistory">
+              <!-- Order history will be loaded here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <!-- Footer will be injected here -->
+  </div>
+  <script src="../assets/js/main.js"></script>
+  <script src="../assets/js/status.js"></script>
+</body>
+
+</html>

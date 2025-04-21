@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - T2K Coffee</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/admin-dashboard.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header will be injected here -->
+        <main class="admin-page">
+            <div class="container">
+                <h1>Admin Dashboard</h1>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Today's Revenue</h3>
+                        <p class="stat-value" id="todayRevenue">$0.00</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Active Orders</h3>
+                        <p class="stat-value" id="activeOrders">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Available Tables</h3>
+                        <p class="stat-value" id="availableTables">0/20</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Popular Item</h3>
+                        <p class="stat-value" id="popularItem">-</p>
+                    </div>
+                </div>
+                
+                <div class="recent-orders">
+                    <h2>Recent Orders</h2>
+                    <table id="recentOrdersTable">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Table</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Recent orders will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+        <!-- Footer will be injected here -->
+    </div>
+    <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/admin-dashboard.js"></script>
+</body>
+</html>
