@@ -1,17 +1,69 @@
 <header class="main-header">
     <div class="container">
         <div class="logo">
-            <a href="../index.html">T2K Coffee</a>
+            <a href="/frontend/index.html"><i class="fas fa-coffee"></i> T2K Coffee</a>
         </div>
-        <nav class="main-nav">
+        
+        <button class="mobile-menu-btn" id="mobileMenuToggle">
+            <i class="fas fa-bars"></i>
+        </button>
+        
+        <nav class="main-nav" id="mainNav">
             <ul>
-                <li><a href="../frontend/customer/menu.html">Menu</a></li>
-                <li><a href="../frontend/customer/cart.html">Cart</a></li>
-                <li><a href="../frontend/customer/status.html">Order Status</a></li>
+                <li><a href="/frontend/customer/menu.html"><i class="fas fa-utensils"></i> Menu</a></li>
+                <li><a href="/frontend/customer/status.html"><i class="fas fa-clock"></i> Order Status</a></li>
+                <li><a href="/frontend/customer/about.html"><i class="fas fa-info-circle"></i> About Us</a></li>
+                <li><a href="/frontend/customer/contact.html"><i class="fas fa-envelope"></i> Contact</a></li>
             </ul>
         </nav>
+        
         <div class="user-actions">
-            <a href="../frontend/auth/login.html" class="btn-login">Login</a>
+            <div class="cart-icon">
+                <a href="/frontend/customer/cart.html"><i class="fas fa-shopping-cart"></i></a>
+                <span class="cart-count" id="cartCount">0</span>
+            </div>
+            <a href="/frontend/auth/login.html" class="btn-login">Login</a>
+            <a href="/frontend/auth/signup.html" class="btn-signup">Sign Up</a>
         </div>
     </div>
 </header>
+
+<script>
+    // Toggle mobile menu
+    document.getElementById('mobileMenuToggle').addEventListener('click', function() {
+        document.getElementById('mainNav').classList.toggle('active');
+        
+        // Change icon based on state
+        const icon = this.querySelector('i');
+        if (icon.classList.contains('fa-bars')) {
+            icon.classList.remove('fa-bars');
+            icon.classList.add('fa-times');
+        } else {
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-bars');
+        }
+    });
+    
+    // Handle active menu item highlighting
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get current page path
+        const currentPath = window.location.pathname;
+        
+        // Mark active menu item
+        const navLinks = document.querySelectorAll('.main-nav a');
+        navLinks.forEach(link => {
+            const linkPath = link.getAttribute('href');
+            if (currentPath === linkPath || currentPath.endsWith(linkPath)) {
+                link.parentElement.classList.add('active');
+            }
+        });
+        
+        // Load cart count from localStorage
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        let totalItems = 0;
+        cart.forEach(item => {
+            totalItems += item.quantity;
+        });
+        document.getElementById('cartCount').textContent = totalItems;
+    });
+</script>
