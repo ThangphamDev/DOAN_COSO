@@ -1,33 +1,46 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Load header and footer components
-    loadComponent('header', '.main-header');
-    loadComponent('footer', '.main-footer');
+    // Tính đường dẫn tới components/ theo vị trí trang hiện tại
+    const currentPath = window.location.pathname;
+    let basePath = "";
+
+    if (currentPath.includes("/admin/") || currentPath.includes("/customer/") || currentPath.includes("/staff/") || currentPath.includes("/auth/")) {
+        basePath = "../components/";
+    } else {
+        basePath = "./components/";
+    }
+
+    // Load header và footer
+    loadComponent(basePath + 'header.html', '.main-header');
+    loadComponent(basePath + 'footer.html', '.main-footer');
     
-    // Initialize any common functionality
+    // Initialize common features
     initCommonFeatures();
 });
 
-function loadComponent(componentName, targetSelector) {
+function loadComponent(path, targetSelector) {
     const targetElement = document.querySelector(targetSelector);
-    if (!targetElement) return;
-
-    fetch(`components/${componentName}.html`)
-        .then(response => response.text())
+    if (!targetElement) {
+        console.error(`Target element not found: ${targetSelector}`);
+        return;
+    }
+    
+    fetch(path)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.text();
+        })
         .then(html => {
             targetElement.outerHTML = html;
         })
         .catch(error => {
-            console.error(`Error loading ${componentName}:`, error);
+            console.error(`Error loading component from ${path}:`, error);
+            // Fallback
+            targetElement.outerHTML = `<div class="component-error">Failed to load component</div>`;
         });
 }
 
-
 function initCommonFeatures() {
-    // Common functionality like cart management can go here
     console.log('Initializing common features...');
-    
-    // Example: Initialize cart if it doesn't exist
-    if (!localStorage.getItem('cart')) {
-        localStorage.setItem('cart', JSON.stringify([]));
-    }
 }
