@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Thêm món mới</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <h2>Thêm món mới</h2>
+  <form id="productForm">
+    <label for="name">Tên món:</label>
+    <input type="text" id="name" name="name" required /><br />
+
+    <label for="price">Giá:</label>
+    <input type="number" id="price" name="price" step="0.01" required /><br />
+
+    <label for="description">Mô tả:</label>
+    <textarea id="description" name="description"></textarea><br />
+
+    <label for="image">Ảnh (base64 hoặc bỏ qua):</label>
+    <input type="file" id="image" name="image" accept="image/*"><br />
+
+    <label>
+      <input type="checkbox" id="available" name="available" checked />
+      Còn bán
+    </label><br />
+
+    <button type="submit">Thêm món</button>
+  </form>
+
+  <p id="statusMsg"></p>
+
+  <script src="../assets/js/products.js"></script>
+</body>
+</html>

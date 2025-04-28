@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Menu - T2K Coffee</title>
+    <link rel="stylesheet" href="../assets/css/style.css" />
+    <script src="../assets/js/main.js"></script>
+</head>
+
+<body>
+    <header>
+        <h1>Menu</h1>
+    </header>
+
+    <main>
+        <div id="product-list" class="menu-container">
+         
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch("http://localhost:8080/api/products")
+                .then(res => res.json())
+                .then(data => {
+                    const container = document.getElementById("menu-container");
+                    data.forEach(product => {
+                        const item = document.createElement("div");
+                        item.classList.add("menu-item");
+                        item.innerHTML = `
+                    <h3>${product.name}</h3>
+                    <p>${product.description}</p>
+                    <strong>$${product.price}</strong>
+                `;
+                        container.appendChild(item);
+                    });
+                })
+                .catch(err => console.error("Error fetching products:", err));
+        });
+
+
+        function addToCart(productId) {
+            alert('Added product ' + productId + ' to cart!');
+            // TODO: Implement real add-to-cart logic
+        }
+    </script>
+</body>
+
+</html>

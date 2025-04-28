@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - T2K Coffee</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div id="app">
+        <div class="main-header"></div>
+
+        <main class="admin-dashboard">
+            <div class="sidebar">
+                <nav class="admin-nav">
+                    <ul>
+                        <li class="active"><a href="#dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                        <li><a href="#staff"><i class="fas fa-users"></i> Staff Management</a></li>
+                        <li><a href="#products"><i class="fas fa-coffee"></i> Product Management</a></li>
+                        <li><a href="#categories"><i class="fas fa-tags"></i> Categories</a></li>
+                        <li><a href="#tables"><i class="fas fa-chair"></i> Table Management</a></li>
+                        <li><a href="#promotions"><i class="fas fa-percentage"></i> Promotions</a></li>
+                        <li><a href="#reports"><i class="fas fa-chart-bar"></i> Reports</a></li>
+                        <li><a href="#settings"><i class="fas fa-cog"></i> Settings</a></li>
+                    </ul>
+                </nav>
+            </div>
+
+            <div class="main-content">
+                <h1><i class="fas fa-tachometer-alt"></i> Admin Dashboard</h1>
+                
+                
+                <div class="summary-cards">
+                    <div class="card">
+                        <div class="card-icon bg-primary">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="card-info">
+                            <h3>Today's Revenue</h3>
+                            <p>$<span id="todayRevenue">0.00</span></p>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon bg-success">
+                            <i class="fas fa-shopping-bag"></i>
+                        </div>
+                        <div class="card-info">
+                            <h3>Today's Orders</h3>
+                            <p><span id="todayOrders">0</span></p>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon bg-warning">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="card-info">
+                            <h3>Staff Members</h3>
+                            <p><span id="staffCount">0</span></p>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon bg-danger">
+                            <i class="fas fa-utensils"></i>
+                        </div>
+                        <div class="card-info">
+                            <h3>Menu Items</h3>
+                            <p><span id="productCount">0</span></p>
+                        </div>
+                    </div>
+                </div>
+
+             
+                <section class="admin-section">
+                    <h2><i class="fas fa-history"></i> Recent Activity</h2>
+                    <div class="activity-list">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Activity</th>
+                                    <th>User</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentActivity">
+                               
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+            
+                <section class="admin-section quick-actions">
+                    <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
+                    <div class="action-buttons">
+                        <button class="action-btn" id="addStaffBtn">
+                            <i class="fas fa-user-plus"></i> Add Staff
+                        </button>
+                        <button class="action-btn" id="addProductBtn">
+                            <i class="fas fa-plus-circle"></i> Add Product
+                        </button>
+                        <button class="action-btn" id="addCategoryBtn">
+                            <i class="fas fa-tag"></i> Add Category
+                        </button>
+                        <button class="action-btn" id="addTableBtn">
+                            <i class="fas fa-chair"></i> Add Table
+                        </button>
+                        <button class="action-btn" id="addPromotionBtn">
+                            <i class="fas fa-percentage"></i> Add Promotion
+                        </button>
+                    </div>
+                </section>
+
+               
+                <section class="admin-section stats-overview">
+                    <div class="stats-chart">
+                        <h2><i class="fas fa-chart-line"></i> Revenue Overview</h2>
+                        <div class="chart-container">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="stats-summary">
+                        <h2><i class="fas fa-info-circle"></i> Summary</h2>
+                        <div class="summary-item">
+                            <h3>Best Selling Product</h3>
+                            <p id="bestSeller">-</p>
+                        </div>
+                        <div class="summary-item">
+                            <h3>Busiest Time</h3>
+                            <p id="busiestTime">-</p>
+                        </div>
+                        <div class="summary-item">
+                            <h3>Average Order Value</h3>
+                            <p id="avgOrderValue">$0.00</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+  
+        <div class="modal" id="staffModal">
+            <div class="modal-content">
+                <span class="close-btn">&times;</span>
+                <h2><i class="fas fa-user-plus"></i> Add New Staff</h2>
+                <form id="addStaffForm">
+                    <div class="form-group">
+                        <label for="staffUsername">Username</label>
+                        <input type="text" id="staffUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="staffFullName">Full Name</label>
+                        <input type="text" id="staffFullName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="staffPassword">Password</label>
+                        <input type="password" id="staffPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="staffPhone">Phone</label>
+                        <input type="tel" id="staffPhone">
+                    </div>
+                    <div class="form-group">
+                        <label for="staffRole">Role</label>
+                        <select id="staffRole" required>
+                            <option value="staff">Staff</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="staffImage">Profile Image</label>
+                        <input type="file" id="staffImage" accept="image/*">
+                    </div>
+                    <button type="submit" class="btn-submit">Add Staff</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="modal" id="productModal">
+            <div class="modal-content">
+                <span class="close-btn">&times;</span>
+                <h2><i class="fas fa-coffee"></i> Add New Product</h2>
+                <form id="addProductForm">
+                    <div class="form-group">
+                        <label for="productName">Product Name</label>
+                        <input type="text" id="productName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productCategory">Category</label>
+                        <select id="productCategory" required>
+                     
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="productPrice">Price</label>
+                        <input type="number" step="0.01" id="productPrice" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productDescription">Description</label>
+                        <textarea id="productDescription" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="productImage">Product Image</label>
+                        <input type="file" id="productImage" accept="image/*">
+                    </div>
+                    <div class="form-group">
+                        <label for="productStatus">Status</label>
+                        <select id="productStatus">
+                            <option value="1">Available</option>
+                            <option value="0">Unavailable</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-submit">Add Product</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="main-footer"></div>
+    </div>
+
+    <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/admin.js"></script>
+ 
+</body>
+
+</html>
