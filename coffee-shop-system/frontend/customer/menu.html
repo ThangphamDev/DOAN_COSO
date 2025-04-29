@@ -1,48 +1,706 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menu - T2K Coffee</title>
-    <link rel="stylesheet" href="../assets/css/style.css" />
-    <script src="../assets/js/main.js"></script>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/components.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .menu-page {
+            padding: 30px 0 60px;
+            margin-top: 0;
+        }
+        
+        .category-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .category-tab {
+            padding: 10px 20px;
+            background-color: #f8f9fa;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            border: none;
+        }
+        
+        .category-tab.active {
+            background-color: #e67e22;
+            color: white;
+        }
+        
+        .category-tab:hover:not(.active) {
+            background-color: #e9ecef;
+        }
+        
+        .menu-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .menu-item {
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .menu-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .menu-item-image {
+            height: 200px;
+            width: 100%;
+            object-fit: cover;
+        }
+        
+        .menu-item-info {
+            padding: 20px;
+        }
+        
+        .menu-item-title {
+            font-size: 1.2rem;
+            margin: 0 0 10px;
+            color: #2c3e50;
+        }
+        
+        .menu-item-description {
+            color: #7f8c8d;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            height: 40px;
+            overflow: hidden;
+        }
+        
+        .menu-item-price {
+            font-weight: bold;
+            color: #e67e22;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+        
+        .menu-item-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .item-quantity {
+            display: flex;
+            align-items: center;
+        }
+        
+        .quantity-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 1px solid #ddd;
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #2c3e50;
+            transition: all 0.2s;
+        }
+        
+        .quantity-btn:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .quantity-input {
+            width: 35px;
+            text-align: center;
+            border: none;
+            font-size: 1rem;
+            margin: 0 8px;
+        }
+        
+        .add-to-cart-btn {
+            background-color: #e67e22;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .add-to-cart-btn:hover {
+            background-color: #d35400;
+        }
+        
+        /* Order Panel */
+        .order-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            min-width: 250px;
+        }
+        
+        .order-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .order-panel-title {
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .cart-count-badge {
+            background-color: #e67e22;
+            color: white;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+        
+        .order-panel-content {
+            margin-bottom: 15px;
+        }
+        
+        .order-panel-table {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .order-panel-table select {
+            flex: 1;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        
+        .order-total {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-top: 1px dashed #ddd;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+        
+        .proceed-btn {
+            background-color: #e67e22;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        
+        .proceed-btn:hover {
+            background-color: #d35400;
+        }
+        
+        /* Loading state */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2rem;
+            color: #7f8c8d;
+        }
+        
+        .loading i {
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .menu-container {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+            
+            .order-panel {
+                bottom: 0;
+                right: 0;
+                width: 100%;
+                border-radius: 10px 10px 0 0;
+            }
+        }
+    </style>
 </head>
 
 <body>
-    <header>
-        <h1>Menu</h1>
-    </header>
-
-    <main>
-        <div id="product-list" class="menu-container">
-         
+    <div id="app">
+        <!-- Header will be loaded dynamically -->
+        <div id="header-container"></div>
+        
+        <main class="menu-page">
+            <div class="container">
+                <h1 class="page-title">Our Menu</h1>
+                
+                <div class="category-tabs" id="categoryTabs">
+                    <!-- Categories will be loaded here -->
+                    <button class="category-tab active" data-category="all">All Items</button>
+                    <button class="category-tab" data-category="coffee">Coffee</button>
+                    <button class="category-tab" data-category="tea">Tea</button>
+                    <button class="category-tab" data-category="pastry">Pastry</button>
+                    <button class="category-tab" data-category="dessert">Desserts</button>
+                </div>
+                
+                <div id="menuContainer" class="menu-container">
+                    <div class="loading">
+                        <i class="fas fa-spinner"></i> Loading menu items...
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Order Panel -->
+            <div class="order-panel" id="orderPanel">
+                <div class="order-panel-header">
+                    <div class="order-panel-title">
+                        <i class="fas fa-shopping-cart"></i> Your Order
+                        <span class="cart-count-badge" id="cartCountBadge">0</span>
+                    </div>
+                    <div class="order-panel-actions">
+                        <button id="clearCartBtn" title="Clear Cart" style="background: none; border: none; cursor: pointer;">
+                            <i class="fas fa-trash" style="color: #e74c3c;"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="order-panel-content">
+                    <div class="order-panel-table">
+                        <i class="fas fa-chair"></i>
+                        <select id="tableSelect">
+                            <option value="">Select a table</option>
+                            <option value="1">Table 1</option>
+                            <option value="2">Table 2</option>
+                            <option value="3">Table 3</option>
+                            <option value="4">Table 4</option>
+                            <option value="5">Table 5</option>
+                            <option value="6">Table 6</option>
+                            <option value="takeaway">Takeaway</option>
+                        </select>
+                    </div>
+                    
+                    <div id="cartItemsPreview">
+                        <p style="text-align: center; color: #7f8c8d; padding: 20px 0;">
+                            Your cart is empty
+                        </p>
+                    </div>
+                    
+                    <div class="order-total">
+                        <span>Total:</span>
+                        <span id="orderTotal">$0.00</span>
+                    </div>
+                </div>
+                
+                <button class="proceed-btn" id="proceedBtn">
+                    Proceed to Checkout
+                </button>
         </div>
     </main>
+        
+        <!-- Footer will be loaded dynamically -->
+        <div id="footer-container"></div>
+    </div>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            fetch("http://localhost:8080/api/products")
-                .then(res => res.json())
-                .then(data => {
-                    const container = document.getElementById("menu-container");
-                    data.forEach(product => {
-                        const item = document.createElement("div");
-                        item.classList.add("menu-item");
-                        item.innerHTML = `
-                    <h3>${product.name}</h3>
-                    <p>${product.description}</p>
-                    <strong>$${product.price}</strong>
-                `;
-                        container.appendChild(item);
-                    });
-                })
-                .catch(err => console.error("Error fetching products:", err));
+        // Sample menu data - this would normally come from an API
+        const MENU_ITEMS = [
+            {
+                id: 1,
+                name: "Espresso",
+                description: "Strong coffee brewed by forcing hot water under pressure through finely-ground coffee beans",
+                price: 2.50,
+                image: "https://images.unsplash.com/photo-1610889556528-9a770e32642f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+                category: "coffee"
+            },
+            {
+                id: 2,
+                name: "Cappuccino",
+                description: "Espresso-based coffee drink prepared with steamed milk foam",
+                price: 3.50,
+                image: "https://images.unsplash.com/photo-1534778101976-62847782c213?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+                category: "coffee"
+            },
+            {
+                id: 3,
+                name: "Latte",
+                description: "Coffee drink made with espresso and steamed milk",
+                price: 3.75,
+                image: "https://images.unsplash.com/photo-1570968915860-54d5c301fa9f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1075&q=80",
+                category: "coffee"
+            },
+            {
+                id: 4,
+                name: "Green Tea",
+                description: "Tea made from Camellia sinensis leaves that have not undergone oxidation",
+                price: 2.75,
+                image: "https://images.unsplash.com/photo-1627435601361-ec25f5b1d0e5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+                category: "tea"
+            },
+            {
+                id: 5,
+                name: "Croissant",
+                description: "Buttery, flaky, French viennoiserie pastry",
+                price: 2.25,
+                image: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1026&q=80",
+                category: "pastry"
+            },
+            {
+                id: 6,
+                name: "Cheesecake",
+                description: "Sweet dessert consisting of a thick, creamy filling on a buttery crust",
+                price: 4.50,
+                image: "https://images.unsplash.com/photo-1533134242453-b3e6257489f4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+                category: "dessert"
+            },
+            {
+                id: 7,
+                name: "Black Tea",
+                description: "Fully oxidized tea with a rich and robust flavor",
+                price: 2.50,
+                image: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+                category: "tea"
+            },
+            {
+                id: 8,
+                name: "Chocolate Cake",
+                description: "Rich and moist chocolate cake with chocolate frosting",
+                price: 4.75,
+                image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+                category: "dessert"
+            }
+        ];
+
+        // Cart functionality
+        let cart = [];
+        let selectedTable = "";
+        
+        document.addEventListener("DOMContentLoaded", function() {
+            // Load header and footer components
+            loadComponent('../components/header.html', 'header-container');
+            loadComponent('../components/footer.html', 'footer-container');
+            
+            // Initialize menu
+            setTimeout(() => {
+                renderMenuItems(MENU_ITEMS);
+            }, 1000); // Simulate loading time
+            
+            // Initialize event handlers
+            initializeEventHandlers();
+            
+            // Load cart from localStorage
+            loadCart();
         });
-
-
-        function addToCart(productId) {
-            alert('Added product ' + productId + ' to cart!');
-            // TODO: Implement real add-to-cart logic
+        
+        // Function to load components (header/footer)
+        async function loadComponent(url, containerId) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch ${url}: ${response.status}`);
+                }
+                const html = await response.text();
+                document.getElementById(containerId).innerHTML = html;
+                
+                // Execute scripts in the loaded HTML
+                const scripts = document.getElementById(containerId).querySelectorAll('script');
+                scripts.forEach(script => {
+                    const newScript = document.createElement('script');
+                    if (script.src) {
+                        newScript.src = script.src;
+                    } else {
+                        newScript.textContent = script.textContent;
+                    }
+                    document.body.appendChild(newScript);
+                });
+            } catch (error) {
+                console.error('Error loading component:', error);
+                document.getElementById(containerId).innerHTML = `<div style="color: red; padding: 20px;">Failed to load component: ${error.message}</div>`;
+            }
+        }
+        
+        // Function to render menu items
+        function renderMenuItems(items) {
+            const menuContainer = document.getElementById('menuContainer');
+            
+            // Clear previous items
+            menuContainer.innerHTML = '';
+            
+            if (items.length === 0) {
+                menuContainer.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 50px 0;">
+                        <i class="fas fa-coffee" style="font-size: 3rem; color: #e67e22; margin-bottom: 20px;"></i>
+                        <p>No items found in this category.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Render items
+            items.forEach(item => {
+                const menuItem = document.createElement('div');
+                menuItem.className = 'menu-item';
+                menuItem.setAttribute('data-id', item.id);
+                menuItem.setAttribute('data-category', item.category);
+                
+                menuItem.innerHTML = `
+                    <img src="${item.image}" alt="${item.name}" class="menu-item-image">
+                    <div class="menu-item-info">
+                        <h3 class="menu-item-title">${item.name}</h3>
+                        <p class="menu-item-description">${item.description}</p>
+                        <div class="menu-item-price">$${item.price.toFixed(2)}</div>
+                        <div class="menu-item-actions">
+                            <div class="item-quantity">
+                                <button class="quantity-btn decrease-btn" data-id="${item.id}">-</button>
+                                <input type="number" value="1" min="1" class="quantity-input" data-id="${item.id}">
+                                <button class="quantity-btn increase-btn" data-id="${item.id}">+</button>
+                            </div>
+                            <button class="add-to-cart-btn" data-id="${item.id}">
+                                <i class="fas fa-cart-plus"></i> Add
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                menuContainer.appendChild(menuItem);
+            });
+        }
+        
+        // Function to initialize event handlers
+        function initializeEventHandlers() {
+            // Category tabs click handler
+            document.getElementById('categoryTabs').addEventListener('click', function(e) {
+                if (e.target.classList.contains('category-tab')) {
+                    // Update active tab
+                    document.querySelectorAll('.category-tab').forEach(tab => {
+                        tab.classList.remove('active');
+                    });
+                    e.target.classList.add('active');
+                    
+                    // Filter menu items
+                    const category = e.target.getAttribute('data-category');
+                    filterMenuItems(category);
+                }
+            });
+            
+            // Event delegation for quantity buttons and add to cart
+            document.getElementById('menuContainer').addEventListener('click', function(e) {
+                // Handle increase quantity button
+                if (e.target.classList.contains('increase-btn')) {
+                    const productId = e.target.getAttribute('data-id');
+                    const inputElement = document.querySelector(`.quantity-input[data-id="${productId}"]`);
+                    inputElement.value = parseInt(inputElement.value) + 1;
+                }
+                
+                // Handle decrease quantity button
+                if (e.target.classList.contains('decrease-btn')) {
+                    const productId = e.target.getAttribute('data-id');
+                    const inputElement = document.querySelector(`.quantity-input[data-id="${productId}"]`);
+                    if (parseInt(inputElement.value) > 1) {
+                        inputElement.value = parseInt(inputElement.value) - 1;
+                    }
+                }
+                
+                // Handle add to cart button
+                if (e.target.classList.contains('add-to-cart-btn') || 
+                    (e.target.parentElement && e.target.parentElement.classList.contains('add-to-cart-btn'))) {
+                    const button = e.target.classList.contains('add-to-cart-btn') ? 
+                                e.target : e.target.parentElement;
+                    const productId = parseInt(button.getAttribute('data-id'));
+                    const quantity = parseInt(document.querySelector(`.quantity-input[data-id="${productId}"]`).value);
+                    
+                    addToCart(productId, quantity);
+                }
+            });
+            
+            // Table selection handler
+            document.getElementById('tableSelect').addEventListener('change', function(e) {
+                selectedTable = e.target.value;
+                localStorage.setItem('selectedTable', selectedTable);
+            });
+            
+            // Clear cart button handler
+            document.getElementById('clearCartBtn').addEventListener('click', function() {
+                if (confirm('Are you sure you want to clear your cart?')) {
+                    clearCart();
+                }
+            });
+            
+            // Proceed to checkout button handler
+            document.getElementById('proceedBtn').addEventListener('click', function() {
+                if (cart.length === 0) {
+                    alert('Your cart is empty. Please add some items before checking out.');
+                    return;
+                }
+                
+                if (!selectedTable) {
+                    alert('Please select a table before proceeding to checkout.');
+                    return;
+                }
+                
+                // Redirect to checkout page
+                localStorage.setItem('cart', JSON.stringify(cart));
+                localStorage.setItem('selectedTable', selectedTable);
+                window.location.href = 'checkout.html';
+            });
+        }
+        
+        // Function to filter menu items by category
+        function filterMenuItems(category) {
+            let filteredItems = MENU_ITEMS;
+            
+            if (category !== 'all') {
+                filteredItems = MENU_ITEMS.filter(item => item.category === category);
+            }
+            
+            renderMenuItems(filteredItems);
+        }
+        
+        // Function to add items to cart
+        function addToCart(productId, quantity) {
+            const product = MENU_ITEMS.find(item => item.id === productId);
+            
+            if (!product) {
+                console.error('Product not found:', productId);
+                return;
+            }
+            
+            // Check if item is already in cart
+            const existingItemIndex = cart.findIndex(item => item.id === productId);
+            
+            if (existingItemIndex !== -1) {
+                // Update quantity if item exists
+                cart[existingItemIndex].quantity += quantity;
+            } else {
+                // Add new item to cart
+                cart.push({
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    quantity: quantity
+                });
+            }
+            
+            // Update cart UI
+            updateCartUI();
+            
+            // Store cart in localStorage
+            localStorage.setItem('cart', JSON.stringify(cart));
+            
+            // Show success message
+            const button = document.querySelector(`.add-to-cart-btn[data-id="${productId}"]`);
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check"></i> Added';
+            button.style.backgroundColor = '#27ae60';
+            
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.style.backgroundColor = '';
+            }, 1500);
+        }
+        
+        // Function to update cart UI
+        function updateCartUI() {
+            // Update cart count badge
+            const cartCountBadge = document.getElementById('cartCountBadge');
+            const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+            cartCountBadge.textContent = totalItems;
+            
+            // Update cart items preview
+            const cartItemsPreview = document.getElementById('cartItemsPreview');
+            
+            if (cart.length === 0) {
+                cartItemsPreview.innerHTML = `
+                    <p style="text-align: center; color: #7f8c8d; padding: 20px 0;">
+                        Your cart is empty
+                    </p>
+                `;
+            } else {
+                let cartHtml = '';
+                
+                cart.forEach(item => {
+                    cartHtml += `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem;">
+                            <div>
+                                <span style="font-weight: 500;">${item.name}</span>
+                                <span style="color: #7f8c8d; margin-left: 5px;">x${item.quantity}</span>
+                            </div>
+                            <div>$${(item.price * item.quantity).toFixed(2)}</div>
+                        </div>
+                    `;
+                });
+                
+                cartItemsPreview.innerHTML = cartHtml;
+            }
+            
+            // Update order total
+            const orderTotal = document.getElementById('orderTotal');
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            orderTotal.textContent = '$' + total.toFixed(2);
+        }
+        
+        // Function to load cart from localStorage
+        function loadCart() {
+            const savedCart = localStorage.getItem('cart');
+            if (savedCart) {
+                cart = JSON.parse(savedCart);
+                updateCartUI();
+            }
+            
+            const savedTable = localStorage.getItem('selectedTable');
+            if (savedTable) {
+                selectedTable = savedTable;
+                document.getElementById('tableSelect').value = selectedTable;
+            }
+        }
+        
+        // Function to clear cart
+        function clearCart() {
+            cart = [];
+            updateCartUI();
+            localStorage.removeItem('cart');
         }
     </script>
 </body>

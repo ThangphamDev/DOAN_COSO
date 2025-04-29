@@ -4,74 +4,181 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Checkout - T2K Coffee</title>
+  <title>Thanh Toán - T2K Coffee</title>
   <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/components.css">
   <link rel="stylesheet" href="../assets/css/checkout.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
   <div id="app">
-    <!-- Header will be injected here -->
+    <div id="header-container"></div>
+    
     <main class="checkout-page">
       <div class="container">
-        <h1>Checkout</h1>
+        <h1>Thanh Toán</h1>
 
         <div class="checkout-container">
-          <div class="customer-info">
-            <h3>Customer Information</h3>
-            <form id="customerForm">
+          <div class="order-info">
+            <h3>Thông Tin Đơn Hàng</h3>
+            <form id="orderForm">
               <div class="form-group">
-                <label for="fullName">Full Name</label>
-                <input type="text" id="fullName" required>
-              </div>
-              <div class="form-group">
-                <label for="phone">Phone Number</label>
-                <input type="tel" id="phone" required>
-              </div>
-              <div class="form-group">
-                <label for="tableNumber">Table Number</label>
+                <label for="tableNumber">Số Bàn</label>
                 <select id="tableNumber" required>
-                  <option value="">Select a table</option>
+                  <option value="">Chọn bàn</option>
                   <!-- Tables will be loaded via JS -->
                 </select>
               </div>
               <div class="form-group">
-                <label for="notes">Special Instructions</label>
-                <textarea id="notes" rows="3"></textarea>
+                <label for="notes">Ghi Chú</label>
+                <textarea id="notes" rows="3" placeholder="Ghi chú đặc biệt cho đơn hàng của bạn"></textarea>
               </div>
             </form>
           </div>
 
           <div class="order-summary">
-            <h3>Order Summary</h3>
+            <h3>Tóm Tắt Đơn Hàng</h3>
             <div id="orderSummary">
               <!-- Order summary will be loaded here -->
             </div>
             <div class="payment-methods">
-              <h3>Payment Method</h3>
+              <h3>Phương Thức Thanh Toán</h3>
               <div class="payment-options">
                 <label>
-                  <input type="radio" name="payment" value="cash" checked>
-                  <span>Cash</span>
+                  <input type="radio" name="payment" value="cash" checked id="cashPayment">
+                  <span>Tiền Mặt</span>
                 </label>
                 <label>
-                  <input type="radio" name="payment" value="card">
-                  <span>Credit Card</span>
-                </label>
-                <label>
-                  <input type="radio" name="payment" value="mobile">
-                  <span>Mobile Payment</span>
+                  <input type="radio" name="payment" value="transfer" id="transferPayment">
+                  <span>Chuyển Khoản</span>
                 </label>
               </div>
-              <button class="btn-place-order" id="placeOrderBtn">Place Order</button>
+              <button class="btn-place-order" id="placeOrderBtn">Đặt Hàng</button>
             </div>
+          </div>
+          
+          <!-- QR Code container sẽ xuất hiện khi chọn thanh toán chuyển khoản -->
+          <div id="qrCodeContainer" class="qr-code-container" style="display: none;">
           </div>
         </div>
       </div>
     </main>
-    <!-- Footer will be injected here -->
+    
+    <div id="footer-container"></div>
   </div>
-  <script src="../assets/js/main.js"></script>
+  
+  <script>
+    // Function to load components
+    async function loadComponent(url, containerId) {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch ${url}: ${response.status}`);
+            }
+            const html = await response.text();
+            document.getElementById(containerId).innerHTML = html;
+            
+            // Execute scripts in the loaded HTML
+            const scripts = document.getElementById(containerId).querySelectorAll('script');
+            scripts.forEach(script => {
+                const newScript = document.createElement('script');
+                if (script.src) {
+                    newScript.src = script.src;
+                } else {
+                    newScript.textContent = script.textContent;
+                }
+                document.body.appendChild(newScript);
+            });
+        } catch (error) {
+            console.error('Error loading component:', error);
+            document.getElementById(containerId).innerHTML = `<div style="color: red; padding: 20px;">Failed to load component: ${error.message}</div>`;
+        }
+    }
+    
+    // Đảm bảo tải components khi trang đã tải xong
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load header và footer
+        loadComponent('../components/header.html', 'header-container');
+        loadComponent('../components/footer.html', 'footer-container');
+        
+        // Thêm sự kiện thay đổi phương thức thanh toán
+        setTimeout(function() {
+            document.getElementById('transferPayment').addEventListener('change', function() {
+                if (this.checked) {
+                    // Hiển thị mã QR ngay khi chọn phương thức chuyển khoản
+                    const order = {
+                        tableNumber: document.getElementById('tableNumber').value || 'Chưa chọn',
+                        notes: document.getElementById('notes').value,
+                        cart: JSON.parse(localStorage.getItem('cart')) || [],
+                        paymentMethod: 'transfer',
+                        totalAmount: calculateTotalAmount(),
+                        orderTime: new Date().toISOString()
+                    };
+                    
+                    if (order.cart.length > 0) {
+                        showVietQRPreview(order);
+                    }
+                }
+            });
+            
+            document.getElementById('cashPayment').addEventListener('change', function() {
+                if (this.checked) {
+                    // Ẩn mã QR khi chọn phương thức tiền mặt
+                    document.getElementById('qrCodeContainer').style.display = 'none';
+                }
+            });
+        }, 1000); // Đợi 1 giây để đảm bảo DOM đã được tải
+    });
+    
+    // Hàm tính tổng tiền từ giỏ hàng
+    function calculateTotalAmount() {
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        return cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    }
+    
+    // Hàm hiển thị mã QR
+    function showVietQRPreview(order) {
+        const amount = order.totalAmount;
+        // Tạo mã ngẫu nhiên cho nội dung chuyển khoản
+        const randomDigits = Math.floor(100000 + Math.random() * 900000);
+        const previewCode = `HD${randomDigits}`;
+        
+        // Thông tin tài khoản
+        const accountNumber = "1028272356";
+        const bankCode = "VCB"; // Vietcombank
+        const accountName = "PHAM XUAN THANG";
+        
+        // Nội dung chuyển khoản: Mã hóa đơn
+        const transferContent = previewCode;
+        
+        // Tạo URL VietQR
+        const vietQrUrl = `https://img.vietqr.io/image/${bankCode}-${accountNumber}-compact.png?amount=${amount}&addInfo=${transferContent}&accountName=${encodeURIComponent(accountName)}`;
+        
+        // Hiển thị QR code
+        const qrContainer = document.getElementById('qrCodeContainer');
+        qrContainer.style.display = 'block';
+        qrContainer.innerHTML = `
+            <div class="qr-section">
+                <h3>Quét mã QR để thanh toán</h3>
+                <div class="qr-info">
+                    <p><strong>Số tài khoản:</strong> ${accountNumber}</p>
+                    <p><strong>Ngân hàng:</strong> Vietcombank</p>
+                    <p><strong>Tên người nhận:</strong> ${accountName}</p>
+                    <p><strong>Số tiền:</strong> ${amount.toLocaleString('vi-VN')}đ</p>
+                    <p><strong>Nội dung:</strong> ${transferContent}</p>
+                </div>
+                <div class="qr-image">
+                    <img src="${vietQrUrl}" alt="VietQR Code">
+                </div>
+                <p class="qr-note">Vui lòng nhập đúng nội dung chuyển khoản để đơn hàng được xử lý nhanh chóng</p>
+            </div>
+        `;
+        
+        // Cuộn trang đến phần QR code
+        qrContainer.scrollIntoView({ behavior: 'smooth' });
+    }
+  </script>
   <script src="../assets/js/checkout.js"></script>
 </body>
 
