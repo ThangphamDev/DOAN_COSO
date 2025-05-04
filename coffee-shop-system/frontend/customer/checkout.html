@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 
 <head>
   <meta charset="UTF-8">
@@ -101,84 +101,9 @@
         // Load header và footer
         loadComponent('../components/header.html', 'header-container');
         loadComponent('../components/footer.html', 'footer-container');
-        
-        // Thêm sự kiện thay đổi phương thức thanh toán
-        setTimeout(function() {
-            document.getElementById('transferPayment').addEventListener('change', function() {
-                if (this.checked) {
-                    // Hiển thị mã QR ngay khi chọn phương thức chuyển khoản
-                    const order = {
-                        tableNumber: document.getElementById('tableNumber').value || 'Chưa chọn',
-                        notes: document.getElementById('notes').value,
-                        cart: JSON.parse(localStorage.getItem('cart')) || [],
-                        paymentMethod: 'transfer',
-                        totalAmount: calculateTotalAmount(),
-                        orderTime: new Date().toISOString()
-                    };
-                    
-                    if (order.cart.length > 0) {
-                        showVietQRPreview(order);
-                    }
-                }
-            });
-            
-            document.getElementById('cashPayment').addEventListener('change', function() {
-                if (this.checked) {
-                    // Ẩn mã QR khi chọn phương thức tiền mặt
-                    document.getElementById('qrCodeContainer').style.display = 'none';
-                }
-            });
-        }, 1000); // Đợi 1 giây để đảm bảo DOM đã được tải
     });
-    
-    // Hàm tính tổng tiền từ giỏ hàng
-    function calculateTotalAmount() {
-        const cart = JSON.parse(localStorage.getItem('cart')) || [];
-        return cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-    }
-    
-    // Hàm hiển thị mã QR
-    function showVietQRPreview(order) {
-        const amount = order.totalAmount;
-        // Tạo mã ngẫu nhiên cho nội dung chuyển khoản
-        const randomDigits = Math.floor(100000 + Math.random() * 900000);
-        const previewCode = `HD${randomDigits}`;
-        
-        // Thông tin tài khoản
-        const accountNumber = "1028272356";
-        const bankCode = "VCB"; // Vietcombank
-        const accountName = "PHAM XUAN THANG";
-        
-        // Nội dung chuyển khoản: Mã hóa đơn
-        const transferContent = previewCode;
-        
-        // Tạo URL VietQR
-        const vietQrUrl = `https://img.vietqr.io/image/${bankCode}-${accountNumber}-compact.png?amount=${amount}&addInfo=${transferContent}&accountName=${encodeURIComponent(accountName)}`;
-        
-        // Hiển thị QR code
-        const qrContainer = document.getElementById('qrCodeContainer');
-        qrContainer.style.display = 'block';
-        qrContainer.innerHTML = `
-            <div class="qr-section">
-                <h3>Quét mã QR để thanh toán</h3>
-                <div class="qr-info">
-                    <p><strong>Số tài khoản:</strong> ${accountNumber}</p>
-                    <p><strong>Ngân hàng:</strong> Vietcombank</p>
-                    <p><strong>Tên người nhận:</strong> ${accountName}</p>
-                    <p><strong>Số tiền:</strong> ${amount.toLocaleString('vi-VN')}đ</p>
-                    <p><strong>Nội dung:</strong> ${transferContent}</p>
-                </div>
-                <div class="qr-image">
-                    <img src="${vietQrUrl}" alt="VietQR Code">
-                </div>
-                <p class="qr-note">Vui lòng nhập đúng nội dung chuyển khoản để đơn hàng được xử lý nhanh chóng</p>
-            </div>
-        `;
-        
-        // Cuộn trang đến phần QR code
-        qrContainer.scrollIntoView({ behavior: 'smooth' });
-    }
   </script>
+  <script src="../assets/js/api.js"></script>
   <script src="../assets/js/checkout.js"></script>
 </body>
 

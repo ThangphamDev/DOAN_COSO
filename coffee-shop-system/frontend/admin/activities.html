@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nhật ký hoạt động - T2K Coffee Admin</title>
+    <!-- CSS Libraries -->
+    <link rel="stylesheet" href="../assets/vendor/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../assets/vendor/font-awesome/css/all.min.css">
+    <link rel="stylesheet" href="../assets/vendor/flatpickr/flatpickr.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../assets/css/admin.css">
+    <link rel="stylesheet" href="../assets/css/admin-modules.css">
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
+</head>
+
+<body>
+    <div id="app">
+        <div id="loader" class="loader-overlay">
+            <div class="loader"></div>
+        </div>
+
+        <header class="admin-header">
+            <div class="logo">
+                <img src="../assets/images/logo.png" alt="T2K Coffee Logo">
+                <h1>T2K Coffee</h1>
+            </div>
+            <div class="header-actions">
+                <button class="btn-notification" title="Thông báo">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge">3</span>
+                </button>
+                <div class="admin-profile">
+                    <img src="../assets/images/default-avatar.png" alt="Admin" class="avatar">
+                    <span id="adminName">Admin</span>
+                    <div class="dropdown-menu">
+                        <a href="profile.html"><i class="fas fa-user"></i> Hồ sơ</a>
+                        <a href="settings.html"><i class="fas fa-cog"></i> Cài đặt</a>
+                        <hr>
+                        <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="admin-container">
+            <div class="sidebar-container">
+                <!-- Sidebar sẽ được load bằng JavaScript -->
+            </div>
+
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-history"></i> Nhật ký hoạt động</h1>
+                    <div class="breadcrumb">
+                        <a href="dashboard.html">Trang chủ</a> / <span>Nhật ký hoạt động</span>
+                    </div>
+                </div>
+
+                <div class="activity-logs">
+                    <div class="action-bar">
+                        <div class="search-box">
+                            <input type="text" id="searchActivity" placeholder="Tìm kiếm hoạt động...">
+                            <button class="search-btn"><i class="fas fa-search"></i></button>
+                        </div>
+                        <div class="filter-dropdown">
+                            <button class="btn-secondary dropdown-toggle">
+                                <i class="fas fa-filter"></i> Lọc <i class="fas fa-caret-down"></i>
+                            </button>
+                            <div class="dropdown-menu">
+                                <label><input type="checkbox" value="login" checked> Đăng nhập</label>
+                                <label><input type="checkbox" value="order" checked> Đơn hàng</label>
+                                <label><input type="checkbox" value="product" checked> Sản phẩm</label>
+                                <label><input type="checkbox" value="user" checked> Người dùng</label>
+                                <label><input type="checkbox" value="settings" checked> Cài đặt</label>
+                            </div>
+                        </div>
+                        <div class="date-range">
+                            <input type="text" id="dateRange" class="datepicker" placeholder="Chọn khoảng thời gian">
+                            <button id="clearDateFilter" class="btn-icon" title="Xóa bộ lọc"><i class="fas fa-times"></i></button>
+                        </div>
+                        <button id="exportActivities" class="btn-primary"><i class="fas fa-download"></i> Xuất báo cáo</button>
+                    </div>
+
+                    <div class="activity-timeline">
+                        <div class="timeline-container">
+                            <div class="timeline-header">
+                                <span class="timeline-date">Thời gian</span>
+                                <span class="timeline-user">Người dùng</span>
+                                <span class="timeline-action">Hành động</span>
+                                <span class="timeline-ip">Địa chỉ IP</span>
+                                <span class="timeline-details">Chi tiết</span>
+                            </div>
+                            
+                            <div id="activityList" class="timeline-list">
+                                <!-- Dữ liệu sẽ được nạp từ JavaScript -->
+                            </div>
+                            
+                            <div class="timeline-footer">
+                                <div class="pagination">
+                                    <button class="pagination-btn" data-page="first"><i class="fas fa-angle-double-left"></i></button>
+                                    <button class="pagination-btn" data-page="prev"><i class="fas fa-angle-left"></i></button>
+                                    <span class="pagination-info">Trang <span id="currentPage">1</span> / <span id="totalPages">5</span></span>
+                                    <button class="pagination-btn" data-page="next"><i class="fas fa-angle-right"></i></button>
+                                    <button class="pagination-btn" data-page="last"><i class="fas fa-angle-double-right"></i></button>
+                                </div>
+                                
+                                <div class="per-page">
+                                    <label for="itemsPerPage">Hiển thị:</label>
+                                    <select id="itemsPerPage">
+                                        <option value="10">10</option>
+                                        <option value="20">20</option>
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal xem chi tiết hoạt động -->
+                <div class="modal" id="activityDetailModal">
+                    <div class="modal-content">
+                        <span class="close-btn">&times;</span>
+                        <h2>Chi tiết hoạt động</h2>
+                        <div class="activity-detail">
+                            <div class="detail-row">
+                                <div class="detail-label">Thời gian:</div>
+                                <div class="detail-value" id="detailTime"></div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Người dùng:</div>
+                                <div class="detail-value" id="detailUser"></div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Hành động:</div>
+                                <div class="detail-value" id="detailAction"></div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Địa chỉ IP:</div>
+                                <div class="detail-value" id="detailIp"></div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Thiết bị:</div>
+                                <div class="detail-value" id="detailDevice"></div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Đối tượng:</div>
+                                <div class="detail-value" id="detailObject"></div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Mô tả:</div>
+                                <div class="detail-value" id="detailDescription"></div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Thay đổi:</div>
+                                <div class="detail-value code-block" id="detailChanges"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="../assets/js/api-client.js"></script>
+    <script src="../assets/js/admin-module.js"></script>
+</body>
+
+</html> 

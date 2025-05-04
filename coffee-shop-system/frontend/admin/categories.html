@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý danh mục - T2K Coffee Admin</title>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../assets/css/admin.css">
+    <link rel="stylesheet" href="../assets/css/admin-modules.css">
+    <!-- Favicon -->
+</head>
+
+<body>
+    <div id="app">
+        <div id="loader" class="loader-overlay">
+            <div class="loader"></div>
+        </div>
+
+        <header class="admin-header">
+            <div class="logo">
+                <img src="../assets/images/logo.png" alt="T2K Coffee Logo">
+                <h1>T2K Coffee</h1>
+            </div>
+            <div class="header-actions">
+                <button class="btn-notification" title="Thông báo">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge">3</span>
+                </button>
+                <div class="admin-profile">
+                    <img src="../assets/images/default-avatar.png" alt="Admin" class="avatar">
+                    <span id="adminName">Admin</span>
+                    <div class="dropdown-menu">
+                        <a href="profile.html"><i class="fas fa-user"></i> Hồ sơ</a>
+                        <a href="settings.html"><i class="fas fa-cog"></i> Cài đặt</a>
+                        <hr>
+                        <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="admin-container">
+            <div class="sidebar-container">
+                <!-- Sidebar sẽ được load bằng JavaScript -->
+            </div>
+
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-tags"></i> Quản lý danh mục</h1>
+                    <div class="breadcrumb">
+                        <a href="dashboard.html">Trang chủ</a> / <span>Danh mục</span>
+                    </div>
+                </div>
+
+                <div class="category-management">
+                    <div class="action-bar">
+                        <button id="addCategoryBtn" class="btn-primary"><i class="fas fa-plus"></i> Thêm danh mục</button>
+                        <div class="search-box">
+                            <input type="text" id="searchCategory" placeholder="Tìm kiếm danh mục...">
+                            <button class="search-btn"><i class="fas fa-search"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="category-layout">
+                        <div class="category-table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Tên danh mục</th>
+                                        <th>Mô tả</th>
+                                        <th>Số sản phẩm</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="categoryTableBody">
+                                    <!-- Dữ liệu sẽ được nạp từ JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="category-stats">
+                            <div class="stats-card total-categories">
+                                <i class="fas fa-tags"></i>
+                                <div class="stats-content">
+                                    <h3>Tổng danh mục</h3>
+                                    <p id="totalCategories">0</p>
+                                </div>
+                            </div>
+                            <div class="stats-card most-products">
+                                <i class="fas fa-trophy"></i>
+                                <div class="stats-content">
+                                    <h3>Danh mục nhiều sản phẩm nhất</h3>
+                                    <p id="mostProductsCategory">-</p>
+                                </div>
+                            </div>
+                            <div class="stats-card no-products">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <div class="stats-content">
+                                    <h3>Danh mục không có sản phẩm</h3>
+                                    <p id="noProductsCategories">0</p>
+                                </div>
+                            </div>
+
+                            <div class="category-chart-container">
+                                <h3>Phân bố sản phẩm theo danh mục</h3>
+                                <canvas id="categoryChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Modal (hidden by default) -->
+                <div class="modal" id="categoryModal">
+                    <div class="modal-content">
+                        <span class="close-btn">&times;</span>
+                        <h2 id="modalCategoryTitle">Thêm danh mục mới</h2>
+                        <form id="categoryForm">
+                            <input type="hidden" id="categoryId">
+                            <div class="form-group">
+                                <label for="categoryName">Tên danh mục</label>
+                                <input type="text" id="categoryName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="categoryDescription">Mô tả</label>
+                                <textarea id="categoryDescription" rows="3"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="categoryIcon">Icon</label>
+                                <select id="categoryIcon">
+                                    <option value="fa-coffee">Cà phê</option>
+                                    <option value="fa-mug-hot">Nước nóng</option>
+                                    <option value="fa-wine-glass">Đồ uống</option>
+                                    <option value="fa-ice-cream">Món tráng miệng</option>
+                                    <option value="fa-bread-slice">Bánh mì</option>
+                                    <option value="fa-cookie">Bánh ngọt</option>
+                                    <option value="fa-pizza-slice">Đồ ăn nhẹ</option>
+                                    <option value="fa-utensils">Khác</option>
+                                </select>
+                                <div class="icon-preview">
+                                    <i id="iconPreview" class="fas fa-coffee"></i>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="categoryOrder">Thứ tự hiển thị</label>
+                                <input type="number" id="categoryOrder" min="1" value="1">
+                            </div>
+                            <button type="submit" class="btn-primary">Lưu</button>
+                        </form>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../assets/js/api-client.js"></script>
+    <script src="../assets/js/admin-module.js"></script>
+</body>
+
+</html> 

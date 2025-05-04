@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý nhân viên - T2K Coffee Admin</title>
+    <!-- CSS Libraries -->
+    <link rel="stylesheet" href="../assets/vendor/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../assets/vendor/font-awesome/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../assets/css/admin.css">
+    <link rel="stylesheet" href="../assets/css/admin-modules.css">
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
+</head>
+
+<body>
+    <div id="app">
+        <div id="loader" class="loader-overlay">
+            <div class="loader"></div>
+        </div>
+
+        <header class="admin-header">
+            <div class="logo">
+                <img src="../assets/images/logo.png" alt="T2K Coffee Logo">
+                <h1>T2K Coffee</h1>
+            </div>
+            <div class="header-actions">
+                <button class="btn-notification" title="Thông báo">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge">3</span>
+                </button>
+                <div class="admin-profile">
+                    <img src="../assets/images/default-avatar.png" alt="Admin" class="avatar">
+                    <span id="adminName">Admin</span>
+                    <div class="dropdown-menu">
+                        <a href="profile.html"><i class="fas fa-user"></i> Hồ sơ</a>
+                        <a href="settings.html"><i class="fas fa-cog"></i> Cài đặt</a>
+                        <hr>
+                        <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="admin-container">
+            <div class="sidebar-container">
+                <!-- Sidebar sẽ được load bằng JavaScript -->
+            </div>
+
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-users"></i> Quản lý nhân viên</h1>
+                    <div class="breadcrumb">
+                        <a href="dashboard.html">Trang chủ</a> / <span>Quản lý nhân viên</span>
+                    </div>
+                </div>
+
+                <!-- Thanh công cụ -->
+                <div class="content-toolbar">
+                    <div class="search-box">
+                        <input type="text" id="staffSearchInput" placeholder="Tìm kiếm nhân viên...">
+                        <button type="button"><i class="fas fa-search"></i></button>
+                    </div>
+                    <div class="filter-box">
+                        <select id="staffRoleFilter">
+                            <option value="">Tất cả vai trò</option>
+                            <option value="admin">Quản trị viên</option>
+                            <option value="staff">Nhân viên</option>
+                        </select>
+                    </div>
+                    <button id="addStaffBtn" class="btn-primary">
+                        <i class="fas fa-plus"></i> Thêm nhân viên
+                    </button>
+                </div>
+
+                <!-- Bảng danh sách nhân viên -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2>Danh sách nhân viên</h2>
+                        <div class="card-actions">
+                            <button id="refreshStaffBtn" class="btn-refresh" title="Làm mới">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="staffTable">
+                            <thead>
+                                <tr>
+                                    <th>Mã NV</th>
+                                    <th>Ảnh</th>
+                                    <th>Họ và tên</th>
+                                    <th>Tên đăng nhập</th>
+                                    <th>Vai trò</th>
+                                    <th>Liên hệ</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="staffTableBody">
+                                <!-- Dữ liệu sẽ được nạp bằng JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-footer">
+                        <div class="pagination">
+                            <button class="page-btn" id="prevPage" disabled><i class="fas fa-chevron-left"></i></button>
+                            <span id="currentPage">Trang 1</span>
+                            <button class="page-btn" id="nextPage"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                        <div class="items-per-page">
+                            <label for="itemsPerPage">Hiển thị:</label>
+                            <select id="itemsPerPage">
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Modal thêm/sửa nhân viên -->
+        <div class="modal" id="staffModal">
+            <div class="modal-content">
+                <span class="close-btn">&times;</span>
+                <h2 id="staffModalTitle"><i class="fas fa-user-plus"></i> Thêm nhân viên mới</h2>
+                <form id="staffForm">
+                    <input type="hidden" id="staffId">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="staffUsername">Tên đăng nhập <span class="required">*</span></label>
+                            <input type="text" id="staffUsername" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="staffFullName">Họ và tên <span class="required">*</span></label>
+                            <input type="text" id="staffFullName" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="staffPassword">Mật khẩu <span id="passwordRequired" class="required">*</span></label>
+                            <input type="password" id="staffPassword">
+                            <small id="passwordHint">Mật khẩu phải có ít nhất 6 ký tự</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="staffPhone">Số điện thoại</label>
+                            <input type="tel" id="staffPhone">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="staffRole">Vai trò <span class="required">*</span></label>
+                            <select id="staffRole" required>
+                                <option value="staff">Nhân viên</option>
+                                <option value="admin">Quản trị viên</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="staffStatus">Trạng thái</label>
+                            <select id="staffStatus">
+                                <option value="active">Đang làm việc</option>
+                                <option value="inactive">Tạm nghỉ</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="staffAddress">Địa chỉ</label>
+                            <input type="text" id="staffAddress">
+                        </div>
+                        <div class="form-group">
+                            <label for="staffEmail">Email</label>
+                            <input type="email" id="staffEmail">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="staffImage">Ảnh đại diện</label>
+                        <input type="file" id="staffImage" accept="image/*">
+                        <div class="image-preview" id="staffImagePreview">
+                            <span id="previewPlaceholder">Chọn ảnh để xem trước</span>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel" data-close-modal>Hủy</button>
+                        <button type="submit" class="btn-submit">Lưu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal xác nhận xóa -->
+        <div class="modal" id="deleteConfirmModal">
+            <div class="modal-content delete-confirm">
+                <span class="close-btn">&times;</span>
+                <div class="confirm-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h2>Xác nhận xóa</h2>
+                <p>Bạn có chắc chắn muốn xóa nhân viên <strong id="deleteStaffName"></strong>?</p>
+                <p class="warning-text">Lưu ý: Hành động này không thể hoàn tác!</p>
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" data-close-modal>Hủy</button>
+                    <button type="button" id="confirmDeleteBtn" class="btn-danger">Xóa</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/js/api-client.js"></script>
+    <script src="../assets/js/admin-module.js"></script>
+</body>
+
+</html> 

@@ -1,0 +1,847 @@
+// api.js - Quản lý tất cả API calls từ frontend
+
+// Các endpoint API
+const API = {
+    BASE_URL: 'http://localhost:8081/api',
+    ORDERS: '/orders',
+    PRODUCTS: '/products',
+    CATEGORIES: '/categories',
+    USERS: '/users',
+    TABLES: '/tables',
+    ACTIVITIES: '/activities',
+    PROMOTIONS: '/promotions',
+    STAFFS: '/staffs',
+    REPORTS: '/reports',
+    AUTH: '/auth'
+};
+
+// Kiểm tra kết nối API
+async function checkApiConnection() {
+    try {
+        console.log("Đang kiểm tra kết nối API đến:", `${API.BASE_URL}${API.ORDERS}`);
+        
+        // Thêm timeout để tránh đợi quá lâu khi server không phản hồi
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 giây timeout
+        
+        const response = await fetch(`${API.BASE_URL}${API.ORDERS}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            },
+            signal: controller.signal
+        });
+        
+        // Xóa timeout nếu request hoàn thành
+        clearTimeout(timeoutId);
+        
+        console.log(`API response status: ${response.status}`);
+        
+        return {
+            available: response.ok,
+            status: response.status,
+            statusText: response.statusText
+        };
+    } catch (error) {
+        console.error("Lỗi kết nối API:", error);
+        
+        // Xử lý chi tiết hơn dựa trên loại lỗi
+        if (error.name === 'AbortError') {
+            console.error("Timeout: Máy chủ không phản hồi sau 5 giây");
+            return {
+                available: false,
+                status: 0,
+                statusText: "Timeout: Máy chủ không phản hồi sau 5 giây"
+            };
+        } else if (error.message.includes('Failed to fetch')) {
+            console.error("Network error: Không thể kết nối đến máy chủ");
+            return {
+                available: false,
+                status: 0,
+                statusText: "Network error: Không thể kết nối đến máy chủ. Máy chủ có thể chưa được khởi động."
+            };
+        }
+        
+        return {
+            available: false,
+            status: 0,
+            statusText: error.message
+        };
+    }
+}
+
+// Chuyển đổi từ object order backend sang định dạng frontend
+function convertOrderFromServer(serverOrder) {
+    console.log("API.js - convertOrderFromServer - input:", JSON.stringify(serverOrder, null, 2));
+    
+    // Clone đối tượng để không ảnh hưởng đến dữ liệu gốc
+    const order = { ...serverOrder };
+    
+    // Map ID
+    if (order.idOrder) {
+        order.id = order.idOrder;
+    }
+    
+    // Map table - Cải thiện xử lý bàn
+    if (order.table) {
+        if (typeof order.table === 'object') {
+            // Sử dụng tableNumber từ đối tượng table
+            if (order.table.tableNumber) {
+                order.tableNumber = order.table.tableNumber;
+            } else if (order.table.idTable) {
+                // Nếu không có tableNumber, sử dụng idTable
+                order.tableNumber = order.table.idTable;
+            }
+            
+            // Kiểm tra nếu là đơn takeaway
+            if (order.table.tableNumber === 'takeaway' || order.table.idTable === 'takeaway') {
+                order.tableNumber = 'takeaway';
+            }
+        } else if (typeof order.table === 'string' || typeof order.table === 'number') {
+            // Nếu table là string hoặc number
+            order.tableNumber = order.table;
+        }
+    }
+    
+    // Xử lý thông tin thanh toán
+    if (order.payment) {
+        order.paymentMethod = order.payment.paymentMethod || "cash";
+        order.paymentStatus = order.payment.paymentStatus || "pending";
+        
+        // Nếu đã thanh toán, cập nhật localStorage
+        if (order.payment.paymentStatus === "completed") {
+            localStorage.setItem("paymentCompleted", "true");
+            localStorage.setItem("paymentMethod", order.payment.paymentMethod || "cash");
+        }
+        
+        // Log thông tin thanh toán để debug
+        console.log("API.js - Tìm thấy thông tin thanh toán:", {
+            method: order.paymentMethod,
+            status: order.paymentStatus
+        });
+    } else {
+        // Mặc định thanh toán tiền mặt nếu không có thông tin
+        order.paymentMethod = order.paymentMethod || "cash";
+        order.paymentStatus = order.paymentStatus || "pending";
+    }
+    
+    // Map items từ orderDetails
+    if (order.orderDetails && order.orderDetails.length > 0) {
+        order.items = order.orderDetails.map(detail => {
+            return {
+                id: detail.product.idProduct,
+                name: detail.product.productName || detail.product.name,
+                price: detail.unitPrice ? parseFloat(detail.unitPrice) : parseFloat(detail.product.price),
+                quantity: detail.quantity
+            };
+        });
+    }
+    
+    // Chuyển đổi totalAmount từ BigDecimal sang số
+    if (order.totalAmount) {
+        order.totalAmount = parseFloat(order.totalAmount);
+    }
+    
+    // Đảm bảo ngày giờ là đúng định dạng
+    if (order.orderTime && typeof order.orderTime === 'string') {
+        order.orderTime = new Date(order.orderTime).toISOString();
+    }
+    
+    // Đảm bảo có trạng thái
+    if (!order.status) {
+        order.status = "processing";
+    }
+    
+    console.log("API.js - convertOrderFromServer - output:", JSON.stringify(order, null, 2));
+    return order;
+}
+
+// Chuyển đổi từ object order frontend sang định dạng backend
+function convertOrderToServer(clientOrder) {
+    // Dữ liệu cơ bản
+    const serverOrder = {
+        totalAmount: clientOrder.totalAmount,
+        note: clientOrder.notes || clientOrder.note,
+        status: clientOrder.status || "processing"
+    };
+    
+    // Thêm ID nếu có (cho cập nhật)
+    if (clientOrder.id) {
+        serverOrder.idOrder = clientOrder.id;
+    } else if (clientOrder.idOrder) {
+        serverOrder.idOrder = clientOrder.idOrder;
+    }
+    
+    // Thêm thời gian nếu có
+    if (clientOrder.orderTime) {
+        serverOrder.orderTime = new Date(clientOrder.orderTime).toISOString();
+    } else {
+        serverOrder.orderTime = new Date().toISOString();
+    }
+    
+    // Thêm thông tin thanh toán
+    const isCompleted = clientOrder.paymentCompleted === true || 
+                        localStorage.getItem("paymentCompleted") === "true";
+    
+    // Tạo đối tượng payment
+    serverOrder.payment = {
+        paymentMethod: clientOrder.paymentMethod || localStorage.getItem("paymentMethod") || "cash",
+        paymentStatus: isCompleted ? "completed" : "pending",
+        createAt: new Date().toISOString(),
+        amount: clientOrder.totalAmount
+    };
+    
+    console.log("API.js - convertOrderToServer - Thông tin thanh toán:", serverOrder.payment);
+    
+    // Thêm thông tin bàn
+    if (clientOrder.tableNumber && clientOrder.tableNumber !== 'takeaway') {
+        serverOrder.table = {
+            idTable: parseInt(clientOrder.tableNumber)
+        };
+    } else if (clientOrder.tableNumber === 'takeaway') {
+        serverOrder.table = {
+            idTable: "takeaway",
+            tableNumber: "takeaway"
+        };
+    } else if (clientOrder.table) {
+        serverOrder.table = clientOrder.table;
+    }
+    
+    // Chuyển đổi items thành productItems (cho API)
+    const items = clientOrder.items || clientOrder.cart;
+    if (items && items.length > 0) {
+        serverOrder.productItems = items.map(item => {
+            return {
+                productId: item.id || item.productId,
+                quantity: item.quantity,
+                unitPrice: item.price || item.unitPrice
+            };
+        });
+    } else {
+        // Đảm bảo luôn có trường productItems, ngay cả khi không có sản phẩm
+        // Điều này giúp backend xử lý theo đúng đường dẫn mã mong muốn
+        serverOrder.productItems = [];
+    }
+    
+    console.log("API.js - convertOrderToServer - Final Order:", JSON.stringify(serverOrder, null, 2));
+    return serverOrder;
+}
+
+// Lấy tất cả đơn hàng
+async function getAllOrders() {
+    try {
+        const response = await fetch(`${API.BASE_URL}${API.ORDERS}`);
+        
+        if (!response.ok) {
+            throw new Error(`Lỗi khi lấy đơn hàng: ${response.status}`);
+        }
+        
+        const orders = await response.json();
+        return orders.map(order => convertOrderFromServer(order));
+    } catch (error) {
+        console.error("Lỗi khi lấy danh sách đơn hàng:", error);
+        throw error;
+    }
+}
+
+// Lấy thông tin một đơn hàng theo ID
+async function getOrderById(orderId) {
+    try {
+        const response = await fetch(`${API.BASE_URL}${API.ORDERS}/${orderId}`);
+        
+        if (!response.ok) {
+            throw new Error(`Lỗi khi lấy đơn hàng: ${response.status}`);
+        }
+        
+        const order = await response.json();
+        return convertOrderFromServer(order);
+    } catch (error) {
+        console.error(`Lỗi khi lấy đơn hàng ID: ${orderId}`, error);
+        throw error;
+    }
+}
+
+// Lấy các đơn hàng theo trạng thái
+async function getOrdersByStatus(status) {
+    try {
+        const response = await fetch(`${API.BASE_URL}${API.ORDERS}/status/${status}`);
+        
+        if (!response.ok) {
+            throw new Error(`Lỗi khi lấy đơn hàng theo trạng thái: ${response.status}`);
+        }
+        
+        const orders = await response.json();
+        return orders.map(order => convertOrderFromServer(order));
+    } catch (error) {
+        console.error(`Lỗi khi lấy đơn hàng theo trạng thái: ${status}`, error);
+        throw error;
+    }
+}
+
+// Lấy các đơn hàng gần đây
+async function getRecentOrders() {
+    try {
+        const response = await fetch(`${API.BASE_URL}${API.ORDERS}/recent`);
+        
+        if (!response.ok) {
+            throw new Error(`Lỗi khi lấy đơn hàng gần đây: ${response.status}`);
+        }
+        
+        const orders = await response.json();
+        return orders.map(order => convertOrderFromServer(order));
+    } catch (error) {
+        console.error("Lỗi khi lấy đơn hàng gần đây:", error);
+        throw error;
+    }
+}
+
+// Tạo đơn hàng mới
+async function createOrder(order) {
+    try {
+        const serverOrder = convertOrderToServer(order);
+        
+        // Thêm lớp bảo vệ - đảm bảo luôn có productItems
+        if (!serverOrder.productItems) {
+            console.warn("WARNING: serverOrder không có productItems, đang thêm mảng rỗng");
+            serverOrder.productItems = [];
+        }
+        
+        console.log("API.js - createOrder - Final request:", JSON.stringify(serverOrder, null, 2));
+        
+        const response = await fetch(`${API.BASE_URL}${API.ORDERS}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(serverOrder)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Lỗi khi tạo đơn hàng: ${response.status}`);
+        }
+        
+        const createdOrder = await response.json();
+        console.log("API.js - createOrder - Response from server:", JSON.stringify(createdOrder, null, 2));
+        return convertOrderFromServer(createdOrder);
+    } catch (error) {
+        console.error("Lỗi khi tạo đơn hàng:", error);
+        throw error;
+    }
+}
+
+// Cập nhật đơn hàng
+async function updateOrder(orderId, orderData) {
+    try {
+        const serverOrder = convertOrderToServer(orderData);
+        
+        const response = await fetch(`${API.BASE_URL}${API.ORDERS}/${orderId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(serverOrder)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Lỗi khi cập nhật đơn hàng: ${response.status}`);
+        }
+        
+        const updatedOrder = await response.json();
+        return convertOrderFromServer(updatedOrder);
+    } catch (error) {
+        console.error(`Lỗi khi cập nhật đơn hàng ID: ${orderId}`, error);
+        throw error;
+    }
+}
+
+// Cập nhật trạng thái đơn hàng
+async function updateOrderStatus(orderId, status) {
+    try {
+        const response = await fetch(`${API.BASE_URL}${API.ORDERS}/${orderId}/status`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Lỗi khi cập nhật trạng thái đơn hàng: ${response.status}`);
+        }
+        
+        const updatedOrder = await response.json();
+        return convertOrderFromServer(updatedOrder);
+    } catch (error) {
+        console.error(`Lỗi khi cập nhật trạng thái đơn hàng ID: ${orderId}`, error);
+        throw error;
+    }
+}
+
+// Cập nhật thông tin thanh toán
+async function updatePaymentInfo(orderId, paymentMethod, isCompleted = true) {
+    try {
+        console.log(`Cập nhật thanh toán cho đơn hàng ${orderId}: Phương thức=${paymentMethod}, Trạng thái=${isCompleted ? 'completed' : 'pending'}`);
+        
+        // Chuyển đổi orderId sang số nếu cần
+        const numericOrderId = typeof orderId === 'string' && orderId.startsWith('HD') 
+            ? orderId.substring(2) 
+            : orderId;
+            
+        const paymentInfo = {
+            paymentMethod: paymentMethod,
+            paymentStatus: isCompleted ? "completed" : "pending",
+            updateAt: new Date().toISOString()
+        };
+        
+        // Thêm debug để xem URL và dữ liệu
+        const url = `${API.BASE_URL}${API.ORDERS}/${numericOrderId}/payment`;
+        console.log("API call to URL:", url);
+        console.log("API call data:", JSON.stringify(paymentInfo));
+        
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(paymentInfo)
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`API Error (${response.status}):`, errorText);
+            throw new Error(`Lỗi khi cập nhật thông tin thanh toán: ${response.status} - ${errorText}`);
+        }
+        
+        const updatedOrder = await response.json();
+        console.log("API Success - Updated order:", updatedOrder);
+        
+        // Cập nhật localStorage
+        if (isCompleted) {
+            localStorage.setItem("paymentCompleted", "true");
+            localStorage.setItem("paymentMethod", paymentMethod);
+            console.log("Payment info saved to localStorage");
+        }
+        
+        return updatedOrder;
+    } catch (error) {
+        console.error(`Lỗi khi cập nhật thông tin thanh toán đơn hàng ID: ${orderId}`, error);
+        // Vẫn cập nhật localStorage ngay cả khi API gặp lỗi
+        if (isCompleted) {
+            localStorage.setItem("paymentCompleted", "true");
+            localStorage.setItem("paymentMethod", paymentMethod);
+            console.log("Payment info saved to localStorage despite API error");
+        }
+        throw error;
+    }
+}
+
+// Lấy trạng thái đơn hàng
+async function getOrderStatus(orderId) {
+    try {
+        const response = await fetch(`${API.BASE_URL}${API.ORDERS}/${orderId}/status`);
+        
+        if (!response.ok) {
+            throw new Error(`Lỗi khi lấy trạng thái đơn hàng: ${response.status}`);
+        }
+        
+        const statusData = await response.json();
+        return statusData.status;
+    } catch (error) {
+        console.error(`Lỗi khi lấy trạng thái đơn hàng ID: ${orderId}`, error);
+        throw error;
+    }
+}
+
+// Xóa đơn hàng
+async function deleteOrder(orderId) {
+    try {
+        const response = await fetch(`${API.BASE_URL}${API.ORDERS}/${orderId}`, {
+            method: 'DELETE'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Lỗi khi xóa đơn hàng: ${response.status}`);
+        }
+        
+        return true;
+    } catch (error) {
+        console.error(`Lỗi khi xóa đơn hàng ID: ${orderId}`, error);
+        throw error;
+    }
+}
+
+// Lấy tất cả bàn
+async function getAllTables() {
+    try {
+        const response = await fetch(`${API.BASE_URL}${API.TABLES}`);
+        
+        if (!response.ok) {
+            throw new Error(`Lỗi khi lấy danh sách bàn: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error("Lỗi khi lấy danh sách bàn:", error);
+        throw error;
+    }
+}
+
+// Lấy bàn theo trạng thái
+async function getTablesByStatus(status) {
+    try {
+        const response = await fetch(`${API.BASE_URL}${API.TABLES}/status/${status}`);
+        
+        if (!response.ok) {
+            throw new Error(`Lỗi khi lấy bàn theo trạng thái: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error(`Lỗi khi lấy bàn theo trạng thái: ${status}`, error);
+        throw error;
+    }
+}
+
+// API cho các sản phẩm
+// Lấy tất cả sản phẩm
+async function getAllProducts() {
+    try {
+        const response = await fetch(`${API.BASE_URL}${API.PRODUCTS}`);
+        
+        if (!response.ok) {
+            throw new Error(`Lỗi khi lấy danh sách sản phẩm: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error("Lỗi khi lấy danh sách sản phẩm:", error);
+        throw error;
+    }
+}
+
+// Lấy sản phẩm theo ID
+async function getProductById(productId) {
+    try {
+        const response = await fetch(`${API.BASE_URL}${API.PRODUCTS}/${productId}`);
+        
+        if (!response.ok) {
+            throw new Error(`Lỗi khi lấy thông tin sản phẩm: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error(`Lỗi khi lấy sản phẩm ID: ${productId}`, error);
+        throw error;
+    }
+}
+
+// Lấy sản phẩm nổi bật
+async function getFeaturedProducts() {
+    try {
+        const response = await fetch(`${API.BASE_URL}${API.PRODUCTS}/featured`);
+        
+        if (!response.ok) {
+            throw new Error(`Lỗi khi lấy sản phẩm nổi bật: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error("Lỗi khi lấy sản phẩm nổi bật:", error);
+        throw error;
+    }
+}
+
+// Tìm kiếm sản phẩm
+async function searchProducts(query) {
+    try {
+        const response = await fetch(`${API.BASE_URL}${API.PRODUCTS}/search?q=${encodeURIComponent(query)}`);
+        
+        if (!response.ok) {
+            throw new Error(`Lỗi khi tìm kiếm sản phẩm: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error(`Lỗi khi tìm kiếm sản phẩm với từ khóa: ${query}`, error);
+        throw error;
+    }
+}
+
+// Tạo sản phẩm mới
+async function createProduct(productData) {
+    try {
+        const response = await fetch(`${API.BASE_URL}${API.PRODUCTS}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(productData)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Lỗi khi tạo sản phẩm: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error("Lỗi khi tạo sản phẩm:", error);
+        throw error;
+    }
+}
+
+// Cập nhật sản phẩm
+async function updateProduct(productId, productData) {
+    try {
+        const response = await fetch(`${API.BASE_URL}${API.PRODUCTS}/${productId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(productData)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Lỗi khi cập nhật sản phẩm: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error(`Lỗi khi cập nhật sản phẩm ID: ${productId}`, error);
+        throw error;
+    }
+}
+
+// Xóa sản phẩm
+async function deleteProduct(productId) {
+    try {
+        const response = await fetch(`${API.BASE_URL}${API.PRODUCTS}/${productId}`, {
+            method: 'DELETE'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Lỗi khi xóa sản phẩm: ${response.status}`);
+        }
+        
+        return true;
+    } catch (error) {
+        console.error(`Lỗi khi xóa sản phẩm ID: ${productId}`, error);
+        throw error;
+    }
+}
+
+// API cho danh mục
+// Lấy tất cả danh mục
+async function getAllCategories() {
+    try {
+        const response = await fetch(`${API.BASE_URL}${API.CATEGORIES}`);
+        
+        if (!response.ok) {
+            throw new Error(`Lỗi khi lấy danh sách danh mục: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error("Lỗi khi lấy danh sách danh mục:", error);
+        throw error;
+    }
+}
+
+// Lấy danh mục theo ID
+async function getCategoryById(categoryId) {
+    try {
+        const response = await fetch(`${API.BASE_URL}${API.CATEGORIES}/${categoryId}`);
+        
+        if (!response.ok) {
+            throw new Error(`Lỗi khi lấy thông tin danh mục: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error(`Lỗi khi lấy danh mục ID: ${categoryId}`, error);
+        throw error;
+    }
+}
+
+// Tạo danh mục mới
+async function createCategory(categoryData) {
+    try {
+        const response = await fetch(`${API.BASE_URL}${API.CATEGORIES}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(categoryData)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Lỗi khi tạo danh mục: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error("Lỗi khi tạo danh mục:", error);
+        throw error;
+    }
+}
+
+// Cập nhật danh mục
+async function updateCategory(categoryId, categoryData) {
+    try {
+        const response = await fetch(`${API.BASE_URL}${API.CATEGORIES}/${categoryId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(categoryData)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Lỗi khi cập nhật danh mục: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error(`Lỗi khi cập nhật danh mục ID: ${categoryId}`, error);
+        throw error;
+    }
+}
+
+// Xóa danh mục
+async function deleteCategory(categoryId) {
+    try {
+        const response = await fetch(`${API.BASE_URL}${API.CATEGORIES}/${categoryId}`, {
+            method: 'DELETE'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Lỗi khi xóa danh mục: ${response.status}`);
+        }
+        
+        return true;
+    } catch (error) {
+        console.error(`Lỗi khi xóa danh mục ID: ${categoryId}`, error);
+        throw error;
+    }
+}
+
+// API xác thực và người dùng
+// Đăng nhập
+async function login(username, password) {
+    try {
+        const response = await fetch(`${API.BASE_URL}${API.AUTH}/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Đăng nhập thất bại: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Lưu token vào localStorage nếu có
+        if (data.token) {
+            localStorage.setItem('token', data.token);
+        }
+        
+        return data;
+    } catch (error) {
+        console.error("Lỗi khi đăng nhập:", error);
+        throw error;
+    }
+}
+
+// Lấy thông tin người dùng hiện tại
+async function getCurrentUser() {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('Không tìm thấy token xác thực');
+        }
+        
+        const response = await fetch(`${API.BASE_URL}${API.AUTH}/me`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Lỗi khi lấy thông tin người dùng: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error("Lỗi khi lấy thông tin người dùng:", error);
+        throw error;
+    }
+}
+
+// Đăng xuất
+async function logout() {
+    try {
+        const token = localStorage.getItem('token');
+        if (token) {
+            // Gọi API đăng xuất nếu backend có endpoint này
+            const response = await fetch(`${API.BASE_URL}${API.AUTH}/logout`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (!response.ok) {
+                console.warn(`Cảnh báo khi đăng xuất: ${response.status}`);
+            }
+        }
+        
+        // Xóa token khỏi localStorage
+        localStorage.removeItem('token');
+        
+        return true;
+    } catch (error) {
+        console.error("Lỗi khi đăng xuất:", error);
+        // Xóa token ngay cả khi có lỗi
+        localStorage.removeItem('token');
+        return true;
+    }
+}
+
+// Export cập nhật
+window.CafeAPI = {
+    checkApiConnection,
+    getAllOrders,
+    getOrderById,
+    getOrdersByStatus,
+    getRecentOrders,
+    createOrder,
+    updateOrder,
+    updateOrderStatus,
+    updatePaymentInfo,
+    getOrderStatus,
+    deleteOrder,
+    getAllTables,
+    getTablesByStatus,
+    convertOrderFromServer,
+    convertOrderToServer,
+    // Thêm API sản phẩm
+    getAllProducts,
+    getProductById,
+    getFeaturedProducts,
+    searchProducts,
+    createProduct,
+    updateProduct,
+    deleteProduct,
+    // Thêm API danh mục
+    getAllCategories,
+    getCategoryById,
+    createCategory,
+    updateCategory,
+    deleteCategory,
+    // Thêm API xác thực
+    login,
+    getCurrentUser,
+    logout
+};

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 
 <head>
     <meta charset="UTF-8">
@@ -8,226 +8,362 @@
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
     <div id="app">
-        <div class="main-header"></div>
+        <div id="loader" class="loader-overlay">
+            <div class="loader"></div>
+        </div>
 
-        <main class="admin-dashboard">
-            <div class="sidebar">
-                <nav class="admin-nav">
-                    <ul>
-                        <li class="active"><a href="#dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                        <li><a href="#staff"><i class="fas fa-users"></i> Staff Management</a></li>
-                        <li><a href="#products"><i class="fas fa-coffee"></i> Product Management</a></li>
-                        <li><a href="#categories"><i class="fas fa-tags"></i> Categories</a></li>
-                        <li><a href="#tables"><i class="fas fa-chair"></i> Table Management</a></li>
-                        <li><a href="#promotions"><i class="fas fa-percentage"></i> Promotions</a></li>
-                        <li><a href="#reports"><i class="fas fa-chart-bar"></i> Reports</a></li>
-                        <li><a href="#settings"><i class="fas fa-cog"></i> Settings</a></li>
-                    </ul>
-                </nav>
+        <header class="admin-header">
+            <div class="logo">
+                <img src="../assets/images/logo.png" alt="T2K Coffee Logo">
+                <h1>T2K Coffee</h1>
+            </div>
+            <div class="header-actions">
+                <button class="btn-notification" title="Thông báo">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge">3</span>
+                </button>
+                <div class="admin-profile">
+                    <img src="../assets/images/default-avatar.png" alt="Admin" class="avatar">
+                    <span id="adminName">Admin</span>
+                    <div class="dropdown-menu">
+                        <a href="profile.html"><i class="fas fa-user"></i> Hồ sơ</a>
+                        <a href="settings.html"><i class="fas fa-cog"></i> Cài đặt</a>
+                        <hr>
+                        <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="admin-container">
+            <div class="sidebar-container">
+                <!-- Sidebar sẽ được load bằng JavaScript -->
             </div>
 
-            <div class="main-content">
-                <h1><i class="fas fa-tachometer-alt"></i> Admin Dashboard</h1>
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-tachometer-alt"></i> Tổng quan hệ thống</h1>
+                    <div class="breadcrumb">
+                        <a href="dashboard.html">Trang chủ</a> / <span>Tổng quan</span>
+                    </div>
+                </div>
                 
-                
-                <div class="summary-cards">
-                    <div class="card">
-                        <div class="card-icon bg-primary">
+                <div class="dashboard-stats">
+                    <div class="stat-card">
+                        <div class="stat-card-icon bg-primary">
                             <i class="fas fa-dollar-sign"></i>
                         </div>
-                        <div class="card-info">
-                            <h3>Today's Revenue</h3>
-                            <p>$<span id="todayRevenue">0.00</span></p>
+                        <div class="stat-card-info">
+                            <h3>Doanh thu hôm nay</h3>
+                            <p><span id="todayRevenue">0</span> VNĐ</p>
+                            <span class="trend" id="revenueTrend"></span>
                         </div>
                     </div>
                     
-                    <div class="card">
-                        <div class="card-icon bg-success">
+                    <div class="stat-card">
+                        <div class="stat-card-icon bg-success">
                             <i class="fas fa-shopping-bag"></i>
                         </div>
-                        <div class="card-info">
-                            <h3>Today's Orders</h3>
+                        <div class="stat-card-info">
+                            <h3>Đơn hàng hôm nay</h3>
                             <p><span id="todayOrders">0</span></p>
+                            <span class="trend" id="ordersTrend"></span>
                         </div>
                     </div>
                     
-                    <div class="card">
-                        <div class="card-icon bg-warning">
+                    <div class="stat-card">
+                        <div class="stat-card-icon bg-warning">
                             <i class="fas fa-users"></i>
                         </div>
-                        <div class="card-info">
-                            <h3>Staff Members</h3>
+                        <div class="stat-card-info">
+                            <h3>Nhân viên</h3>
                             <p><span id="staffCount">0</span></p>
+                            <span class="trend" id="staffTrend"></span>
                         </div>
                     </div>
                     
-                    <div class="card">
-                        <div class="card-icon bg-danger">
-                            <i class="fas fa-utensils"></i>
+                    <div class="stat-card">
+                        <div class="stat-card-icon bg-danger">
+                            <i class="fas fa-coffee"></i>
                         </div>
-                        <div class="card-info">
-                            <h3>Menu Items</h3>
+                        <div class="stat-card-info">
+                            <h3>Sản phẩm</h3>
                             <p><span id="productCount">0</span></p>
+                            <span class="trend" id="productTrend"></span>
                         </div>
                     </div>
                 </div>
 
-             
-                <section class="admin-section">
-                    <h2><i class="fas fa-history"></i> Recent Activity</h2>
-                    <div class="activity-list">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Time</th>
-                                    <th>Activity</th>
-                                    <th>User</th>
-                                    <th>Details</th>
-                                </tr>
-                            </thead>
-                            <tbody id="recentActivity">
-                               
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-
-            
-                <section class="admin-section quick-actions">
-                    <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
-                    <div class="action-buttons">
-                        <button class="action-btn" id="addStaffBtn">
-                            <i class="fas fa-user-plus"></i> Add Staff
-                        </button>
-                        <button class="action-btn" id="addProductBtn">
-                            <i class="fas fa-plus-circle"></i> Add Product
-                        </button>
-                        <button class="action-btn" id="addCategoryBtn">
-                            <i class="fas fa-tag"></i> Add Category
-                        </button>
-                        <button class="action-btn" id="addTableBtn">
-                            <i class="fas fa-chair"></i> Add Table
-                        </button>
-                        <button class="action-btn" id="addPromotionBtn">
-                            <i class="fas fa-percentage"></i> Add Promotion
-                        </button>
-                    </div>
-                </section>
-
-               
-                <section class="admin-section stats-overview">
-                    <div class="stats-chart">
-                        <h2><i class="fas fa-chart-line"></i> Revenue Overview</h2>
+                <div class="dashboard-charts">
+                    <div class="chart-card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-chart-line"></i> Doanh thu theo thời gian</h2>
+                            <div class="card-actions">
+                                <select id="revenueChartPeriod">
+                                    <option value="week">Tuần này</option>
+                                    <option value="month">Tháng này</option>
+                                    <option value="year">Năm nay</option>
+                                </select>
+                            </div>
+                        </div>
                         <div class="chart-container">
                             <canvas id="revenueChart"></canvas>
                         </div>
                     </div>
-                    <div class="stats-summary">
-                        <h2><i class="fas fa-info-circle"></i> Summary</h2>
-                        <div class="summary-item">
-                            <h3>Best Selling Product</h3>
-                            <p id="bestSeller">-</p>
+                    
+                    <div class="chart-card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-chart-pie"></i> Sản phẩm bán chạy</h2>
+                            <div class="card-actions">
+                                <button id="refreshProductChart" class="btn-refresh">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </div>
                         </div>
-                        <div class="summary-item">
-                            <h3>Busiest Time</h3>
-                            <p id="busiestTime">-</p>
-                        </div>
-                        <div class="summary-item">
-                            <h3>Average Order Value</h3>
-                            <p id="avgOrderValue">$0.00</p>
+                        <div class="chart-container">
+                            <canvas id="productChart"></canvas>
                         </div>
                     </div>
-                </section>
-            </div>
-        </main>
+                </div>
 
-  
+                <div class="dashboard-content">
+                    <div class="content-row">
+                        <div class="content-card recent-activity">
+                            <div class="card-header">
+                                <h2><i class="fas fa-history"></i> Hoạt động gần đây</h2>
+                                <div class="card-actions">
+                                    <a href="activities.html" class="card-link">Xem tất cả</a>
+                                </div>
+                            </div>
+                            <div class="activity-list">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Thời gian</th>
+                                            <th>Hoạt động</th>
+                                            <th>Người dùng</th>
+                                            <th>Chi tiết</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recentActivity">
+                                        <!-- Dữ liệu sẽ được nạp từ JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="content-card summary-card">
+                            <div class="card-header">
+                                <h2><i class="fas fa-info-circle"></i> Tổng quan</h2>
+                            </div>
+                            <div class="summary-list">
+                                <div class="summary-item">
+                                    <div class="summary-icon">
+                                        <i class="fas fa-crown"></i>
+                                    </div>
+                                    <div class="summary-info">
+                                        <h3>Sản phẩm bán chạy nhất</h3>
+                                        <p id="bestSeller">-</p>
+                                    </div>
+                                </div>
+                                <div class="summary-item">
+                                    <div class="summary-icon">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <div class="summary-info">
+                                        <h3>Giờ cao điểm</h3>
+                                        <p id="busiestTime">-</p>
+                                    </div>
+                                </div>
+                                <div class="summary-item">
+                                    <div class="summary-icon">
+                                        <i class="fas fa-receipt"></i>
+                                    </div>
+                                    <div class="summary-info">
+                                        <h3>Giá trị đơn hàng trung bình</h3>
+                                        <p id="avgOrderValue">0 VNĐ</p>
+                                    </div>
+                                </div>
+                                <div class="summary-item">
+                                    <div class="summary-icon">
+                                        <i class="fas fa-user-check"></i>
+                                    </div>
+                                    <div class="summary-info">
+                                        <h3>Khách hàng thân thiết</h3>
+                                        <p><span id="loyalCustomers">0</span> người</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="content-card quick-actions">
+                        <div class="card-header">
+                            <h2><i class="fas fa-bolt"></i> Thao tác nhanh</h2>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="action-btn" id="addStaffBtn">
+                                <i class="fas fa-user-plus"></i> Thêm nhân viên
+                            </button>
+                            <button class="action-btn" id="addProductBtn">
+                                <i class="fas fa-plus-circle"></i> Thêm sản phẩm
+                            </button>
+                            <button class="action-btn" id="addCategoryBtn">
+                                <i class="fas fa-tag"></i> Thêm danh mục
+                            </button>
+                            <button class="action-btn" id="addTableBtn">
+                                <i class="fas fa-chair"></i> Thêm bàn
+                            </button>
+                            <button class="action-btn" id="addPromotionBtn">
+                                <i class="fas fa-percentage"></i> Thêm khuyến mãi
+                            </button>
+                            <button class="action-btn" id="viewOrdersBtn">
+                                <i class="fas fa-list-alt"></i> Xem đơn hàng
+                            </button>
+                            <button class="action-btn" id="generateReportBtn">
+                                <i class="fas fa-file-export"></i> Tạo báo cáo
+                            </button>
+                            <button class="action-btn" id="settingsBtn">
+                                <i class="fas fa-cog"></i> Cài đặt hệ thống
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Modal thêm nhân viên -->
         <div class="modal" id="staffModal">
             <div class="modal-content">
                 <span class="close-btn">&times;</span>
-                <h2><i class="fas fa-user-plus"></i> Add New Staff</h2>
+                <h2><i class="fas fa-user-plus"></i> Thêm nhân viên mới</h2>
                 <form id="addStaffForm">
-                    <div class="form-group">
-                        <label for="staffUsername">Username</label>
-                        <input type="text" id="staffUsername" required>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="staffUsername">Tên đăng nhập</label>
+                            <input type="text" id="staffUsername" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="staffFullName">Họ và tên</label>
+                            <input type="text" id="staffFullName" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="staffPassword">Mật khẩu</label>
+                            <input type="password" id="staffPassword" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="staffPhone">Số điện thoại</label>
+                            <input type="tel" id="staffPhone">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="staffRole">Vai trò</label>
+                            <select id="staffRole" required>
+                                <option value="staff">Nhân viên</option>
+                                <option value="admin">Quản trị viên</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="staffAddress">Địa chỉ</label>
+                            <input type="text" id="staffAddress">
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label for="staffFullName">Full Name</label>
-                        <input type="text" id="staffFullName" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="staffPassword">Password</label>
-                        <input type="password" id="staffPassword" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="staffPhone">Phone</label>
-                        <input type="tel" id="staffPhone">
-                    </div>
-                    <div class="form-group">
-                        <label for="staffRole">Role</label>
-                        <select id="staffRole" required>
-                            <option value="staff">Staff</option>
-                            <option value="admin">Admin</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="staffImage">Profile Image</label>
+                        <label for="staffImage">Ảnh đại diện</label>
                         <input type="file" id="staffImage" accept="image/*">
+                        <div class="image-preview" id="staffImagePreview"></div>
                     </div>
-                    <button type="submit" class="btn-submit">Add Staff</button>
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel">Hủy</button>
+                        <button type="submit" class="btn-submit">Thêm nhân viên</button>
+                    </div>
                 </form>
             </div>
         </div>
 
+        <!-- Modal thêm sản phẩm -->
         <div class="modal" id="productModal">
             <div class="modal-content">
                 <span class="close-btn">&times;</span>
-                <h2><i class="fas fa-coffee"></i> Add New Product</h2>
+                <h2><i class="fas fa-coffee"></i> Thêm sản phẩm mới</h2>
                 <form id="addProductForm">
-                    <div class="form-group">
-                        <label for="productName">Product Name</label>
-                        <input type="text" id="productName" required>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productName">Tên sản phẩm</label>
+                            <input type="text" id="productName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productCategory">Danh mục</label>
+                            <select id="productCategory" required>
+                                <!-- Dữ liệu sẽ được nạp từ JavaScript -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productPrice">Giá</label>
+                            <input type="number" step="1000" id="productPrice" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productStatus">Trạng thái</label>
+                            <select id="productStatus">
+                                <option value="1">Có sẵn</option>
+                                <option value="0">Hết hàng</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label for="productCategory">Category</label>
-                        <select id="productCategory" required>
-                     
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="productPrice">Price</label>
-                        <input type="number" step="0.01" id="productPrice" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="productDescription">Description</label>
+                        <label for="productDescription">Mô tả</label>
                         <textarea id="productDescription" rows="3"></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="productImage">Product Image</label>
+                        <label for="productImage">Hình ảnh sản phẩm</label>
                         <input type="file" id="productImage" accept="image/*">
+                        <div class="image-preview" id="productImagePreview"></div>
                     </div>
-                    <div class="form-group">
-                        <label for="productStatus">Status</label>
-                        <select id="productStatus">
-                            <option value="1">Available</option>
-                            <option value="0">Unavailable</option>
-                        </select>
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel">Hủy</button>
+                        <button type="submit" class="btn-submit">Thêm sản phẩm</button>
                     </div>
-                    <button type="submit" class="btn-submit">Add Product</button>
                 </form>
             </div>
         </div>
-
-        <div class="main-footer"></div>
+        
+        <!-- Modal thêm danh mục -->
+        <div class="modal" id="categoryModal">
+            <div class="modal-content">
+                <span class="close-btn">&times;</span>
+                <h2><i class="fas fa-tag"></i> Thêm danh mục mới</h2>
+                <form id="addCategoryForm">
+                    <div class="form-group">
+                        <label for="categoryName">Tên danh mục</label>
+                        <input type="text" id="categoryName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="categoryDescription">Mô tả</label>
+                        <textarea id="categoryDescription" rows="3"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel">Hủy</button>
+                        <button type="submit" class="btn-submit">Thêm danh mục</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <script src="../assets/js/main.js"></script>
     <script src="../assets/js/admin.js"></script>
- 
+    <script src="../assets/js/api-client.js"></script>
+    <script src="../assets/js/admin-core.js"></script>
 </body>
 
 </html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý đơn hàng - T2K Coffee Admin</title>
+    <!-- CSS Libraries -->
+    <link rel="stylesheet" href="../assets/vendor/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../assets/vendor/font-awesome/css/all.min.css">
+    <!-- Custom CSS -->
+
+    <link rel="stylesheet" href="../assets/css/admin.css">
+    <link rel="stylesheet" href="../assets/css/admin-modules.css">
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
+</head>
+
+<body>
+    <div id="app">
+        <div id="loader" class="loader-overlay">
+            <div class="loader"></div>
+        </div>
+
+        <header class="admin-header">
+            <div class="logo">
+                <img src="../assets/images/logo.png" alt="T2K Coffee Logo">
+                <h1>T2K Coffee</h1>
+            </div>
+            <div class="header-actions">
+                <button class="btn-notification" title="Thông báo">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge">3</span>
+                </button>
+                <div class="admin-profile">
+                    <img src="../assets/images/default-avatar.png" alt="Admin" class="avatar">
+                    <span id="adminName">Admin</span>
+                    <div class="dropdown-menu">
+                        <a href="profile.html"><i class="fas fa-user"></i> Hồ sơ</a>
+                        <a href="settings.html"><i class="fas fa-cog"></i> Cài đặt</a>
+                        <hr>
+                        <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="admin-container">
+            <div class="sidebar-container">
+                <!-- Sidebar sẽ được load bằng JavaScript -->
+            </div>
+
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-shopping-cart"></i> Quản lý đơn hàng</h1>
+                    <div class="breadcrumb">
+                        <a href="dashboard.html">Trang chủ</a> / <span>Đơn hàng</span>
+                    </div>
+                </div>
+
+                <!-- Thanh công cụ -->
+                <div class="content-toolbar">
+                    <div class="search-box">
+                        <input type="text" id="orderSearchInput" placeholder="Tìm kiếm đơn hàng...">
+                        <button type="button"><i class="fas fa-search"></i></button>
+                    </div>
+                    <div class="filter-group">
+                        <div class="filter-box">
+                            <select id="statusFilter">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="pending">Chờ xác nhận</option>
+                                <option value="confirmed">Đã xác nhận</option>
+                                <option value="processing">Đang thực hiện</option>
+                                <option value="completed">Đã hoàn thành</option>
+                                <option value="cancelled">Đã hủy</option>
+                            </select>
+                        </div>
+                        <div class="filter-box">
+                            <select id="paymentFilter">
+                                <option value="">Tất cả phương thức</option>
+                                <option value="cash">Tiền mặt</option>
+                                <option value="transfer">Chuyển khoản</option>
+                                <option value="credit">Thẻ tín dụng</option>
+                            </select>
+                        </div>
+                        <div class="date-range">
+                            <input type="date" id="startDate" placeholder="Từ ngày">
+                            <input type="date" id="endDate" placeholder="Đến ngày">
+                        </div>
+                        <button id="filterBtn" class="btn-secondary">
+                            <i class="fas fa-filter"></i> Lọc
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bảng danh sách đơn hàng -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2>Danh sách đơn hàng</h2>
+                        <div class="card-actions">
+                            <div class="order-count">
+                                <span id="orderCount">0</span> đơn hàng
+                            </div>
+                            <button id="refreshOrdersBtn" class="btn-refresh" title="Làm mới">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button id="exportOrdersBtn" class="btn-secondary">
+                                <i class="fas fa-file-export"></i> Xuất Excel
+                            </button>
+                            <button id="printOrdersBtn" class="btn-secondary">
+                                <i class="fas fa-print"></i> In
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="orderTable">
+                            <thead>
+                                <tr>
+                                    <th>Mã đơn</th>
+                                    <th>Khách hàng</th>
+                                    <th>Ngày đặt</th>
+                                    <th>Tổng tiền</th>
+                                    <th>Phương thức</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orderTableBody">
+                                <!-- Dữ liệu sẽ được nạp bằng JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-footer">
+                        <div class="pagination">
+                            <button class="page-btn" id="prevPage" disabled><i class="fas fa-chevron-left"></i></button>
+                            <span id="currentPage">Trang 1</span>
+                            <button class="page-btn" id="nextPage"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                        <div class="items-per-page">
+                            <label for="itemsPerPage">Hiển thị:</label>
+                            <select id="itemsPerPage">
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Modal chi tiết đơn hàng -->
+        <div class="modal" id="orderDetailModal">
+            <div class="modal-content wide-modal">
+                <span class="close-btn">&times;</span>
+                <h2 id="orderDetailModalTitle"><i class="fas fa-info-circle"></i> Chi tiết đơn hàng #<span id="orderIdDetail"></span></h2>
+                
+                <div class="order-detail-container">
+                    <div class="order-info-section">
+                        <div class="info-grid">
+                            <div class="info-group">
+                                <h3>Thông tin đơn hàng</h3>
+                                <div class="info-item">
+                                    <span>Mã đơn hàng:</span>
+                                    <strong id="orderIdInfo"></strong>
+                                </div>
+                                <div class="info-item">
+                                    <span>Ngày đặt:</span>
+                                    <span id="orderDateInfo"></span>
+                                </div>
+                                <div class="info-item">
+                                    <span>Trạng thái:</span>
+                                    <span id="orderStatusInfo"></span>
+                                </div>
+                                <div class="info-item">
+                                    <span>Phương thức:</span>
+                                    <span id="orderPaymentInfo"></span>
+                                </div>
+                                <div class="info-item">
+                                    <span>Ghi chú:</span>
+                                    <span id="orderNotesInfo"></span>
+                                </div>
+                            </div>
+                            
+                            <div class="info-group">
+                                <h3>Thông tin khách hàng</h3>
+                                <div class="info-item">
+                                    <span>Họ tên:</span>
+                                    <span id="customerNameInfo"></span>
+                                </div>
+                                <div class="info-item">
+                                    <span>Điện thoại:</span>
+                                    <span id="customerPhoneInfo"></span>
+                                </div>
+                                <div class="info-item">
+                                    <span>Email:</span>
+                                    <span id="customerEmailInfo"></span>
+                                </div>
+                                <div class="info-item">
+                                    <span>Địa chỉ:</span>
+                                    <span id="customerAddressInfo"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="order-items-section">
+                        <h3>Các mặt hàng đã đặt</h3>
+                        <div class="table-responsive">
+                            <table class="data-table detail-table" id="orderItemsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Sản phẩm</th>
+                                        <th>Đơn giá</th>
+                                        <th>Số lượng</th>
+                                        <th>Thành tiền</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="orderItemsTableBody">
+                                    <!-- Dữ liệu sẽ được nạp bằng JavaScript -->
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3" class="text-right">Tổng cộng:</td>
+                                        <td id="orderTotalInfo" class="text-right"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="order-actions">
+                        <div class="status-update">
+                            <label for="changeStatus">Cập nhật trạng thái:</label>
+                            <select id="changeStatus">
+                                <option value="pending">Chờ xác nhận</option>
+                                <option value="confirmed">Đã xác nhận</option>
+                                <option value="processing">Đang thực hiện</option>
+                                <option value="completed">Đã hoàn thành</option>
+                                <option value="cancelled">Đã hủy</option>
+                            </select>
+                            <button id="updateStatusBtn" class="btn-primary">Cập nhật</button>
+                        </div>
+                        <div class="action-buttons">
+                            <button id="printOrderBtn" class="btn-secondary">
+                                <i class="fas fa-print"></i> In đơn hàng
+                            </button>
+                            <button type="button" class="btn-cancel" data-close-modal>Đóng</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/js/api-client.js"></script>
+    <script src="../assets/js/admin-module.js"></script>
+</body>
+
+</html> 

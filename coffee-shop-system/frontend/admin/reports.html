@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo cáo - T2K Coffee Admin</title>
+    <!-- CSS Libraries -->
+    <link rel="stylesheet" href="../assets/vendor/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../assets/vendor/font-awesome/css/all.min.css">
+    <link rel="stylesheet" href="../assets/vendor/flatpickr/flatpickr.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../assets/css/admin.css">
+    <link rel="stylesheet" href="../assets/css/admin-modules.css">
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <div id="loader" class="loader-overlay">
+            <div class="loader"></div>
+        </div>
+
+        <header class="admin-header">
+            <div class="logo">
+                <img src="../assets/images/logo.png" alt="T2K Coffee Logo">
+                <h1>T2K Coffee</h1>
+            </div>
+            <div class="header-actions">
+                <button class="btn-notification" title="Thông báo">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge">3</span>
+                </button>
+                <div class="admin-profile">
+                    <img src="../assets/images/default-avatar.png" alt="Admin" class="avatar">
+                    <span id="adminName">Admin</span>
+                    <div class="dropdown-menu">
+                        <a href="#profile"><i class="fas fa-user"></i> Hồ sơ</a>
+                        <a href="#settings"><i class="fas fa-cog"></i> Cài đặt</a>
+                        <hr>
+                        <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="admin-container">
+            <div class="sidebar-container">
+                <!-- Sidebar sẽ được load bằng JavaScript -->
+            </div>
+
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-chart-bar"></i> Báo cáo</h1>
+                    <div class="breadcrumb">
+                        <a href="dashboard.html">Trang chủ</a> / <span>Báo cáo</span>
+                    </div>
+                </div>
+
+                <div class="report-controls">
+                    <div class="report-type">
+                        <label for="reportType">Loại báo cáo:</label>
+                        <select id="reportType">
+                            <option value="sales">Doanh thu</option>
+                            <option value="products">Sản phẩm</option>
+                            <option value="staff">Nhân viên</option>
+                            <option value="customers">Khách hàng</option>
+                        </select>
+                    </div>
+                    <div class="date-range">
+                        <label for="dateFrom">Từ ngày:</label>
+                        <input type="date" id="dateFrom">
+                        <label for="dateTo">Đến ngày:</label>
+                        <input type="date" id="dateTo">
+                        <button id="applyDateFilter" class="btn-primary">Áp dụng</button>
+                    </div>
+                    <div class="export-options">
+                        <button id="exportPDF" class="btn-secondary"><i class="fas fa-file-pdf"></i> Xuất PDF</button>
+                        <button id="exportExcel" class="btn-secondary"><i class="fas fa-file-excel"></i> Xuất Excel</button>
+                        <button id="printReport" class="btn-secondary"><i class="fas fa-print"></i> In báo cáo</button>
+                    </div>
+                </div>
+
+                <!-- Báo cáo doanh thu -->
+                <div id="salesReport" class="report-section active">
+                    <div class="report-grid">
+                        <div class="report-card">
+                            <h3>Tổng doanh thu</h3>
+                            <div class="report-value"><span id="totalRevenue">0</span> VNĐ</div>
+                            <div class="report-trend" id="revenueTrend"></div>
+                        </div>
+                        <div class="report-card">
+                            <h3>Tổng đơn hàng</h3>
+                            <div class="report-value"><span id="totalOrders">0</span></div>
+                            <div class="report-trend" id="ordersTrend"></div>
+                        </div>
+                        <div class="report-card">
+                            <h3>Giá trị đơn hàng trung bình</h3>
+                            <div class="report-value"><span id="avgOrderValue">0</span> VNĐ</div>
+                        </div>
+                        <div class="report-card">
+                            <h3>Tổng lợi nhuận</h3>
+                            <div class="report-value"><span id="totalProfit">0</span> VNĐ</div>
+                            <div class="report-trend" id="profitTrend"></div>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3>Biểu đồ doanh thu</h3>
+                            <select id="revenueChartPeriod">
+                                <option value="day">Theo ngày</option>
+                                <option value="week">Theo tuần</option>
+                                <option value="month">Theo tháng</option>
+                            </select>
+                        </div>
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+
+                    <div class="data-table">
+                        <h3>Chi tiết doanh thu theo ngày</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Ngày</th>
+                                    <th>Số đơn hàng</th>
+                                    <th>Doanh thu</th>
+                                    <th>Lợi nhuận</th>
+                                    <th>Sản phẩm bán chạy</th>
+                                </tr>
+                            </thead>
+                            <tbody id="revenueDailyData">
+                                <!-- Dữ liệu sẽ được nạp từ JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Báo cáo sản phẩm -->
+                <div id="productsReport" class="report-section">
+                    <div class="chart-container">
+                        <h3>Top 10 sản phẩm bán chạy</h3>
+                        <canvas id="topProductsChart"></canvas>
+                    </div>
+
+                    <div class="data-table">
+                        <h3>Chi tiết sản phẩm</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Sản phẩm</th>
+                                    <th>Danh mục</th>
+                                    <th>Số lượng đã bán</th>
+                                    <th>Doanh thu</th>
+                                    <th>Tỷ lệ (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productReportData">
+                                <!-- Dữ liệu sẽ được nạp từ JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Báo cáo nhân viên -->
+                <div id="staffReport" class="report-section">
+                    <div class="chart-container">
+                        <h3>Hiệu suất nhân viên</h3>
+                        <canvas id="staffPerformanceChart"></canvas>
+                    </div>
+
+                    <div class="data-table">
+                        <h3>Chi tiết nhân viên</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nhân viên</th>
+                                    <th>Đơn hàng xử lý</th>
+                                    <th>Doanh thu</th>
+                                    <th>Giờ làm việc</th>
+                                    <th>Hiệu suất</th>
+                                </tr>
+                            </thead>
+                            <tbody id="staffReportData">
+                                <!-- Dữ liệu sẽ được nạp từ JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Báo cáo khách hàng -->
+                <div id="customersReport" class="report-section">
+                    <div class="report-grid">
+                        <div class="report-card">
+                            <h3>Tổng khách hàng</h3>
+                            <div class="report-value"><span id="totalCustomers">0</span></div>
+                        </div>
+                        <div class="report-card">
+                            <h3>Khách hàng mới</h3>
+                            <div class="report-value"><span id="newCustomers">0</span></div>
+                        </div>
+                        <div class="report-card">
+                            <h3>Khách hàng thân thiết</h3>
+                            <div class="report-value"><span id="regularCustomers">0</span></div>
+                        </div>
+                        <div class="report-card">
+                            <h3>Chi tiêu trung bình</h3>
+                            <div class="report-value"><span id="avgCustomerSpend">0</span> VNĐ</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <h3>Thống kê khách hàng</h3>
+                        <canvas id="customerStatsChart"></canvas>
+                    </div>
+
+                    <div class="data-table">
+                        <h3>Top khách hàng</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Khách hàng</th>
+                                    <th>Số đơn hàng</th>
+                                    <th>Tổng chi tiêu</th>
+                                    <th>Sản phẩm yêu thích</th>
+                                    <th>Lần ghé gần nhất</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customerReportData">
+                                <!-- Dữ liệu sẽ được nạp từ JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="../assets/js/api-client.js"></script>
+    <script src="../assets/js/admin-module.js"></script>
+</body>
+
+</html> 

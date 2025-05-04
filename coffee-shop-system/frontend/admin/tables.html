@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý bàn - T2K Coffee Admin</title>
+    <!-- CSS Libraries -->
+    <link rel="stylesheet" href="../assets/vendor/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../assets/vendor/font-awesome/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../assets/css/admin.css">
+    <link rel="stylesheet" href="../assets/css/admin-modules.css">
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
+</head>
+
+<body>
+    <div id="app">
+        <div id="loader" class="loader-overlay">
+            <div class="loader"></div>
+        </div>
+
+        <header class="admin-header">
+            <div class="logo">
+                <img src="../assets/images/logo.png" alt="T2K Coffee Logo">
+                <h1>T2K Coffee</h1>
+            </div>
+            <div class="header-actions">
+                <button class="btn-notification" title="Thông báo">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge">3</span>
+                </button>
+                <div class="admin-profile">
+                    <img src="../assets/images/default-avatar.png" alt="Admin" class="avatar">
+                    <span id="adminName">Admin</span>
+                    <div class="dropdown-menu">
+                        <a href="profile.html"><i class="fas fa-user"></i> Hồ sơ</a>
+                        <a href="settings.html"><i class="fas fa-cog"></i> Cài đặt</a>
+                        <hr>
+                        <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="admin-container">
+            <div class="sidebar-container">
+                <!-- Sidebar sẽ được load bằng JavaScript -->
+            </div>
+
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-chair"></i> Quản lý bàn</h1>
+                    <div class="breadcrumb">
+                        <a href="dashboard.html">Trang chủ</a> / <span>Quản lý bàn</span>
+                    </div>
+                </div>
+
+                <div class="content-grid">
+                    <!-- Danh sách bàn -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h2>Danh sách bàn</h2>
+                            <div class="card-actions">
+                                <button id="refreshTablesBtn" class="btn-refresh" title="Làm mới">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                                <button id="addTableBtn" class="btn-primary">
+                                    <i class="fas fa-plus"></i> Thêm bàn
+                                </button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table" id="tableTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Số bàn</th>
+                                        <th>Khu vực</th>
+                                        <th>Sức chứa</th>
+                                        <th>Trạng thái</th>
+                                        <th>Ghi chú</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableTableBody">
+                                    <!-- Dữ liệu sẽ được nạp bằng JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Bố trí bàn -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h2>Bố trí bàn</h2>
+                            <div class="card-actions">
+                                <select id="areaFilter">
+                                    <option value="">Tất cả khu vực</option>
+                                    <option value="1">Tầng 1</option>
+                                    <option value="2">Tầng 2</option>
+                                    <option value="3">Ngoài trời</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="table-map" id="tableMap">
+                            <!-- Bố trí bàn sẽ được tạo bằng JavaScript -->
+                        </div>
+                        <div class="table-legend">
+                            <div class="legend-item">
+                                <span class="legend-color available"></span>
+                                <span class="legend-label">Trống</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color occupied"></span>
+                                <span class="legend-label">Đang sử dụng</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color reserved"></span>
+                                <span class="legend-label">Đã đặt trước</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color inactive"></span>
+                                <span class="legend-label">Không hoạt động</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Modal thêm/sửa bàn -->
+        <div class="modal" id="tableModal">
+            <div class="modal-content">
+                <span class="close-btn">&times;</span>
+                <h2 id="tableModalTitle"><i class="fas fa-plus-circle"></i> Thêm bàn mới</h2>
+                <form id="tableForm">
+                    <input type="hidden" id="tableId">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="tableNumber">Số bàn <span class="required">*</span></label>
+                            <input type="text" id="tableNumber" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tableArea">Khu vực <span class="required">*</span></label>
+                            <select id="tableArea" required>
+                                <option value="1">Tầng 1</option>
+                                <option value="2">Tầng 2</option>
+                                <option value="3">Ngoài trời</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="tableCapacity">Sức chứa <span class="required">*</span></label>
+                            <input type="number" id="tableCapacity" min="1" value="4" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tableStatus">Trạng thái</label>
+                            <select id="tableStatus">
+                                <option value="available">Trống</option>
+                                <option value="occupied">Đang sử dụng</option>
+                                <option value="reserved">Đã đặt trước</option>
+                                <option value="inactive">Không hoạt động</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label for="tableNotes">Ghi chú</label>
+                            <textarea id="tableNotes" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="tablePositionX">Vị trí X</label>
+                            <input type="number" id="tablePositionX" min="0" value="0">
+                            <small>Vị trí ngang trong sơ đồ bàn</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="tablePositionY">Vị trí Y</label>
+                            <input type="number" id="tablePositionY" min="0" value="0">
+                            <small>Vị trí dọc trong sơ đồ bàn</small>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel" data-close-modal>Hủy</button>
+                        <button type="submit" class="btn-submit">Lưu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal xác nhận xóa -->
+        <div class="modal" id="deleteConfirmModal">
+            <div class="modal-content delete-confirm">
+                <span class="close-btn">&times;</span>
+                <div class="confirm-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h2>Xác nhận xóa</h2>
+                <p>Bạn có chắc chắn muốn xóa bàn <strong id="deleteTableName"></strong>?</p>
+                <p class="warning-text">Lưu ý: Nếu bàn đang được sử dụng, bạn không thể xóa!</p>
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" data-close-modal>Hủy</button>
+                    <button type="button" id="confirmDeleteBtn" class="btn-danger">Xóa</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/js/api-client.js"></script>
+    <script src="../assets/js/admin-module.js"></script>
+</body>
+
+</html> 
