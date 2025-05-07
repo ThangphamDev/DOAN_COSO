@@ -6,12 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý sản phẩm - T2K Coffee Admin</title>
     <!-- CSS Libraries -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <!-- Custom CSS -->
-
     <link rel="stylesheet" href="../assets/css/admin.css">
     <link rel="stylesheet" href="../assets/css/admin-modules.css">
     <!-- Favicon -->
-
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
 </head>
 
 <body>
@@ -86,12 +86,12 @@
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Hình ảnh</th>
-                                <th>Tên sản phẩm</th>
-                                <th>Danh mục</th>
-                                <th>Giá</th>
-                                <th>Trạng thái</th>
-                                <th>Thao tác</th>
+                                <th width="10%">Hình ảnh</th>
+                                <th width="25%">Tên sản phẩm</th>
+                                <th width="20%">Danh mục</th>
+                                <th width="15%">Giá</th>
+                                <th width="15%">Trạng thái</th>
+                                <th width="15%">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody id="productTableBody">
@@ -103,22 +103,23 @@
                     <div class="modal" id="productModal">
                         <div class="modal-content">
                             <span class="close-btn">&times;</span>
-                            <h2 id="modalProductTitle">Thêm sản phẩm mới</h2>
+                            <h2 id="modalProductTitle"><i class="fas fa-coffee"></i> Thêm sản phẩm mới</h2>
                             <form id="productForm">
                                 <input type="hidden" id="productId">
                                 <div class="form-group">
-                                    <label for="productName">Tên sản phẩm</label>
-                                    <input type="text" id="productName" required>
+                                    <label for="productName">Tên sản phẩm <span class="required">*</span></label>
+                                    <input type="text" id="productName" name="productName" required>
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="category">Danh mục</label>
+                                        <label for="category">Danh mục <span class="required">*</span></label>
                                         <select id="category" required>
+                                            <option value="">-- Chọn danh mục --</option>
                                             <!-- Các tùy chọn sẽ được nạp từ JavaScript -->
                                         </select>
                                     </div>
                                     <div class="form-group">
-                                        <label for="productPrice">Giá</label>
+                                        <label for="productPrice">Giá (VNĐ) <span class="required">*</span></label>
                                         <input type="number" id="productPrice" min="0" required>
                                     </div>
                                 </div>
@@ -128,8 +129,8 @@
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="productImage">Hình ảnh</label>
-                                        <input type="file" id="productImage" accept="image/*">
+                                        <label for="productImage">Hình ảnh sản phẩm</label>
+                                        <input type="file" id="productImage" accept="image/*" class="file-input">
                                         <div class="image-preview" id="productImagePreview"></div>
                                     </div>
                                     <div class="form-group">
@@ -138,34 +139,22 @@
                                             <option value="active">Đang bán</option>
                                             <option value="inactive">Ngừng bán</option>
                                         </select>
+                                        <div class="form-options">
+                                            <div class="checkbox-group">
+                                                <label>
+                                                    <input type="checkbox" id="isPopular"> Sản phẩm nổi bật
+                                                </label>
+                                                <label>
+                                                    <input type="checkbox" id="isNew"> Sản phẩm mới
+                                                </label>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="ingredients">Thành phần</label>
-                                    <textarea id="ingredients" rows="2"></textarea>
+                                <div class="form-actions">
+                                    <button type="button" class="btn-cancel" onclick="closeModal('productModal')">Hủy</button>
+                                    <button type="submit" class="btn-submit">Lưu sản phẩm</button>
                                 </div>
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="preparationTime">Thời gian chuẩn bị (phút)</label>
-                                        <input type="number" id="preparationTime" min="0">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="calories">Calories</label>
-                                        <input type="number" id="calories" min="0">
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label>Tùy chọn</label>
-                                    <div class="checkbox-group">
-                                        <label>
-                                            <input type="checkbox" id="isPopular"> Sản phẩm nổi bật
-                                        </label>
-                                        <label>
-                                            <input type="checkbox" id="isNew"> Sản phẩm mới
-                                        </label>
-                                    </div>
-                                </div>
-                                <button type="submit" class="btn-primary">Lưu</button>
                             </form>
                         </div>
                     </div>
@@ -174,12 +163,92 @@
         </div>
     </div>
 
-
-    <script src="../assets/js/admin-module.js"></script>
+    <script src="../assets/js/admin-core.js"></script>
     <script src="../assets/js/api-client.js"></script>
     <script src="../assets/js/admin-entities.js"></script>
     <script>
+        // Định nghĩa các hàm toàn cục cho modal
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden'; // Khóa cuộn trang
+            }
+        }
+        
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = ''; // Mở khóa cuộn trang
+            }
+        }
+        
+        function resetProductForm() {
+            const form = document.getElementById('productForm');
+            if (form) {
+                form.reset();
+                document.getElementById('productId').value = '';
+                document.getElementById('productImagePreview').innerHTML = '';
+                
+                // Cập nhật tiêu đề
+                const title = document.getElementById('modalProductTitle');
+                if (title) {
+                    title.innerHTML = '<i class="fas fa-coffee"></i> Thêm sản phẩm mới';
+                }
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
+            // Hiển thị hình ảnh khi chọn file
+            const productImage = document.getElementById('productImage');
+            const productImagePreview = document.getElementById('productImagePreview');
+            
+            if (productImage) {
+                productImage.addEventListener('change', function() {
+                    if (this.files && this.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            productImagePreview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                        }
+                        reader.readAsDataURL(this.files[0]);
+                    }
+                });
+            }
+            
+            // Khởi tạo Modal
+            const addProductBtn = document.getElementById('addProductBtn');
+            const modal = document.getElementById('productModal');
+            const closeBtn = modal.querySelector('.close-btn');
+            
+            if (addProductBtn) {
+                addProductBtn.addEventListener('click', function() {
+                    openModal('productModal');
+                    resetProductForm();
+                });
+            }
+            
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function() {
+                    closeModal('productModal');
+                });
+            }
+            
+            // Đóng modal khi click bên ngoài
+            window.addEventListener('click', function(event) {
+                if (event.target === modal) {
+                    closeModal('productModal');
+                }
+            });
+            
+            // Khởi tạo sự kiện cho nút bấm
+            const btnCancel = document.querySelector('.btn-cancel');
+            if (btnCancel) {
+                btnCancel.addEventListener('click', function() {
+                    closeModal('productModal');
+                });
+            }
+            
             // Kiểm tra xem ApiClient đã được tải chưa
             if (!window.ApiClient) {
                 console.error('API Client chưa được tải!');
@@ -233,6 +302,47 @@
                         menu.classList.remove('show');
                     }
                 });
+            }
+
+            // Thêm style cho modal và nền
+            if (modal) {
+                // Style cho modal
+                modal.style.display = 'none';
+                modal.style.position = 'fixed';
+                modal.style.zIndex = '1000';
+                modal.style.left = '0';
+                modal.style.top = '0';
+                modal.style.width = '100%';
+                modal.style.height = '100%';
+                modal.style.overflow = 'auto';
+                modal.style.backgroundColor = 'rgba(0,0,0,0.4)';
+                modal.style.alignItems = 'center';
+                modal.style.justifyContent = 'center';
+            }
+
+            // Thêm style cho form actions
+            const formActions = document.querySelector('.form-actions');
+            if (formActions) {
+                formActions.style.display = 'flex';
+                formActions.style.justifyContent = 'flex-end';
+                formActions.style.gap = '15px';
+                formActions.style.marginTop = '30px';
+                formActions.style.borderTop = '1px solid #eee';
+                formActions.style.paddingTop = '20px';
+            }
+
+            // Thêm style cho các nút trong form
+            const btnSubmit = document.querySelector('.btn-submit');
+            if (btnSubmit) {
+                btnSubmit.style.backgroundColor = '#6F4E37';
+                btnSubmit.style.color = 'white';
+                btnSubmit.style.padding = '12px 24px';
+                btnSubmit.style.borderRadius = '8px';
+                btnSubmit.style.border = 'none';
+                btnSubmit.style.fontWeight = '600';
+                btnSubmit.style.cursor = 'pointer';
+                btnSubmit.style.transition = 'all 0.3s ease';
+                btnSubmit.style.boxShadow = '0 4px 10px rgba(111, 78, 55, 0.25)';
             }
         });
     </script>

@@ -252,5 +252,180 @@ window.AdminCore = {
     checkApiConnection,
     logout,
     markActiveMenu,
-    loadSidebar
+    loadSidebar,
+    
+    // Đảm bảo các hàm khởi tạo chỉ được gọi một lần
+    initializeOnce: function(functionName, initFunction) {
+        // Tạo object để lưu trạng thái nếu chưa có
+        if (!window.initializationStatus) {
+            window.initializationStatus = {};
+        }
+        
+        // Nếu hàm chưa được khởi tạo
+        if (!window.initializationStatus[functionName]) {
+            console.log(`Khởi tạo lần đầu: ${functionName}`);
+            initFunction();
+            window.initializationStatus[functionName] = true;
+            return true;
+        } else {
+            console.log(`Bỏ qua, đã khởi tạo trước đó: ${functionName}`);
+            return false;
+        }
+    }
+};
+
+// Khởi tạo Bootstrap components
+function initBootstrap() {
+    // Kiểm tra xem Bootstrap đã được tải chưa
+    if (typeof bootstrap !== 'undefined') {
+        console.log('Bootstrap đã được tải, đang khởi tạo components...');
+        
+        // Khởi tạo các tooltips
+        const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        if (tooltips.length > 0) {
+            tooltips.forEach(tooltip => {
+                new bootstrap.Tooltip(tooltip);
+            });
+        }
+        
+        // Khởi tạo popover
+        const popovers = document.querySelectorAll('[data-bs-toggle="popover"]');
+        if (popovers.length > 0) {
+            popovers.forEach(popover => {
+                new bootstrap.Popover(popover);
+            });
+        }
+        
+        // Khởi tạo các modal
+        const modals = document.querySelectorAll('.modal');
+        console.log(`Tìm thấy ${modals.length} modals để khởi tạo`);
+        modals.forEach(modal => {
+            try {
+                // Tạo một instance bootstrap modal
+                const modalInstance = new bootstrap.Modal(modal);
+                console.log(`Đã khởi tạo modal #${modal.id}`);
+                
+                // Lưu instance vào dataset để sử dụng sau này
+                modal.dataset.bsInstance = "initialized";
+                
+                // Bắt sự kiện ẩn.bs.modal để xử lý sau khi modal đóng
+                modal.addEventListener('hidden.bs.modal', function () {
+                    console.log(`Modal #${modal.id} đã đóng`);
+                    // Có thể thêm logic làm sạch form tại đây
+                });
+            } catch (error) {
+                console.error(`Lỗi khi khởi tạo modal #${modal.id}:`, error);
+            }
+        });
+        
+        // Xử lý các nút mở modal
+        const modalTriggers = document.querySelectorAll('[data-bs-toggle="modal"]');
+        modalTriggers.forEach(trigger => {
+            trigger.addEventListener('click', function() {
+                const targetSelector = this.getAttribute('data-bs-target');
+                if (!targetSelector) return;
+                
+                const modal = document.querySelector(targetSelector);
+                if (!modal) return;
+                
+                try {
+                    // Lấy instance hoặc tạo mới
+                    let modalInstance = bootstrap.Modal.getInstance(modal);
+                    if (!modalInstance) {
+                        modalInstance = new bootstrap.Modal(modal);
+                    }
+                    modalInstance.show();
+                } catch (error) {
+                    console.error('Lỗi khi mở modal:', error);
+                    modal.style.display = 'block';
+                }
+            });
+        });
+        
+        console.log('Bootstrap components đã được khởi tạo thành công');
+    } else {
+        console.warn('Bootstrap không được tìm thấy, sẽ sử dụng modal đơn giản.');
+        
+        // Khởi tạo phiên bản đơn giản của modal nếu không có Bootstrap
+        initSimpleModals();
+    }
+}
+
+// Hàm global để mở modal an toàn
+window.AdminCore.openModal = function(modalId) {
+    console.log(`Đang mở modal #${modalId}`);
+    const modal = document.getElementById(modalId);
+    if (!modal) {
+        console.error(`Không tìm thấy modal với ID: ${modalId}`);
+        return;
+    }
+    
+    try {
+        if (typeof bootstrap !== 'undefined') {
+            let modalInstance = bootstrap.Modal.getInstance(modal);
+            if (!modalInstance) {
+                modalInstance = new bootstrap.Modal(modal);
+            }
+            modalInstance.show();
+            console.log(`Đã mở modal #${modalId} bằng Bootstrap`);
+        } else if (typeof $ !== 'undefined' && typeof $.fn.modal !== 'undefined') {
+            $(modal).modal('show');
+            console.log(`Đã mở modal #${modalId} bằng jQuery`);
+        } else {
+            modal.style.display = 'block';
+            modal.classList.add('show');
+            document.body.classList.add('modal-open');
+            console.log(`Đã mở modal #${modalId} bằng CSS`);
+            
+            // Tạo backdrop
+            if (!document.querySelector('.modal-backdrop')) {
+                const backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                document.body.appendChild(backdrop);
+            }
+        }
+    } catch (error) {
+        console.error(`Lỗi khi mở modal #${modalId}:`, error);
+        // Fallback
+        modal.style.display = 'block';
+    }
+};
+
+// Hàm global để đóng modal an toàn
+window.AdminCore.closeModal = function(modalId) {
+    console.log(`Đang đóng modal #${modalId}`);
+    const modal = document.getElementById(modalId);
+    if (!modal) {
+        console.error(`Không tìm thấy modal với ID: ${modalId}`);
+        return;
+    }
+    
+    try {
+        if (typeof bootstrap !== 'undefined') {
+            const modalInstance = bootstrap.Modal.getInstance(modal);
+            if (modalInstance) {
+                modalInstance.hide();
+                console.log(`Đã đóng modal #${modalId} bằng Bootstrap`);
+            } else {
+                modal.style.display = 'none';
+                console.log(`Đã đóng modal #${modalId} bằng CSS (không có instance Bootstrap)`);
+            }
+        } else if (typeof $ !== 'undefined' && typeof $.fn.modal !== 'undefined') {
+            $(modal).modal('hide');
+            console.log(`Đã đóng modal #${modalId} bằng jQuery`);
+        } else {
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+            document.body.classList.remove('modal-open');
+            console.log(`Đã đóng modal #${modalId} bằng CSS`);
+            
+            // Xóa backdrop
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) backdrop.remove();
+        }
+    } catch (error) {
+        console.error(`Lỗi khi đóng modal #${modalId}:`, error);
+        // Fallback
+        modal.style.display = 'none';
+    }
 }; 

@@ -160,7 +160,7 @@ function convertOrderFromServer(serverOrder) {
 function convertOrderToServer(clientOrder) {
     // Dữ liệu cơ bản
     const serverOrder = {
-        totalAmount: clientOrder.totalAmount,
+        totalAmount: clientOrder.finalTotal || clientOrder.totalAmount,
         note: clientOrder.notes || clientOrder.note,
         status: clientOrder.status || "processing"
     };
@@ -188,7 +188,7 @@ function convertOrderToServer(clientOrder) {
         paymentMethod: clientOrder.paymentMethod || localStorage.getItem("paymentMethod") || "cash",
         paymentStatus: isCompleted ? "completed" : "pending",
         createAt: new Date().toISOString(),
-        amount: clientOrder.totalAmount
+        amount: clientOrder.finalTotal || clientOrder.totalAmount
     };
     
     console.log("API.js - convertOrderToServer - Thông tin thanh toán:", serverOrder.payment);
@@ -199,31 +199,40 @@ function convertOrderToServer(clientOrder) {
             idTable: parseInt(clientOrder.tableNumber)
         };
     } else if (clientOrder.tableNumber === 'takeaway') {
-        serverOrder.table = {
-            idTable: "takeaway",
-            tableNumber: "takeaway"
-        };
-    } else if (clientOrder.table) {
-        serverOrder.table = clientOrder.table;
+        // Xử lý đặc biệt cho mang đi
+        serverOrder.table = null;
     }
     
-    // Chuyển đổi items thành productItems (cho API)
-    const items = clientOrder.items || clientOrder.cart;
-    if (items && items.length > 0) {
-        serverOrder.productItems = items.map(item => {
+    // Thêm thông tin khuyến mãi nếu có
+    if (clientOrder.promoCode) {
+        serverOrder.promotion = {
+            code: clientOrder.promoCode
+        };
+        serverOrder.discountAmount = clientOrder.discountAmount || 0;
+    }
+    
+    // Chuyển đổi sản phẩm từ cart thành productItems
+    if (clientOrder.cart && clientOrder.cart.length > 0) {
+        serverOrder.productItems = clientOrder.cart.map(item => {
             return {
-                productId: item.id || item.productId,
+                productId: item.id,
                 quantity: item.quantity,
-                unitPrice: item.price || item.unitPrice
+                unitPrice: item.price
+            };
+        });
+    } else if (clientOrder.items && clientOrder.items.length > 0) {
+        serverOrder.productItems = clientOrder.items.map(item => {
+            return {
+                productId: item.id,
+                quantity: item.quantity,
+                unitPrice: item.price
             };
         });
     } else {
-        // Đảm bảo luôn có trường productItems, ngay cả khi không có sản phẩm
-        // Điều này giúp backend xử lý theo đúng đường dẫn mã mong muốn
+        // Đảm bảo luôn có trường productItems
         serverOrder.productItems = [];
     }
     
-    console.log("API.js - convertOrderToServer - Final Order:", JSON.stringify(serverOrder, null, 2));
     return serverOrder;
 }
 
@@ -297,34 +306,57 @@ async function getRecentOrders() {
 
 // Tạo đơn hàng mới
 async function createOrder(order) {
+    console.log("API.js - createOrder - Raw order data:", JSON.stringify(order, null, 2));
+    
     try {
-        const serverOrder = convertOrderToServer(order);
+        // Chuyển đổi dữ liệu nếu cần
+        let orderData = order;
         
-        // Thêm lớp bảo vệ - đảm bảo luôn có productItems
-        if (!serverOrder.productItems) {
-            console.warn("WARNING: serverOrder không có productItems, đang thêm mảng rỗng");
-            serverOrder.productItems = [];
+        // Kiểm tra xem order đã theo định dạng server chưa
+        if (!order.hasOwnProperty('productItems') && !order.hasOwnProperty('orderDetails')) {
+            console.log("API.js - createOrder - Converting client order to server format");
+            orderData = convertOrderToServer(order);
         }
         
-        console.log("API.js - createOrder - Final request:", JSON.stringify(serverOrder, null, 2));
+        // Kiểm tra nếu đơn hàng có khuyến mãi
+        const appliedPromotion = JSON.parse(localStorage.getItem('appliedPromotion'));
+        if (appliedPromotion && !orderData.promotion) {
+            orderData.promotion = {
+                code: appliedPromotion.code
+            };
+            orderData.discountAmount = appliedPromotion.discountAmount;
+            
+            // Cập nhật tổng tiền sau khuyến mãi
+            if (appliedPromotion.finalTotal) {
+                orderData.totalAmount = appliedPromotion.finalTotal;
+            }
+        }
+        
+        console.log("API.js - createOrder - Final order data:", JSON.stringify(orderData, null, 2));
         
         const response = await fetch(`${API.BASE_URL}${API.ORDERS}`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
-            body: JSON.stringify(serverOrder)
+            body: JSON.stringify(orderData)
         });
         
+        // Xử lý phản hồi
         if (!response.ok) {
-            throw new Error(`Lỗi khi tạo đơn hàng: ${response.status}`);
+            const errorData = await response.text();
+            console.error(`API Error (${response.status}): ${errorData}`);
+            throw new Error(`API Error: ${response.status} - ${errorData}`);
         }
         
-        const createdOrder = await response.json();
-        console.log("API.js - createOrder - Response from server:", JSON.stringify(createdOrder, null, 2));
-        return convertOrderFromServer(createdOrder);
+        // Phân tích phản hồi
+        const data = await response.json();
+        console.log("API.js - createOrder - Response:", JSON.stringify(data, null, 2));
+        
+        return data;
     } catch (error) {
-        console.error("Lỗi khi tạo đơn hàng:", error);
+        console.error("API.js - createOrder - Error:", error);
         throw error;
     }
 }

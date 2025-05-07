@@ -29,7 +29,85 @@ function loadTables() {
     // Xóa các options hiện tại
     tableSelect.innerHTML = '<option value="">Chọn bàn</option>';
     
-    // Thêm các options mới
+    // Gọi API để lấy danh sách bàn
+    fetch(`${API_BASE_URL.replace('/orders', '')}/tables`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Lỗi khi lấy danh sách bàn: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(tables => {
+            console.log("Dữ liệu bàn từ API:", tables);
+            
+            // Lọc ra các bàn có trạng thái "Trống" hoặc "Available"
+            const availableTables = tables.filter(table => 
+                table.status === "Available" || 
+                table.status === "Trống" || 
+                table.status === "available" || 
+                table.status === "trống");
+            
+            if (availableTables.length > 0) {
+                availableTables.forEach(table => {
+                    const option = document.createElement("option");
+                    const tableId = table.idTable || table.ID_Table;
+                    option.value = tableId;
+                    
+                    // Hiển thị thông tin bàn nếu có
+                    let displayText = `Bàn ${tableId}`;
+                    if (table.location) {
+                        displayText += ` (${table.location}`;
+                        if (table.capacity) {
+                            displayText += ` - ${table.capacity} người`;
+                        }
+                        displayText += `)`;
+                    } else if (table.capacity) {
+                        displayText += ` (${table.capacity} người)`;
+                    }
+                    
+                    option.textContent = displayText;
+                    tableSelect.appendChild(option);
+                });
+            } else {
+                // Nếu không có bàn nào từ API, sử dụng dữ liệu mẫu
+                useSampleTables();
+            }
+            
+            // Thêm option mang đi
+            const takeawayOption = document.createElement("option");
+            takeawayOption.value = "takeaway";
+            takeawayOption.textContent = "Mang đi";
+            tableSelect.appendChild(takeawayOption);
+            
+            // Chọn bàn đã lưu trong localStorage nếu có
+            if (savedTable) {
+                // Kiểm tra xem bàn đã lưu có tồn tại trong danh sách không
+                const exists = Array.from(tableSelect.options).some(option => option.value === savedTable);
+                if (exists) {
+                    tableSelect.value = savedTable;
+                }
+            }
+        })
+        .catch(error => {
+            console.error("Lỗi khi lấy dữ liệu bàn từ API:", error);
+            // Fallback: sử dụng dữ liệu mẫu khi có lỗi
+            useSampleTables();
+        });
+}
+
+// Hàm tạo dữ liệu mẫu cho bàn
+function useSampleTables() {
+    const tableSelect = document.getElementById("tableNumber");
+    
+    // Đảm bảo vẫn có option chọn bàn
+    if (tableSelect.querySelector('option[value=""]') === null) {
+        const defaultOption = document.createElement("option");
+        defaultOption.value = "";
+        defaultOption.textContent = "Chọn bàn";
+        tableSelect.appendChild(defaultOption);
+    }
+    
+    // Thêm dữ liệu mẫu
     for (let i = 1; i <= 10; i++) {
         const option = document.createElement("option");
         option.value = i;
@@ -37,13 +115,16 @@ function loadTables() {
         tableSelect.appendChild(option);
     }
     
-    // Thêm option mang đi
-    const takeawayOption = document.createElement("option");
-    takeawayOption.value = "takeaway";
-    takeawayOption.textContent = "Mang đi";
-    tableSelect.appendChild(takeawayOption);
+    // Đảm bảo có option mang đi
+    if (tableSelect.querySelector('option[value="takeaway"]') === null) {
+        const takeawayOption = document.createElement("option");
+        takeawayOption.value = "takeaway";
+        takeawayOption.textContent = "Mang đi";
+        tableSelect.appendChild(takeawayOption);
+    }
     
     // Chọn bàn đã lưu trong localStorage nếu có
+    const savedTable = localStorage.getItem("selectedTable");
     if (savedTable) {
         tableSelect.value = savedTable;
     }
@@ -145,36 +226,37 @@ function setupPaymentMethodChange() {
 // Hoàn tất thanh toán chuyển khoản
 async function completeTransferPayment(order) {
     alert("Cảm ơn bạn đã thanh toán! Đơn hàng của bạn đang được xử lý.");
-    
     try {
-        // Đảm bảo lưu phương thức thanh toán trước khi tạo đơn hàng
         localStorage.setItem("paymentCompleted", "true");
         localStorage.setItem("paymentMethod", "transfer");
-        
-        // Đảm bảo đơn hàng có phương thức thanh toán đúng
         order.paymentMethod = "transfer";
-        
+        // Lấy lại số bàn nếu chưa có
+        if (!order.tableNumber) {
+            order.tableNumber = document.getElementById("tableNumber")?.value || localStorage.getItem("selectedTable") || "";
+        }
+        // Lấy lại khuyến mãi nếu có
+        const appliedPromotion = JSON.parse(localStorage.getItem('appliedPromotion') || 'null');
+        const totalAmount = (appliedPromotion && appliedPromotion.finalTotal)
+            ? appliedPromotion.finalTotal
+            : order.finalTotal || order.totalAmount;
         // Kiểm tra kết nối API
         const apiStatus = await window.CafeAPI.checkApiConnection();
-        
         let orderId;
         if (apiStatus.available) {
             try {
-                // Chuyển đổi đơn hàng sang định dạng server
                 const serverOrder = {
-                    totalAmount: order.totalAmount,
+                    totalAmount: totalAmount,
                     note: order.notes,
                     status: "processing",
                     orderTime: order.orderTime || new Date().toISOString(),
                     payment: {
                         paymentMethod: "transfer",
-                        paymentStatus: "completed",
+                        paymentStatus: "pending",
                         createAt: new Date().toISOString(),
-                        amount: order.totalAmount
+                        amount: totalAmount
                     }
                 };
-                
-                // Thêm thông tin bàn nếu có
+                // Thêm thông tin bàn
                 if (order.tableNumber && order.tableNumber !== 'takeaway') {
                     serverOrder.table = {
                         idTable: parseInt(order.tableNumber)
@@ -185,36 +267,33 @@ async function completeTransferPayment(order) {
                         tableNumber: "takeaway"
                     };
                 }
-                
-                // Chuyển đổi items thành productItems
+                // Thêm sản phẩm
                 if (order.cart && order.cart.length > 0) {
-                    serverOrder.productItems = order.cart.map(item => {
-                        return {
-                            productId: item.id, 
-                            quantity: item.quantity,
-                            unitPrice: item.price
-                        };
-                    });
+                    serverOrder.productItems = order.cart.map(item => ({
+                        productId: item.id,
+                        quantity: item.quantity,
+                        unitPrice: item.price
+                    }));
+                } else if (order.items && order.items.length > 0) {
+                    serverOrder.productItems = order.items.map(item => ({
+                        productId: item.id,
+                        quantity: item.quantity,
+                        unitPrice: item.price
+                    }));
                 } else {
-                    // Đảm bảo luôn có trường productItems ngay cả khi không có sản phẩm
                     serverOrder.productItems = [];
                 }
-                
-                console.log("DEBUG - Gửi dữ liệu đơn hàng đến server:", JSON.stringify(serverOrder, null, 2));
-                console.log("DEBUG - Kiểm tra productItems:", serverOrder.productItems ? "Có" : "Không");
-                console.log("DEBUG - Số lượng sản phẩm trong productItems:", serverOrder.productItems ? serverOrder.productItems.length : 0);
-                
-                // Tạo đơn hàng trên server (ONLY CALL API ONCE!)
-                console.log("DEBUG - Bắt đầu gọi API createOrder");
+                // Thêm khuyến mãi nếu có
+                if (appliedPromotion) {
+                    serverOrder.promotion = { code: appliedPromotion.code };
+                    serverOrder.discountAmount = appliedPromotion.discountAmount;
+                }
+                console.log("DEBUG - Gửi dữ liệu đơn hàng chuyển khoản:", JSON.stringify(serverOrder, null, 2));
                 const createdOrder = await window.CafeAPI.createOrder(serverOrder);
-                console.log("DEBUG - API đã trả về đơn hàng:", JSON.stringify(createdOrder, null, 2));
-                
-                // Lấy ID đơn hàng từ response
                 orderId = createdOrder.idOrder || createdOrder.id;
-                console.log("DEBUG - Đơn hàng được tạo thành công với ID:", orderId);
+                console.log("DEBUG - Đơn hàng chuyển khoản được tạo với ID:", orderId);
             } catch (error) {
-                console.error("Lỗi khi gọi API tạo đơn hàng:", error);
-                // Fallback sang lưu local
+                console.error("Lỗi khi gọi API tạo đơn hàng chuyển khoản:", error);
                 orderId = order.orderId || generateOrderCode();
                 fallbackToLocalStorage(order);
             }
@@ -223,19 +302,14 @@ async function completeTransferPayment(order) {
             orderId = order.orderId || generateOrderCode();
             fallbackToLocalStorage(order);
         }
-        
-        console.log("Đơn hàng đã được tạo với ID:", orderId);
         localStorage.setItem("lastOrderId", orderId);
-        
-        // Xóa current order nếu có
         localStorage.removeItem("currentOrder");
         localStorage.removeItem("cart");
-        
-        // Chuyển đến trang theo dõi đơn hàng
-        console.log("Chuyển hướng đến trang status.html");
+        localStorage.removeItem("appliedPromotion");
+        localStorage.removeItem("selectedTable");
         setTimeout(() => {
             window.location.href = "status.html";
-        }, 2000); // Đợi lâu hơn một chút để API có thời gian xử lý
+        }, 2000);
     } catch (error) {
         console.error("Lỗi khi xử lý thanh toán:", error);
         alert("Đã xảy ra lỗi khi xử lý thanh toán. Vui lòng thử lại sau.");
@@ -244,65 +318,92 @@ async function completeTransferPayment(order) {
 
 // Chuẩn bị dữ liệu đơn hàng
 function prepareOrderData() {
+    // Lấy thông tin khuyến mãi đã áp dụng (nếu có)
+    const appliedPromotion = JSON.parse(localStorage.getItem('appliedPromotion') || 'null');
+    
     return {
         tableNumber: document.getElementById("tableNumber").value || "chưa chọn",
         notes: document.getElementById("notes").value,
         cart: JSON.parse(localStorage.getItem("cart")) || [],
-        paymentMethod: document.querySelector("input[name='payment']:checked").value,
-        totalAmount: calculateTotal(),
         orderTime: new Date().toISOString(),
-        orderId: generateOrderCode()
+        totalAmount: calculateTotal(),
+        paymentMethod: document.querySelector('input[name="payment"]:checked').value,
+        promoCode: appliedPromotion ? appliedPromotion.code : null,
+        discountAmount: appliedPromotion ? appliedPromotion.discountAmount : 0,
+        finalTotal: appliedPromotion ? appliedPromotion.finalTotal : calculateTotal()
     };
 }
 
 // Setup Place Order button
 function setupPlaceOrder() {
-    const btn = document.getElementById("placeOrderBtn");
-    btn.addEventListener("click", async function () {
+    const placeOrderBtn = document.getElementById("placeOrderBtn");
+    
+    placeOrderBtn.addEventListener("click", async function() {
+        // Lấy thông tin bàn
         const tableNumber = document.getElementById("tableNumber").value;
-        const notes = document.getElementById("notes").value;
-        const paymentMethod = document.querySelector("input[name='payment']:checked").value;
-
+        
+        // Kiểm tra đã chọn bàn chưa
         if (!tableNumber) {
-            alert("Vui lòng chọn bàn trước khi đặt hàng.");
+            alert("Vui lòng chọn bàn hoặc chọn mang đi");
             return;
         }
-
-        const order = prepareOrderData();
-
+        
+        // Lưu bàn đã chọn vào localStorage để tiện sử dụng sau này
+        localStorage.setItem("selectedTable", tableNumber);
+        
+        // Lấy giỏ hàng
+        const cart = JSON.parse(localStorage.getItem("cart")) || [];
+        
+        // Kiểm tra giỏ hàng có sản phẩm không
+        if (cart.length === 0) {
+            alert("Giỏ hàng của bạn đang trống. Vui lòng thêm sản phẩm trước khi đặt hàng.");
+            return;
+        }
+        
+        // Lấy phương thức thanh toán
+        const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+        
+        // Nếu thanh toán bằng chuyển khoản, hiển thị QR và sau đó mới xử lý đơn hàng
         if (paymentMethod === "transfer") {
+            // Chuẩn bị dữ liệu đơn hàng
+            const order = prepareOrderData();
+            
+            // Hiển thị mã QR thanh toán
             showVietQR(order);
-        } else if (paymentMethod === "cash") {
-            alert("Cảm ơn quý khách! Đơn hàng của bạn đang được xử lý.");
+        } else {
+            // Xử lý đặt hàng khi thanh toán tiền mặt
             try {
-                // Đảm bảo lưu phương thức thanh toán trước khi tạo đơn hàng
-                localStorage.setItem("paymentCompleted", "true");
-                localStorage.setItem("paymentMethod", "cash");
+                // Lấy thông tin đơn hàng
+                const order = prepareOrderData();
                 
-                // Đảm bảo đơn hàng có phương thức thanh toán đúng
-                order.paymentMethod = "cash";
+                // Hiển thị thông báo
+                alert("Đơn hàng của bạn đang được xử lý!");
                 
                 // Kiểm tra kết nối API
                 const apiStatus = await window.CafeAPI.checkApiConnection();
                 
+                // Lưu thông tin thanh toán
+                localStorage.setItem("paymentMethod", "cash");
+                localStorage.setItem("paymentCompleted", "false");
+                
                 let orderId;
                 if (apiStatus.available) {
                     try {
-                        // Chuyển đổi đơn hàng sang định dạng server
+                        // Chuẩn bị dữ liệu đơn hàng cho server
                         const serverOrder = {
-                            totalAmount: order.totalAmount,
+                            totalAmount: order.finalTotal || order.totalAmount,
                             note: order.notes,
                             status: "processing",
-                            orderTime: order.orderTime || new Date().toISOString(),
+                            orderTime: order.orderTime,
                             payment: {
                                 paymentMethod: "cash",
-                                paymentStatus: "completed",
+                                paymentStatus: "pending",
                                 createAt: new Date().toISOString(),
-                                amount: order.totalAmount
+                                amount: order.finalTotal || order.totalAmount
                             }
                         };
                         
-                        // Thêm thông tin bàn nếu có
+                        // Thêm thông tin bàn
                         if (order.tableNumber && order.tableNumber !== 'takeaway') {
                             serverOrder.table = {
                                 idTable: parseInt(order.tableNumber)
@@ -314,26 +415,26 @@ function setupPlaceOrder() {
                             };
                         }
                         
-                        // Chuyển đổi items thành productItems
-                        if (order.cart && order.cart.length > 0) {
-                            serverOrder.productItems = order.cart.map(item => {
-                                return {
-                                    productId: item.id, 
-                                    quantity: item.quantity,
-                                    unitPrice: item.price
-                                };
-                            });
-                        } else {
-                            // Đảm bảo luôn có trường productItems ngay cả khi không có sản phẩm
-                            serverOrder.productItems = [];
+                        // Thêm thông tin sản phẩm
+                        serverOrder.productItems = order.cart.map(item => {
+                            return {
+                                productId: item.id,
+                                quantity: item.quantity,
+                                unitPrice: item.price
+                            };
+                        });
+                        
+                        // Thêm thông tin khuyến mãi nếu có
+                        if (order.promoCode) {
+                            serverOrder.promotion = {
+                                code: order.promoCode
+                            };
+                            serverOrder.discountAmount = order.discountAmount;
                         }
                         
                         console.log("DEBUG - Gửi dữ liệu đơn hàng đến server:", JSON.stringify(serverOrder, null, 2));
-                        console.log("DEBUG - Kiểm tra productItems:", serverOrder.productItems ? "Có" : "Không");
-                        console.log("DEBUG - Số lượng sản phẩm trong productItems:", serverOrder.productItems ? serverOrder.productItems.length : 0);
                         
-                        // Tạo đơn hàng trên server (ONLY CALL API ONCE!)
-                        console.log("DEBUG - Bắt đầu gọi API createOrder");
+                        // Gọi API tạo đơn hàng
                         const createdOrder = await window.CafeAPI.createOrder(serverOrder);
                         console.log("DEBUG - API đã trả về đơn hàng:", JSON.stringify(createdOrder, null, 2));
                         
@@ -343,36 +444,50 @@ function setupPlaceOrder() {
                     } catch (error) {
                         console.error("Lỗi khi gọi API tạo đơn hàng:", error);
                         // Fallback sang lưu local
-                        orderId = order.orderId || generateOrderCode();
+                        orderId = generateOrderCode();
                         fallbackToLocalStorage(order);
                     }
                 } else {
                     console.warn("API không khả dụng, lưu đơn hàng vào localStorage");
-                    orderId = order.orderId || generateOrderCode();
+                    orderId = generateOrderCode();
                     fallbackToLocalStorage(order);
                 }
                 
                 console.log("Đơn hàng đã được tạo với ID:", orderId);
                 localStorage.setItem("lastOrderId", orderId);
                 
-                // Xóa giỏ hàng sau khi đặt hàng thành công
+                // Xóa giỏ hàng
                 localStorage.removeItem("cart");
                 
-                // Redirect to status page after 2 seconds
-                setTimeout(() => {
-                    window.location.href = "status.html";
-                }, 2000);
+                // Xóa thông tin khuyến mãi
+                localStorage.removeItem("appliedPromotion");
+                
+                // Xóa bàn đã chọn
+                localStorage.removeItem("selectedTable");
+                
+                // Chuyển hướng đến trang xem tình trạng đơn hàng
+                window.location.href = "status.html";
             } catch (error) {
-                console.error("Lỗi khi tạo đơn hàng:", error);
-                alert("Đã xảy ra lỗi khi tạo đơn hàng. Vui lòng thử lại sau.");
+                console.error("Lỗi khi xử lý đặt hàng:", error);
+                alert("Đã xảy ra lỗi khi xử lý đơn hàng. Vui lòng thử lại sau.");
             }
         }
     });
 }
 
+// Calculate total from cart items
 function calculateTotal() {
     const cart = JSON.parse(localStorage.getItem("cart")) || [];
-    return cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    const appliedPromotion = JSON.parse(localStorage.getItem('appliedPromotion') || 'null');
+    
+    let total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+    // Áp dụng giảm giá nếu có
+    if (appliedPromotion && appliedPromotion.finalTotal) {
+        total = appliedPromotion.finalTotal;
+    }
+    
+    return total;
 }
 
 function generateOrderCode() {
@@ -383,34 +498,42 @@ function generateOrderCode() {
 
 // Hiển thị mã QR chuyển khoản
 function showVietQR(order) {
-    // Đảm bảo có totalAmount
-    const amount = order.totalAmount || 
-                  (order.items ? order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) : 0) ||
-                  (order.cart ? order.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) : 0);
-    
+    // Lấy số tiền sau khuyến mãi nếu có
+    const appliedPromotion = JSON.parse(localStorage.getItem('appliedPromotion') || 'null');
+    const amount = (appliedPromotion && appliedPromotion.finalTotal)
+        ? appliedPromotion.finalTotal
+        : order.finalTotal || order.totalAmount || 
+          (order.items ? order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) : 0) ||
+          (order.cart ? order.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) : 0);
+
     // Đảm bảo có mã đơn hàng
     const orderCode = order.orderId || generateOrderCode();
-    
+
     // Đảm bảo phương thức thanh toán luôn là chuyển khoản
     order.paymentMethod = "transfer";
-    
+
+    // Đảm bảo truyền đúng số bàn
+    const tableNumber = order.tableNumber || document.getElementById("tableNumber")?.value || localStorage.getItem("selectedTable") || "";
+    order.tableNumber = tableNumber;
+
     console.log("Hiển thị QR chuyển khoản cho đơn hàng:", {
         orderId: orderCode,
         amount: amount,
         paymentMethod: order.paymentMethod,
+        tableNumber: tableNumber
     });
-    
+
     // Thông tin tài khoản
     const accountNumber = "1028272356";
     const bankCode = "VCB"; // Vietcombank
     const accountName = "PHAM XUAN THANG";
-    
+
     // Nội dung chuyển khoản: Mã hóa đơn
     const transferContent = orderCode;
-    
+
     // Tạo URL VietQR
     const vietQrUrl = `https://img.vietqr.io/image/${bankCode}-${accountNumber}-compact.png?amount=${amount}&addInfo=${transferContent}&accountName=${encodeURIComponent(accountName)}`;
-    
+
     // Hiển thị QR code với giao diện đẹp hơn
     const qrContainer = document.getElementById('qrCodeContainer');
     qrContainer.style.display = 'block';
@@ -438,7 +561,7 @@ function showVietQR(order) {
             <button id="paymentDoneBtn" class="btn-payment-done">Đã thanh toán xong</button>
         </div>
     `;
-    
+
     // Thêm event listener cho nút "Đã thanh toán"
     document.getElementById('paymentDoneBtn').addEventListener('click', function() {
         // Kiểm tra xem đang xử lý đơn hàng hiện tại hay đơn hàng mới
@@ -448,7 +571,6 @@ function showVietQR(order) {
             localStorage.removeItem("currentOrder");
             localStorage.setItem("paymentCompleted", "true");
             localStorage.setItem("paymentMethod", "transfer");
-            
             setTimeout(() => {
                 window.location.href = "status.html";
             }, 1000);
@@ -457,16 +579,14 @@ function showVietQR(order) {
             completeTransferPayment(order);
         }
     });
-    
+
     // Cuộn trang đến phần đầu của container QR, nhưng không quá sâu
-    // Sử dụng setTimeout để đảm bảo DOM đã cập nhật trước khi cuộn
     setTimeout(() => {
         const qrSection = document.querySelector('.qr-section');
-        const headerOffset = 100; // Để lại khoảng cách từ đỉnh trang
+        const headerOffset = 100;
         if (qrSection) {
             const qrPosition = qrSection.getBoundingClientRect().top;
             const offsetPosition = qrPosition + window.pageYOffset - headerOffset;
-            
             window.scrollTo({
                 top: offsetPosition,
                 behavior: 'smooth'

@@ -5,13 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý đơn hàng - T2K Coffee Admin</title>
-    <!-- CSS Libraries -->
-    <link rel="stylesheet" href="../assets/vendor/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="../assets/vendor/font-awesome/css/all.min.css">
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <!-- Custom CSS -->
-
     <link rel="stylesheet" href="../assets/css/admin.css">
     <link rel="stylesheet" href="../assets/css/admin-modules.css">
+    <!-- Order Manager CSS -->
+    <link rel="stylesheet" href="../assets/css/modules/order-manager.css">
     <!-- Favicon -->
     <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
 </head>
@@ -20,6 +20,7 @@
     <div id="app">
         <div id="loader" class="loader-overlay">
             <div class="loader"></div>
+            <div class="loader-message">Đang tải...</div>
         </div>
 
         <header class="admin-header">
@@ -52,96 +53,84 @@
 
             <main class="main-content">
                 <div class="page-header">
-                    <h1><i class="fas fa-shopping-cart"></i> Quản lý đơn hàng</h1>
+                    <h1><i class="fas fa-receipt"></i> Quản lý đơn hàng</h1>
                     <div class="breadcrumb">
                         <a href="dashboard.html">Trang chủ</a> / <span>Đơn hàng</span>
                     </div>
                 </div>
 
-                <!-- Thanh công cụ -->
-                <div class="content-toolbar">
-                    <div class="search-box">
-                        <input type="text" id="orderSearchInput" placeholder="Tìm kiếm đơn hàng...">
-                        <button type="button"><i class="fas fa-search"></i></button>
+                <div class="order-management">
+                    <!-- Order statistics -->
+                    <div class="order-stats">
+                        <!-- Stats will be populated by JavaScript -->
                     </div>
-                    <div class="filter-group">
-                        <div class="filter-box">
-                            <select id="statusFilter">
-                                <option value="">Tất cả trạng thái</option>
-                                <option value="pending">Chờ xác nhận</option>
-                                <option value="confirmed">Đã xác nhận</option>
-                                <option value="processing">Đang thực hiện</option>
-                                <option value="completed">Đã hoàn thành</option>
-                                <option value="cancelled">Đã hủy</option>
-                            </select>
+
+                    <!-- Action Bar with Search and Filters -->
+                    <div class="action-bar">
+                        <div class="search-filter-group">
+                            <div class="search-box">
+                                <input type="text" id="searchOrder" placeholder="Tìm kiếm đơn hàng...">
+                                <button class="search-btn">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            <div class="filter-controls">
+                                <select id="statusFilter" class="filter-select">
+                                    <option value="all">Tất cả trạng thái</option>
+                                    <option value="processing">Đang xử lý</option>
+                                    <option value="completed">Hoàn thành</option>
+                                    <option value="cancelled">Đã hủy</option>
+                                    <option value="pending">Chờ xử lý</option>
+                                </select>
+                                <div class="date-range">
+                                    <input type="date" id="dateFrom" placeholder="Từ ngày">
+                                    <input type="date" id="dateTo" placeholder="Đến ngày">
+                                </div>
+                            </div>
                         </div>
-                        <div class="filter-box">
-                            <select id="paymentFilter">
-                                <option value="">Tất cả phương thức</option>
-                                <option value="cash">Tiền mặt</option>
-                                <option value="transfer">Chuyển khoản</option>
-                                <option value="credit">Thẻ tín dụng</option>
-                            </select>
-                        </div>
-                        <div class="date-range">
-                            <input type="date" id="startDate" placeholder="Từ ngày">
-                            <input type="date" id="endDate" placeholder="Đến ngày">
-                        </div>
-                        <button id="filterBtn" class="btn-secondary">
-                            <i class="fas fa-filter"></i> Lọc
+                        <button class="add-order-btn">
+                            <i class="fas fa-plus"></i> Tạo đơn hàng mới
                         </button>
                     </div>
-                </div>
 
-                <!-- Bảng danh sách đơn hàng -->
-                <div class="content-card">
-                    <div class="card-header">
-                        <h2>Danh sách đơn hàng</h2>
-                        <div class="card-actions">
-                            <div class="order-count">
-                                <span id="orderCount">0</span> đơn hàng
-                            </div>
-                            <button id="refreshOrdersBtn" class="btn-refresh" title="Làm mới">
-                                <i class="fas fa-sync-alt"></i>
-                            </button>
-                            <button id="exportOrdersBtn" class="btn-secondary">
-                                <i class="fas fa-file-export"></i> Xuất Excel
-                            </button>
-                            <button id="printOrdersBtn" class="btn-secondary">
-                                <i class="fas fa-print"></i> In
-                            </button>
-                        </div>
+                    <!-- Orders Table -->
+                    <table id="ordersTable" class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>Mã đơn</th>
+                                <th>Ngày đặt</th>
+                                <th>Bàn</th>
+                                <th>Sản phẩm</th>
+                                <th>Trạng thái</th>
+                                <th>Tổng tiền</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orderTableBody">
+                            <!-- Orders will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+
+                    <!-- Empty state when no orders -->
+                    <div class="empty-state" style="display: none;">
+                        <!-- Empty state content will be populated by JavaScript -->
                     </div>
-                    <div class="table-responsive">
-                        <table class="data-table" id="orderTable">
-                            <thead>
-                                <tr>
-                                    <th>Mã đơn</th>
-                                    <th>Khách hàng</th>
-                                    <th>Ngày đặt</th>
-                                    <th>Tổng tiền</th>
-                                    <th>Phương thức</th>
-                                    <th>Trạng thái</th>
-                                    <th>Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody id="orderTableBody">
-                                <!-- Dữ liệu sẽ được nạp bằng JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="table-footer">
+
+                    <!-- Pagination -->
+                    <div class="pagination-container">
                         <div class="pagination">
-                            <button class="page-btn" id="prevPage" disabled><i class="fas fa-chevron-left"></i></button>
-                            <span id="currentPage">Trang 1</span>
-                            <button class="page-btn" id="nextPage"><i class="fas fa-chevron-right"></i></button>
+                            <!-- Pagination will be populated by JavaScript -->
+                        </div>
+                        <div class="page-info">
+                            <!-- Page info will be populated by JavaScript -->
                         </div>
                         <div class="items-per-page">
                             <label for="itemsPerPage">Hiển thị:</label>
                             <select id="itemsPerPage">
                                 <option value="10">10</option>
-                                <option value="20">20</option>
+                                <option value="25">25</option>
                                 <option value="50">50</option>
+                                <option value="100">100</option>
                             </select>
                         </div>
                     </div>
@@ -149,112 +138,127 @@
             </main>
         </div>
 
-        <!-- Modal chi tiết đơn hàng -->
-        <div class="modal" id="orderDetailModal">
-            <div class="modal-content wide-modal">
-                <span class="close-btn">&times;</span>
-                <h2 id="orderDetailModalTitle"><i class="fas fa-info-circle"></i> Chi tiết đơn hàng #<span id="orderIdDetail"></span></h2>
-                
-                <div class="order-detail-container">
-                    <div class="order-info-section">
-                        <div class="info-grid">
-                            <div class="info-group">
-                                <h3>Thông tin đơn hàng</h3>
-                                <div class="info-item">
-                                    <span>Mã đơn hàng:</span>
-                                    <strong id="orderIdInfo"></strong>
+        <!-- Order Detail Modal -->
+        <div id="orderModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Chi tiết đơn hàng</h2>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <div id="orderDetails" class="order-details">
+                    <!-- Order details will be populated by JavaScript -->
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-primary">
+                        <i class="fas fa-print"></i> In hóa đơn
+                    </button>
+                    <button class="btn-secondary cancel-btn">Đóng</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal chỉnh sửa đơn hàng -->
+        <div class="modal" id="editOrderModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Chỉnh sửa đơn hàng</h2>
+                        <button type="button" class="close-btn" data-bs-dismiss="modal" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editOrderForm">
+                            <input type="hidden" id="editOrderId">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="editOrderStatus">Trạng thái</label>
+                                    <select id="editOrderStatus" class="form-control">
+                                        <option value="processing">Đang xử lý</option>
+                                        <option value="completed">Hoàn thành</option>
+                                        <option value="cancelled">Đã hủy</option>
+                                        <option value="pending">Chờ xử lý</option>
+                                    </select>
                                 </div>
-                                <div class="info-item">
-                                    <span>Ngày đặt:</span>
-                                    <span id="orderDateInfo"></span>
-                                </div>
-                                <div class="info-item">
-                                    <span>Trạng thái:</span>
-                                    <span id="orderStatusInfo"></span>
-                                </div>
-                                <div class="info-item">
-                                    <span>Phương thức:</span>
-                                    <span id="orderPaymentInfo"></span>
-                                </div>
-                                <div class="info-item">
-                                    <span>Ghi chú:</span>
-                                    <span id="orderNotesInfo"></span>
+                                <div class="form-group">
+                                    <label for="editOrderNotes">Ghi chú</label>
+                                    <textarea id="editOrderNotes" class="form-control" rows="2"></textarea>
                                 </div>
                             </div>
                             
-                            <div class="info-group">
-                                <h3>Thông tin khách hàng</h3>
-                                <div class="info-item">
-                                    <span>Họ tên:</span>
-                                    <span id="customerNameInfo"></span>
-                                </div>
-                                <div class="info-item">
-                                    <span>Điện thoại:</span>
-                                    <span id="customerPhoneInfo"></span>
-                                </div>
-                                <div class="info-item">
-                                    <span>Email:</span>
-                                    <span id="customerEmailInfo"></span>
-                                </div>
-                                <div class="info-item">
-                                    <span>Địa chỉ:</span>
-                                    <span id="customerAddressInfo"></span>
+                            <h4>Danh sách món</h4>
+                            <div class="table-responsive">
+                                <table id="editOrderItemsTable" class="order-items-edit-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Sản phẩm</th>
+                                            <th>Đơn giá</th>
+                                            <th>Số lượng</th>
+                                            <th>Thành tiền</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Items will be added dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="add-item-section">
+                                <button type="button" id="addItemBtn" class="btn-primary">
+                                    <i class="fas fa-plus"></i> Thêm sản phẩm
+                                </button>
+                            </div>
+                            
+                            <div class="edit-summary">
+                                <div class="d-flex justify-content-between">
+                                    <strong>Tổng cộng:</strong>
+                                    <strong id="editOrderTotal">0 ₫</strong>
                                 </div>
                             </div>
-                        </div>
+                        </form>
                     </div>
-                    
-                    <div class="order-items-section">
-                        <h3>Các mặt hàng đã đặt</h3>
-                        <div class="table-responsive">
-                            <table class="data-table detail-table" id="orderItemsTable">
-                                <thead>
-                                    <tr>
-                                        <th>Sản phẩm</th>
-                                        <th>Đơn giá</th>
-                                        <th>Số lượng</th>
-                                        <th>Thành tiền</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="orderItemsTableBody">
-                                    <!-- Dữ liệu sẽ được nạp bằng JavaScript -->
-                                </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <td colspan="3" class="text-right">Tổng cộng:</td>
-                                        <td id="orderTotalInfo" class="text-right"></td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-cancel" data-bs-dismiss="modal">Hủy</button>
+                        <button type="button" id="saveOrderBtn" class="btn-primary">Lưu</button>
                     </div>
-                    
-                    <div class="order-actions">
-                        <div class="status-update">
-                            <label for="changeStatus">Cập nhật trạng thái:</label>
-                            <select id="changeStatus">
-                                <option value="pending">Chờ xác nhận</option>
-                                <option value="confirmed">Đã xác nhận</option>
-                                <option value="processing">Đang thực hiện</option>
-                                <option value="completed">Đã hoàn thành</option>
-                                <option value="cancelled">Đã hủy</option>
-                            </select>
-                            <button id="updateStatusBtn" class="btn-primary">Cập nhật</button>
-                        </div>
-                        <div class="action-buttons">
-                            <button id="printOrderBtn" class="btn-secondary">
-                                <i class="fas fa-print"></i> In đơn hàng
-                            </button>
-                            <button type="button" class="btn-cancel" data-close-modal>Đóng</button>
-                        </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal thêm sản phẩm -->
+        <div class="modal" id="addProductModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Thêm sản phẩm</h2>
+                        <button type="button" class="close-btn" data-bs-dismiss="modal" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addProductForm">
+                            <div class="form-group">
+                                <label for="productSelect">Sản phẩm</label>
+                                <select id="productSelect" class="form-control" required>
+                                    <option value="">-- Chọn sản phẩm --</option>
+                                    <!-- Products will be added dynamically -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="productQuantity">Số lượng</label>
+                                <input type="number" id="productQuantity" class="form-control" min="1" value="1" required>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-cancel" data-bs-dismiss="modal">Hủy</button>
+                        <button type="button" id="confirmAddProductBtn" class="btn-primary">Thêm</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="../assets/js/api-client.js"></script>
-    <script src="../assets/js/admin-module.js"></script>
+    <!-- JavaScript -->
+    <script src="../assets/js/admin-core.js"></script>
+    <script src="../assets/js/modules/order-manager.js"></script>
 </body>
 
 </html> 

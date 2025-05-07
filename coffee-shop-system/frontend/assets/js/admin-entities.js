@@ -186,6 +186,46 @@ function setupUserFormSubmission() {
  */
 function initializeProductManagement() {
     console.log('Khởi tạo chức năng quản lý sản phẩm');
+    
+    // Thêm CSS cho trạng thái sản phẩm
+    const statusStyle = document.createElement('style');
+    statusStyle.innerHTML = `
+        .product-status-badge {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            display: inline-block;
+            min-width: 100px;
+            text-align: center;
+        }
+        .status-active {
+            background-color: #28a745 !important;
+            color: white !important;
+        }
+        .status-inactive {
+            background-color: #dc3545 !important;
+            color: white !important;
+        }
+        .btn-toggle-status {
+            margin-left: 8px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-toggle-status:hover {
+            background: #e9ecef;
+        }
+        .product-status-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    `;
+    document.head.appendChild(statusStyle);
+    
     checkApiServerStatus();
     loadCategoriesForDropdown().then(() => {
         setupCategoryFilter();
@@ -353,8 +393,7 @@ async function loadProductData() {
                     categoryInfo: {
                         categoryId: product.categoryId,
                         categoryName: product.categoryName,
-                        hasCategory: !!product.category,
-                        categoryObject: product.category
+                        hasCategory: !!product.category
                     }
                 });
             }
@@ -568,39 +607,47 @@ function useSampleCategories(categoryDropdown, categoryFilter) {
 
 // Hiển thị danh sách sản phẩm
 function displayProducts(products) {
-    // Thử tìm bảng sản phẩm theo cả hai ID phổ biến
-    const tableBody = document.getElementById('productTableBody') || document.getElementById('products-table-body');
-    
-    // Kiểm tra sự tồn tại của phần tử table body
+    try {
+        // Log tổng quan về dữ liệu sản phẩm
+        console.log(`Hiển thị ${products ? products.length : 0} sản phẩm`);
+        
+        if (products && products.length > 0) {
+            // Ghi ra log kiểm tra trạng thái của các sản phẩm
+            products.forEach(product => {
+                console.log(`Sản phẩm ID ${product.id || product.idProduct}: Tên=${product.name || product.productName}, Status=${product.status}, isAvailable=${product.isAvailable}`);
+            });
+        }
+        
+        // Lấy phần tử hiển thị
+        const tableBody = document.getElementById('productTableBody');
     if (!tableBody) {
-        console.error('Không tìm thấy phần tử bảng sản phẩm. ' + 
-                     'Vui lòng kiểm tra ID của bảng trong file HTML, ' + 
-                     'đảm bảo rằng có một phần tử với ID "productTableBody" hoặc "products-table-body".');
-        showErrorMessage('Lỗi hiển thị: Không tìm thấy bảng sản phẩm trên trang. Vui lòng liên hệ quản trị viên.');
+            console.error('Không tìm thấy bảng sản phẩm');
         return;
     }
     
-    // Xóa nội dung hiện tại
+        // Xóa toàn bộ dữ liệu cũ
     tableBody.innerHTML = '';
     
+        // Kiểm tra kiểu dữ liệu
     if (!products || products.length === 0) {
-        // Hiển thị thông báo nếu không có sản phẩm
         tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Không có sản phẩm nào</td></tr>';
         return;
     }
     
-    // Đoán định dạng bảng dựa trên ID
-    if (tableBody.id === 'products-table-body') {
-        // Định dạng bảng mới
+        // Kiểm tra xem nên sử dụng định dạng hiển thị nào (cũ hoặc mới)
+        if (window.useNewProductFormat === true) {
         displayProductsNewFormat(products, tableBody);
     } else {
-        // Định dạng bảng cũ (mặc định)
         displayProductsOldFormat(products, tableBody);
+        }
+    } catch (error) {
+        console.error('Lỗi hiển thị sản phẩm:', error);
     }
 }
 
 // Hiển thị sản phẩm với định dạng mới
 function displayProductsNewFormat(products, tableBody) {
+    console.log('Dữ liệu truyền vào displayProductsNewFormat:', products);
     // Đảm bảo products là một mảng hợp lệ
     if (!products || !Array.isArray(products)) {
         console.error('Dữ liệu sản phẩm không hợp lệ:', products);
@@ -619,9 +666,16 @@ function displayProductsNewFormat(products, tableBody) {
     // Debug: In ra thông tin chi tiết về từng sản phẩm
     console.log('Chi tiết sản phẩm trước khi hiển thị:');
     validProducts.forEach((product, index) => {
+        // Xác định đúng tên hiển thị cho sản phẩm dựa vào các trường có thể có
+        const displayName = product.name || product.productName || 'Sản phẩm không tên';
+        
         console.log(`Sản phẩm #${index}:`, {
             id: product.id || product.idProduct,
-            name: product.name || product.productName,
+            name: displayName,
+            productName: product.productName,
+            name_field: product.name,
+            status: product.status,
+            isAvailable: product.isAvailable,
             categoryInfo: {
                 categoryId: product.categoryId,
                 categoryName: product.categoryName,
@@ -630,64 +684,45 @@ function displayProductsNewFormat(products, tableBody) {
         });
     });
     
+    // Xóa nội dung cũ trước khi thêm mới
+    tableBody.innerHTML = '';
+    
     // Tạo hàng cho mỗi sản phẩm
     validProducts.forEach((product, index) => {
         const row = document.createElement('tr');
+        // Lấy đúng key từ dữ liệu API
+        const productId = product.id || product.idProduct;
+        const productName = product.name || product.productName || 'Sản phẩm không tên';
         
-        // Tạo URL ảnh sản phẩm với fallback là ảnh mặc định
+        // Kiểm tra trạng thái sản phẩm (đang bán hay ngừng bán)
+        // Kiểm tra tất cả các trường có thể chứa thông tin trạng thái
+        const isProductAvailable = 
+            product.status === 'active' || 
+            product.status === true || 
+            product.status === 1 || 
+            product.isAvailable === true || 
+            product.isAvailable === 1;
+            
+        console.log(`Sản phẩm ${productName} (ID: ${productId}): status=${product.status}, isAvailable=${product.isAvailable}, Kết quả=${isProductAvailable ? 'Đang bán' : 'Ngừng bán'}`);
+        
+        // Ảnh sản phẩm
         let productImage = defaultImageBase64;
         if (product.image) {
-            // Xử lý nếu đường dẫn là file name
             if (!product.image.startsWith('data:') && !product.image.startsWith('http')) {
                 productImage = `${API_BASE_URL}/products/images/${product.image}`;
             } else {
                 productImage = product.image;
             }
-            console.log(`Ảnh sản phẩm ${product.name || product.productName}: ${productImage}`);
         }
-        
-        // Chuẩn bị tên sản phẩm
-        const productName = product.name || product.productName || 'Sản phẩm không tên';
-        
-        // Xác định tên danh mục - kiểm tra nhiều nguồn dữ liệu
-        let categoryName = 'Chưa phân loại';
-        let isCategorized = false;
-        
-        // 1. Kiểm tra từ trường category (object)
-        if (product.category) {
-            const catName = product.category.name || product.category.categoryName;
-            if (catName) {
-                categoryName = catName;
-                isCategorized = true;
-                console.log(`Sản phẩm "${productName}" có danh mục từ object: ${categoryName}`);
-            }
-        }
-        
-        // 2. Kiểm tra từ trường categoryName (string)
-        if (!isCategorized && product.categoryName) {
-            categoryName = product.categoryName;
+        // Danh mục
+        let categoryName = product.categoryName || 'Chưa phân loại';
+        let isCategorized = !!product.categoryName;
+        if (!isCategorized && product.category && (product.category.name || product.category.categoryName)) {
+            categoryName = product.category.name || product.category.categoryName;
             isCategorized = true;
-            console.log(`Sản phẩm "${productName}" có danh mục từ name: ${categoryName}`);
         }
-        
-        // 3. Kiểm tra từ trường categoryId và window.cachedCategories
-        if (!isCategorized && product.categoryId && window.cachedCategories) {
-            const categoryFound = window.cachedCategories.find(c => 
-                (c.id && c.id == product.categoryId) || 
-                (c.idCategory && c.idCategory == product.categoryId));
-            
-            if (categoryFound) {
-                categoryName = categoryFound.name || categoryFound.categoryName;
-                isCategorized = true;
-                console.log(`Sản phẩm "${productName}" có danh mục từ ID (${product.categoryId}): ${categoryName}`);
-            }
-        }
-        
-        // Format danh mục với CSS đặc biệt nếu chưa phân loại
-        const categoryDisplay = isCategorized ? 
-            categoryName : 
-            `<span class="category-uncategorized">${categoryName}</span>`;
-            
+        const categoryDisplay = isCategorized ? categoryName : `<span class="category-uncategorized">${categoryName}</span>`;
+        // Tạo HTML cho hàng sản phẩm
         row.innerHTML = `
             <td>${index + 1}</td>
             <td>
@@ -697,24 +732,179 @@ function displayProductsNewFormat(products, tableBody) {
             <td>${productName}</td>
             <td>${(product.price || 0).toLocaleString()} VNĐ</td>
             <td>${categoryDisplay}</td>
-            <td>${product.status === 1 || product.status === true || product.status === 'active' ? 
-                '<span class="badge bg-success">Có bán</span>' : 
-                '<span class="badge bg-danger">Ngừng bán</span>'}</td>
             <td>
-                <button class="btn btn-sm btn-primary edit-product-btn" data-id="${product.id || product.idProduct}">
+                <div class="product-status-container">
+                    <span class="product-status-badge ${isProductAvailable ? 'status-active' : 'status-inactive'}">
+                        ${isProductAvailable ? 'Đang bán' : 'Ngừng bán'}
+                    </span>
+                    <button class="btn-toggle-status" data-id="${productId}" 
+                            data-status="${isProductAvailable ? 'active' : 'inactive'}">
+                        <i class="fas fa-exchange-alt"></i>
+                    </button>
+                </div>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-primary edit-product-btn" data-id="${productId}">
                     <i class="fas fa-edit"></i> Sửa
                 </button>
-                <button class="btn btn-sm btn-danger delete-product-btn" data-id="${product.id || product.idProduct}">
+                <button class="btn btn-sm btn-danger delete-product-btn" data-id="${productId}">
                     <i class="fas fa-trash"></i> Xóa
                 </button>
             </td>
         `;
-        
         tableBody.appendChild(row);
     });
     
-    // Gắn sự kiện cho các nút chỉnh sửa và xóa
+    // Gắn sự kiện cho các nút
     attachProductButtonEvents();
+    attachStatusToggleButtons();
+}
+
+// Gắn sự kiện cho các nút toggle trạng thái sản phẩm
+function attachStatusToggleButtons() {
+    const toggleButtons = document.querySelectorAll('.btn-toggle-status');
+    
+    // Gắn sự kiện cho các nút chuyển đổi trạng thái
+    toggleButtons.forEach(button => {
+        button.addEventListener('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            showLoadingMessage('Đang cập nhật trạng thái sản phẩm...');
+            
+            try {
+                // Lấy ID sản phẩm và trạng thái hiện tại
+                const productId = this.getAttribute('data-id');
+                const currentStatus = this.getAttribute('data-status');
+                
+                // Chuyển đổi từ active/inactive sang true/false cho API
+                // Nếu đang active thì chuyển thành false, ngược lại chuyển thành true
+                const newIsAvailable = currentStatus !== 'active';
+                
+                console.log(`Thay đổi trạng thái sản phẩm ID: ${productId}`);
+                console.log(`Trạng thái hiện tại: ${currentStatus} -> Trạng thái mới (UI): ${newIsAvailable ? 'active' : 'inactive'}`);
+                console.log(`Giá trị isAvailable gửi lên API: ${newIsAvailable}`);
+                
+                // Vô hiệu hóa nút trong lúc đang xử lý
+                this.disabled = true;
+                
+                // Gọi API để cập nhật trạng thái
+                const result = await updateProductStatus(productId, newIsAvailable);
+                
+                // Lấy trạng thái thực tế từ kết quả API
+                const actualStatus = result.isAvailable;
+                const statusText = actualStatus ? 'active' : 'inactive';
+                const statusDisplay = actualStatus ? 'Đang bán' : 'Ngừng bán';
+                
+                console.log(`Kết quả từ API: isAvailable=${actualStatus}, statusText=${statusText}, statusDisplay=${statusDisplay}`);
+                
+                // Cập nhật UI
+                const statusBadge = this.closest('.product-status-container').querySelector('.product-status-badge');
+                if (statusBadge) {
+                    statusBadge.className = `product-status-badge ${statusText === 'active' ? 'status-active' : 'status-inactive'}`;
+                    statusBadge.textContent = statusDisplay;
+                }
+                
+                // Cập nhật trạng thái và nội dung của nút
+                this.setAttribute('data-status', statusText);
+                
+                // Bỏ vô hiệu hóa nút
+                this.disabled = false;
+                
+                // Hiển thị thông báo thành công
+                showSuccessMessage(`Đã cập nhật trạng thái sản phẩm thành ${statusDisplay}`);
+                
+                // Tải lại dữ liệu sau 1 giây để đảm bảo cập nhật đúng
+                setTimeout(() => {
+                    if (typeof ApiClient.clearCache === 'function') {
+                        ApiClient.clearCache();
+                    }
+                    loadProductData();
+                }, 1000);
+                
+            } catch (error) {
+                console.error(`Lỗi khi cập nhật trạng thái sản phẩm:`, error);
+                showErrorMessage(`Có lỗi xảy ra khi cập nhật trạng thái: ${error.message}`);
+                
+                // Bỏ vô hiệu hóa nút nếu có lỗi
+                this.disabled = false;
+            } finally {
+                hideLoadingMessage();
+            }
+        });
+    });
+}
+
+// Hàm cập nhật trạng thái sản phẩm
+async function updateProductStatus(productId, isAvailable) {
+    try {
+        console.log(`Đang cập nhật trạng thái sản phẩm ID: ${productId} thành ${isAvailable ? 'Đang bán' : 'Ngừng bán'}`);
+        console.log(`API endpoint được gọi: /products/${productId}/availability?isAvailable=${isAvailable}`);
+        
+        // Sử dụng API chuyên dụng để cập nhật trạng thái
+        const result = await ApiClient.Product.updateProductStatus(productId, isAvailable);
+        console.log(`Kết quả cập nhật trạng thái từ API:`, result);
+        
+        // Xóa cache API để đảm bảo dữ liệu mới khi tải lại
+        if (typeof ApiClient.clearCache === 'function') {
+            ApiClient.clearCache();
+            console.log('Đã xóa cache API sau khi cập nhật trạng thái');
+        }
+        
+        // Xác định trạng thái từ kết quả API - không sử dụng hardcode
+        let actualStatus = null;
+        
+        // Kiểm tra kết quả API để lấy ra trạng thái thực tế
+        if (result) {
+            // Ưu tiên kiểm tra trường isAvailable trong response
+            if (result.isAvailable !== undefined) {
+                actualStatus = result.isAvailable === true || result.isAvailable === 1 || result.isAvailable === 'true';
+                console.log(`Lấy trạng thái từ API response (isAvailable): ${result.isAvailable} => ${actualStatus}`);
+            } 
+            // Nếu không có isAvailable, thử kiểm tra trường status
+            else if (result.status !== undefined) {
+                actualStatus = result.status === true || 
+                              result.status === 1 || 
+                              result.status === 'active' || 
+                              result.status === 'true';
+                console.log(`Lấy trạng thái từ API response (status): ${result.status} => ${actualStatus}`);
+            }
+            // Nếu là product object, kiểm tra trong object
+            else if (result.product) {
+                if (result.product.isAvailable !== undefined) {
+                    actualStatus = result.product.isAvailable === true || 
+                                  result.product.isAvailable === 1 || 
+                                  result.product.isAvailable === 'true';
+                    console.log(`Lấy trạng thái từ API response (product.isAvailable): ${result.product.isAvailable} => ${actualStatus}`);
+                } else if (result.product.status !== undefined) {
+                    actualStatus = result.product.status === true || 
+                                  result.product.status === 1 || 
+                                  result.product.status === 'active' || 
+                                  result.product.status === 'true';
+                    console.log(`Lấy trạng thái từ API response (product.status): ${result.product.status} => ${actualStatus}`);
+                }
+            }
+        }
+        
+        // Nếu không thể xác định từ API, sử dụng giá trị yêu cầu (isAvailable parameter)
+        if (actualStatus === null) {
+            actualStatus = isAvailable;
+            console.log(`Không thể xác định trạng thái từ API response, sử dụng giá trị yêu cầu: ${actualStatus}`);
+        }
+        
+        // Nếu trạng thái thực tế khác với trạng thái yêu cầu, ghi log cảnh báo
+        if (actualStatus !== isAvailable) {
+            console.warn(`Chú ý: Trạng thái API trả về (${actualStatus}) khác với trạng thái yêu cầu (${isAvailable})`);
+        }
+        
+        return {
+            isAvailable: actualStatus,
+            message: `Đã cập nhật trạng thái thành ${actualStatus ? 'Đang bán' : 'Ngừng bán'}`
+        };
+    } catch (error) {
+        console.error(`Lỗi khi cập nhật trạng thái sản phẩm ID: ${productId}`, error);
+        throw error;
+    }
 }
 
 // Hiển thị sản phẩm với định dạng cũ
@@ -752,7 +942,7 @@ function displayProductsOldFormat(products, tableBody) {
             console.log(`Ảnh sản phẩm ${product.name || product.productName}: ${imagePath}`);
         }
         
-        // Chuẩn bị tên sản phẩm và giá
+        // Chuẩn bị tên sản phẩm và giá - ưu tiên trường 'name' trước 'productName'
         const productName = product.name || product.productName || 'Sản phẩm không tên';
         const productPrice = (product.price || 0).toLocaleString('vi-VN');
         const productId = product.id || product.idProduct || '';
@@ -793,9 +983,21 @@ function displayProductsOldFormat(products, tableBody) {
             categoryName : 
             `<span class="category-uncategorized">${categoryName}</span>`;
         
-        // Trạng thái hiển thị
-        const status = product.status === 'active' || product.status === true || product.status === 1 ? 'Đang bán' : 'Ngừng bán';
-        const statusClass = product.status === 'active' || product.status === true || product.status === 1 ? 'active' : 'inactive';
+        // Trạng thái hiển thị - kiểm tra tất cả các trường khả thi
+        console.log('Kiểm tra trạng thái sản phẩm:', product.id, 'Status:', product.status, 'isAvailable:', product.isAvailable);
+        
+        // Kiểm tra tất cả các trường có thể có trạng thái
+        const isActiveProduct = 
+            product.status === 'active' || 
+            product.status === true || 
+            product.status === 1 || 
+            product.isAvailable === true || 
+            product.isAvailable === 1;
+        
+        const status = isActiveProduct ? 'Đang bán' : 'Ngừng bán';
+        const statusClass = isActiveProduct ? 'active' : 'inactive';
+        
+        console.log('Kết quả kiểm tra trạng thái:', product.id, status, statusClass);
         
         // Tạo các cột dữ liệu
         row.innerHTML = `
@@ -931,65 +1133,17 @@ async function editProduct(productId) {
     }
 }
 
-// Cập nhật modal mới với dữ liệu sản phẩm
-function updateNewModalWithProductData(product, modal) {
-    // Cập nhật UI với thông tin sản phẩm
-    document.getElementById('edit-product-id').value = product.id;
-    document.getElementById('edit-product-name').value = product.name;
-    document.getElementById('edit-product-price').value = product.price;
-    document.getElementById('edit-product-description').value = product.description || '';
-    document.getElementById('edit-product-status').value = product.status;
-    
-    // Xử lý ảnh sản phẩm
-    const productImagePreview = document.getElementById('edit-product-image-preview');
-    if (product.image) {
-        productImagePreview.src = `${API_BASE_URL}/images/${product.image}`;
-        productImagePreview.setAttribute('data-original-image', product.image);
-    } else {
-        productImagePreview.src = defaultImageBase64;
-        productImagePreview.setAttribute('data-original-image', '');
-    }
-    
-    // Đặt onerror để sử dụng ảnh mặc định nếu tải ảnh thất bại
-    productImagePreview.onerror = function() {
-        this.onerror = null;
-        this.src = defaultImageBase64;
-    };
-    
-    // Reset file input
-    document.getElementById('edit-product-image').value = '';
-    
-    // Tải danh sách danh mục và đặt giá trị đã chọn
-    if (typeof loadCategoriesForSelect === 'function') {
-        loadCategoriesForSelect('edit-product-category', product.categoryId);
-    } else {
-        // Fallback nếu không có hàm loadCategoriesForSelect
-        const categorySelect = document.getElementById('edit-product-category');
-        if (categorySelect && product.categoryId) {
-            categorySelect.value = product.categoryId;
-        }
-    }
-    
-    // Hiển thị modal
-    if (typeof bootstrap !== 'undefined' && typeof bootstrap.Modal !== 'undefined') {
-        const modalInstance = new bootstrap.Modal(modal);
-        modalInstance.show();
-    } else {
-        // Fallback nếu không có bootstrap
-        modal.style.display = 'flex';
-        setTimeout(() => {
-            modal.classList.add('show');
-        }, 10);
-    }
-}
-
 // Cập nhật modal cũ với dữ liệu sản phẩm
 function updateOldModalWithProductData(product, modal) {
+    // Log dữ liệu sản phẩm để kiểm tra
+    console.log('Dữ liệu sản phẩm nhận được để cập nhật modal:', product);
+    
     // Cập nhật tiêu đề
     const title = modal.querySelector('h2');
     if (title) {
-        title.textContent = 'Chỉnh sửa sản phẩm';
+        title.innerHTML = '<i class="fas fa-coffee"></i> Chỉnh sửa sản phẩm';
     }
+    
     // Điền dữ liệu vào form
     const idInput = document.getElementById('productId');
     const nameInput = document.getElementById('productName');
@@ -999,7 +1153,14 @@ function updateOldModalWithProductData(product, modal) {
     const statusSelect = document.getElementById('productStatus');
 
     if (idInput) idInput.value = product.id || product.idProduct;
-    if (nameInput) nameInput.value = product.name || product.productName;
+    
+    // Ưu tiên lấy tên từ trường name trước, sau đó mới đến productName
+    if (nameInput) {
+        const displayName = product.name || product.productName;
+        nameInput.value = displayName || '';
+        console.log('Đặt tên sản phẩm cho form:', displayName);
+    }
+    
     if (priceInput) priceInput.value = product.price;
     if (descInput) descInput.value = product.description || '';
 
@@ -1023,7 +1184,7 @@ function updateOldModalWithProductData(product, modal) {
                 }
             }
             if (!found) {
-                showErrorMessage('Không tìm thấy danh mục phù hợp cho sản phẩm này. Vui lòng chọn lại danh mục!');
+                console.warn('Không tìm thấy danh mục phù hợp cho sản phẩm này. Vui lòng chọn lại danh mục!');
                 categorySelect.value = '';
             }
         });
@@ -1031,11 +1192,20 @@ function updateOldModalWithProductData(product, modal) {
 
     // Thiết lập trạng thái
     if (statusSelect) {
-        if (product.status === 1 || product.status === true || product.status === 'active') {
-            statusSelect.value = 'active';
-        } else {
-            statusSelect.value = 'inactive';
-        }
+        console.log('Trạng thái sản phẩm gốc:', product.status, typeof product.status);
+        console.log('isAvailable:', product.isAvailable, typeof product.isAvailable);
+        
+        // Kiểm tra các trường hợp khác nhau của trạng thái
+        const isActiveProduct = 
+            product.status === 'active' || 
+            product.status === true || 
+            product.status === 1 || 
+            product.isAvailable === true || 
+            product.isAvailable === 1;
+        
+        // Đặt giá trị cho select dựa trên điều kiện tổng hợp
+        statusSelect.value = isActiveProduct ? 'active' : 'inactive';
+        console.log('Đã đặt trạng thái:', statusSelect.value);
     }
     
     // Hiển thị ảnh xem trước nếu có
@@ -1043,15 +1213,22 @@ function updateOldModalWithProductData(product, modal) {
     if (imagePreview) {
         if (product.image) {
             let imagePath = '';
-            if (product.image.startsWith('http')) {
+            // Kiểm tra nếu là đường dẫn tương đối hay URL đầy đủ hoặc dữ liệu base64
+            if (product.image.startsWith('data:') || product.image.startsWith('http')) {
                 imagePath = product.image;
             } else {
-                imagePath = `${API_BASE_URL}/images/${product.image}`;
+                imagePath = `${API_BASE_URL}/products/images/${product.image}`;
             }
+            
+            // Set ảnh xem trước
             imagePreview.innerHTML = `<img src="${imagePath}" alt="${product.name || product.productName}" onerror="this.src='${defaultImageBase64}'">`;
+            console.log('Đã đặt ảnh xem trước cho sản phẩm:', imagePath);
         } else {
             imagePreview.innerHTML = `<img src="${defaultImageBase64}" alt="Default Image">`;
+            console.log('Không có ảnh, sử dụng ảnh mặc định');
         }
+    } else {
+        console.error('Không tìm thấy phần tử imagePreview');
     }
     
     // Thiết lập các trường khác nếu có
@@ -1075,11 +1252,8 @@ function updateOldModalWithProductData(product, modal) {
         document.getElementById('isNew').checked = product.isNew || false;
     }
     
-    // Hiển thị modal
-    modal.style.display = 'flex';
-    setTimeout(() => {
-        modal.classList.add('show');
-    }, 10);
+    // Mở modal
+    openModal('productModal');
 }
 
 // Xử lý xóa sản phẩm
@@ -1105,148 +1279,156 @@ async function deleteProduct(productId) {
     }
 }
 
-// Xử lý form sản phẩm
+// Thiết lập xử lý form gửi sản phẩm
 function setupProductFormSubmission() {
     const form = document.getElementById('productForm');
-    if (!form) return;
+    if (!form) {
+        console.error('Không tìm thấy form sản phẩm');
+        return;
+    }
     
-    // Xóa event listener cũ (nếu có) để tránh trùng lặp
-    const clonedForm = form.cloneNode(true);
-    form.parentNode.replaceChild(clonedForm, form);
-    
-    clonedForm.addEventListener('submit', async function(e) {
+    form.addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        // Ngăn chặn việc submit nhiều lần
-        const submitButton = this.querySelector('button[type="submit"]');
-        if (submitButton) {
-            submitButton.disabled = true;
-        }
-        
         try {
-            // Thu thập dữ liệu form
-            let categoryId = document.getElementById('category').value;
+            showLoadingMessage('Đang lưu sản phẩm...');
+            
+            // Thu thập dữ liệu từ form
+            const productId = document.getElementById('productId').value.trim();
+            const name = document.getElementById('productName').value.trim();
+            const price = document.getElementById('productPrice').value;
+            const description = document.getElementById('productDescription').value.trim();
+            const categoryId = document.getElementById('category').value;
+            const statusEl = document.getElementById('productStatus');
+            
+            // Chuyển đổi trạng thái từ active/inactive sang true/false
+            const isActive = statusEl ? statusEl.value === 'active' : true;
+            console.log('Trạng thái được gửi đi:', statusEl ? statusEl.value : 'undefined', 'Chuyển đổi thành:', isActive);
+            
+            // Kiểm tra dữ liệu trước khi gửi
+            if (!name) {
+                showErrorMessage('Vui lòng nhập tên sản phẩm');
+                return;
+            }
+            
+            if (!price || isNaN(price) || parseFloat(price) < 0) {
+                showErrorMessage('Vui lòng nhập giá sản phẩm hợp lệ');
+                return;
+            }
+            
             if (!categoryId) {
-                showErrorMessage('Vui lòng chọn danh mục cho sản phẩm!');
-                if (submitButton) submitButton.disabled = false;
+                showErrorMessage('Vui lòng chọn danh mục cho sản phẩm');
                 return;
             }
             
-            categoryId = parseInt(categoryId);
-            if (isNaN(categoryId)) {
-                showErrorMessage('Danh mục không hợp lệ!');
-                if (submitButton) submitButton.disabled = false;
-                return;
-            }
-            
-            // Kiểm tra trạng thái
-            const statusSelect = document.getElementById('productStatus');
-            const isActive = statusSelect ? statusSelect.value === 'active' : true;
-            
+            // Khởi tạo đối tượng sản phẩm cơ bản - sử dụng cả name và productName để đảm bảo tương thích
             const productData = {
-                id: document.getElementById('productId').value,
-                name: document.getElementById('productName').value,
-                price: parseFloat(document.getElementById('productPrice').value),
-                description: document.getElementById('productDescription').value,
-                categoryId: categoryId,
-                status: isActive, // Chuyển đổi giá trị trạng thái sang boolean
-                ingredients: document.getElementById('ingredients') ? document.getElementById('ingredients').value : '',
-                preparationTime: document.getElementById('preparationTime') ? parseInt(document.getElementById('preparationTime').value) : 0,
-                calories: document.getElementById('calories') ? parseInt(document.getElementById('calories').value) : 0,
-                isPopular: document.getElementById('isPopular') ? document.getElementById('isPopular').checked : false,
-                isNew: document.getElementById('isNew') ? document.getElementById('isNew').checked : false
+                name: name,
+                productName: name,  // Thêm trường này để tương thích với API
+                price: parseFloat(price),
+                description: description,
+                categoryId: parseInt(categoryId),
+                status: isActive,
+                isAvailable: isActive  // Thêm trường này để đảm bảo trạng thái được cập nhật đúng
             };
             
-            // Xác thực dữ liệu cơ bản
-            if (!productData.name) {
-                showErrorMessage('Vui lòng nhập tên sản phẩm');
-                if (submitButton) submitButton.disabled = false;
-                return;
+            // In ra log để debug
+            console.log('Dữ liệu sản phẩm gửi đi:', productData);
+            
+            // Thu thập thông tin từ các trường tùy chọn
+            const isPopularEl = document.getElementById('isPopular');
+            const isNewEl = document.getElementById('isNew');
+            
+            if (isPopularEl) {
+                productData.isPopular = isPopularEl.checked;
             }
             
-            if (isNaN(productData.price) || productData.price <= 0) {
-                showErrorMessage('Vui lòng nhập giá hợp lệ');
-                if (submitButton) submitButton.disabled = false;
-                return;
+            if (isNewEl) {
+                productData.isNew = isNewEl.checked;
             }
             
+            // Thêm các trường khác nếu có
+            const ingredientsEl = document.getElementById('ingredients');
+            const prepTimeEl = document.getElementById('preparationTime');
+            const caloriesEl = document.getElementById('calories');
+            
+            if (ingredientsEl && ingredientsEl.value.trim()) {
+                productData.ingredients = ingredientsEl.value.trim();
+            }
+            
+            if (prepTimeEl && prepTimeEl.value.trim()) {
+                productData.preparationTime = prepTimeEl.value.trim();
+            }
+            
+            if (caloriesEl && caloriesEl.value.trim()) {
+                productData.calories = caloriesEl.value.trim();
+            }
+            
+            // Kiểm tra có ảnh mới không
             const imageInput = document.getElementById('productImage');
+            let hasNewImage = false;
+            let imageFile = null;
             
-            // Log dữ liệu sản phẩm để debug
-            console.log('Dữ liệu sản phẩm sẽ gửi:', productData);
-            console.log('Trạng thái từ select:', statusSelect?.value);
-            console.log('Trạng thái sẽ gửi lên API:', productData.status);
+            if (imageInput && imageInput.files && imageInput.files[0]) {
+                hasNewImage = true;
+                imageFile = imageInput.files[0];
+            }
             
-            // Kiểm tra nếu là thêm mới hay cập nhật
-            const isUpdate = productData.id !== '';
+            let result;
+            let successMessage;
             
-            showLoadingMessage(`Đang ${isUpdate ? 'cập nhật' : 'thêm'} sản phẩm...`);
-            
-            let responseData;
-            if (isUpdate) {
-                // Thực hiện cập nhật sản phẩm
-                responseData = await ApiClient.Product.updateProduct(productData.id, productData);
-                console.log('Phản hồi từ API khi cập nhật sản phẩm:', responseData);
+            // Thực hiện thêm hoặc cập nhật dựa vào ID
+            if (productId) {
+                // Cập nhật sản phẩm hiện có
+                console.log(`Cập nhật sản phẩm ID: ${productId}`, productData);
                 
-                // Xóa cache để đảm bảo dữ liệu mới
-                if (typeof invalidateCache === 'function') {
-                    invalidateCache('/products');
-                    invalidateCache(`/products/${productData.id}`);
-                }
+                result = await ApiClient.Product.updateProduct(productId, productData);
+                console.log('Kết quả API cập nhật:', result);
+                
+                successMessage = 'Cập nhật sản phẩm thành công!';
             } else {
-                // Thực hiện tạo sản phẩm mới
-                responseData = await ApiClient.Product.createProduct(productData);
-                console.log('Phản hồi từ API khi tạo sản phẩm mới:', responseData);
+                // Tạo sản phẩm mới
+                console.log('Tạo sản phẩm mới:', productData);
                 
-                // Xóa cache để đảm bảo dữ liệu mới
-                if (typeof invalidateCache === 'function') {
-                    invalidateCache('/products');
+                result = await ApiClient.Product.createProduct(productData);
+                console.log('Kết quả API tạo mới:', result);
+                
+                successMessage = 'Thêm sản phẩm mới thành công!';
+            }
+            
+            // Xử lý upload ảnh nếu có
+            if (hasNewImage && imageFile && result) {
+                // Lấy ID từ kết quả API
+                const savedProductId = productId || (result.id || result.idProduct || (result.product && (result.product.id || result.product.idProduct)));
+                
+                if (savedProductId) {
+                    console.log(`Đang tải lên ảnh cho sản phẩm ID: ${savedProductId}`);
+                    await ApiClient.Product.uploadProductImage(savedProductId, imageFile);
+                } else {
+                    console.error('Không thể lấy ID sản phẩm từ kết quả API. Không thể tải lên ảnh.');
+                    showErrorMessage('Đã lưu sản phẩm nhưng không thể tải lên ảnh.');
                 }
             }
             
-            // Lấy ID sản phẩm từ phản hồi
-            const productId = isUpdate ? productData.id : (responseData.id || responseData.idProduct);
-            
-            // Kiểm tra nếu có hình ảnh mới được chọn
-            if (imageInput && imageInput.files.length > 0) {
-                try {
-                    console.log(`Đang tải lên ảnh cho sản phẩm ID: ${productId}`);
-                    const imageResponse = await ApiClient.Product.uploadProductImage(productId, imageInput.files[0]);
-                    console.log('Phản hồi từ API khi tải lên ảnh:', imageResponse);
-                    showSuccessMessage('Đã cập nhật ảnh sản phẩm thành công!');
-                } catch (imageError) {
-                    console.error('Lỗi khi upload ảnh sản phẩm:', imageError);
-                    showErrorMessage('Lỗi khi upload ảnh sản phẩm: ' + imageError.message);
-                }
+            // Xóa cache API để đảm bảo dữ liệu mới khi tải lại
+            if (typeof ApiClient.clearCache === 'function') {
+                ApiClient.clearCache();
             }
             
-            // Đóng modal
+            // Tải lại danh sách sản phẩm
             closeModal('productModal');
+            resetProductForm();
             
-            // Xóa toàn bộ cache để đảm bảo load dữ liệu mới nhất
-            if (typeof clearApiCache === 'function') {
-                clearApiCache();
-            }
+            // Đợi một chút trước khi tải lại dữ liệu
+            setTimeout(() => {
+                loadProductData();
+                showSuccessMessage(successMessage);
+            }, 500);
             
-            // Tải lại dữ liệu sản phẩm
-            await loadProductData();
-            
-            showSuccessMessage(`Đã ${isUpdate ? 'cập nhật' : 'thêm'} sản phẩm thành công`);
         } catch (error) {
-            console.error(`Lỗi khi thêm/cập nhật sản phẩm:`, error);
-            
-            if (error && error.message && error.message.includes('400')) {
-                showErrorMessage('Cập nhật thất bại: Dữ liệu gửi lên không hợp lệ (HTTP 400). Vui lòng kiểm tra lại các trường bắt buộc!');
-            } else {
-                showErrorMessage(`Có lỗi xảy ra: ${error.message}`);
-            }
+            console.error('Lỗi khi lưu sản phẩm:', error);
+            showErrorMessage('Không thể lưu sản phẩm: ' + error.message);
         } finally {
-            // Đảm bảo nút submit được kích hoạt lại
-            if (submitButton) {
-                submitButton.disabled = false;
-            }
-            
-            // Đảm bảo thông báo loading được ẩn
             hideLoadingMessage();
         }
     });
@@ -1740,3 +1922,62 @@ window.AdminEntities = {
     loadProductsByCategory,
     setupCategoryFilter
 }; 
+
+// Cập nhật modal mới với dữ liệu sản phẩm
+function updateNewModalWithProductData(product, modal) {
+    // Cập nhật UI với thông tin sản phẩm
+    document.getElementById('edit-product-id').value = product.id;
+    document.getElementById('edit-product-name').value = product.name;
+    document.getElementById('edit-product-price').value = product.price;
+    document.getElementById('edit-product-description').value = product.description || '';
+    document.getElementById('edit-product-status').value = product.status;
+    
+    // Xử lý ảnh sản phẩm
+    const productImagePreview = document.getElementById('edit-product-image-preview');
+    if (product.image) {
+        let imagePath = '';
+        // Kiểm tra nếu là đường dẫn tương đối hay URL đầy đủ hoặc dữ liệu base64
+        if (product.image.startsWith('data:') || product.image.startsWith('http')) {
+            imagePath = product.image;
+        } else {
+            imagePath = `${API_BASE_URL}/products/images/${product.image}`;
+        }
+        
+        productImagePreview.src = imagePath;
+        productImagePreview.setAttribute('data-original-image', product.image);
+        console.log('Đã đặt ảnh xem trước cho sản phẩm:', imagePath);
+    } else {
+        productImagePreview.src = defaultImageBase64;
+        productImagePreview.setAttribute('data-original-image', '');
+        console.log('Không có ảnh, sử dụng ảnh mặc định');
+    }
+    
+    // Đặt onerror để sử dụng ảnh mặc định nếu tải ảnh thất bại
+    productImagePreview.onerror = function() {
+        this.onerror = null;
+        this.src = defaultImageBase64;
+    };
+    
+    // Reset file input
+    document.getElementById('edit-product-image').value = '';
+    
+    // Tải danh sách danh mục và đặt giá trị đã chọn
+    if (typeof loadCategoriesForSelect === 'function') {
+        loadCategoriesForSelect('edit-product-category', product.categoryId);
+    } else {
+        // Fallback nếu không có hàm loadCategoriesForSelect
+        const categorySelect = document.getElementById('edit-product-category');
+        if (categorySelect && product.categoryId) {
+            categorySelect.value = product.categoryId;
+        }
+    }
+    
+    // Hiển thị modal
+    if (typeof bootstrap !== 'undefined' && typeof bootstrap.Modal !== 'undefined') {
+        const modalInstance = new bootstrap.Modal(modal);
+        modalInstance.show();
+    } else {
+        // Fallback nếu không có bootstrap
+        openModal(modal.id);
+    }
+}

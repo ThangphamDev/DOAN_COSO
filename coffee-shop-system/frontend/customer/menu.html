@@ -510,9 +510,24 @@
         }
         
         /* Media Queries */
-        @media (max-width: 1700px) {
+        @media (max-width: 1919px) {
             #menuContainer {
-                grid-template-columns: repeat(3, 1fr); /* 3 cột khi màn hình 1700px trở xuống */
+                grid-template-columns: repeat(4, 1fr); /* 4 cột khi màn hình 1919px trở xuống */
+            }
+            
+            .toggle-cart {
+                display: flex; /* Luôn hiện toggle cart button */
+                z-index: 1001;
+            }
+            
+            .order-panel {
+                display: none; /* Ẩn order panel mặc định ở viewport nhỏ */
+            }
+        }
+        
+        @media (max-width: 1499px) {
+            #menuContainer {
+                grid-template-columns: repeat(3, 1fr); /* 3 cột khi màn hình nhỏ hơn */
             }
             
             .menu-container {
@@ -521,10 +536,6 @@
             
             .order-panel {
                 display: none; /* Ẩn order panel mặc định ở viewport nhỏ */
-            }
-            
-            .toggle-cart {
-                display: flex; /* Hiện toggle cart button */
             }
         }
         
@@ -536,17 +547,40 @@
         }
         
         @media (max-width: 768px) {
-            /* Các thiết lập cho mobile */
-            .container-wrapper {
-                flex-direction: column;
+            #menuContainer {
+                grid-template-columns: repeat(1, 1fr); /* 1 cột trên màn hình mobile */
+                gap: 15px;
             }
             
-            .menu-item {
-                min-height: 330px; /* Giảm chiều cao trên mobile */
+            .menu-container {
+                padding-right: 0;
             }
             
-            .menu-item-image {
-                height: 150px; /* Giảm chiều cao ảnh trên mobile */
+            .order-panel {
+                position: fixed;
+                right: -350px;
+                transition: right 0.3s ease;
+                z-index: 1002;
+                height: 100%;
+                top: 0;
+                overflow-y: auto;
+                width: 320px;
+                max-width: 100%;
+            }
+            
+            .order-panel.visible {
+                right: 0;
+            }
+            
+            .toggle-cart {
+                width: 50px;
+                height: 50px;
+                bottom: 15px;
+                right: 15px;
+            }
+            
+            .toggle-cart i {
+                font-size: 20px;
             }
         }
         
@@ -571,6 +605,17 @@
             .menu-item-price {
                 font-size: 1.2rem;
                 margin-bottom: 12px;
+            }
+            
+            .toggle-cart {
+                width: 50px;
+                height: 50px;
+                bottom: 15px;
+                right: 15px;
+            }
+            
+            .toggle-cart i {
+                font-size: 20px;
             }
         }
         
@@ -692,7 +737,7 @@
         }
         
         /* Responsive Media Queries */
-        @media (max-width: 1400px) {
+        /* @media (max-width: 1400px) {
             #menuContainer {
                 grid-template-columns: repeat(3, 1fr);
             }
@@ -702,7 +747,7 @@
             #menuContainer {
                 grid-template-columns: repeat(2, 1fr);
             }
-        }
+        } */
         
         @media (max-width: 768px) {
             #menuContainer {
@@ -717,10 +762,12 @@
                 position: fixed;
                 right: -350px;
                 transition: right 0.3s ease;
-                z-index: 1000;
+                z-index: 1002;
                 height: 100%;
                 top: 0;
                 overflow-y: auto;
+                width: 320px;
+                max-width: 100%;
             }
             
             .order-panel.visible {
@@ -728,39 +775,12 @@
             }
             
             .toggle-cart {
-                display: flex;
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                z-index: 1001;
-                background: #e67e22;
                 width: 60px;
                 height: 60px;
-                border-radius: 50%;
-                justify-content: center;
-                align-items: center;
-                color: white;
-                box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             }
             
             .toggle-cart i {
                 font-size: 24px;
-            }
-            
-            .toggle-cart .cart-count {
-                position: absolute;
-                top: -5px;
-                right: -5px;
-                background: #2c3e50;
-                color: white;
-                border-radius: 50%;
-                width: 25px;
-                height: 25px;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                font-size: 14px;
-                font-weight: bold;
             }
         }
         
@@ -773,7 +793,7 @@
             height: 50px;
             background-color: #e67e22;
             border-radius: 50%;
-            display: none; /* Ẩn by default, chỉ hiện khi responsive */
+            display: flex; /* Luôn hiển thị toggle cart */
             justify-content: center;
             align-items: center;
             color: white;
@@ -805,10 +825,6 @@
         
         /* Show toggle cart button on mobile */
         @media (max-width: 768px) {
-            .toggle-cart {
-                display: flex;
-            }
-            
             .order-panel {
                 position: fixed;
                 right: -100%;
@@ -864,7 +880,7 @@
             height: 60px;
             background-color: #e67e22;
             border-radius: 50%;
-            display: none; /* Ẩn by default, chỉ hiện khi responsive */
+            display: flex; /* Luôn hiển thị toggle cart */
             justify-content: center;
             align-items: center;
             color: white;
@@ -901,6 +917,28 @@
         @keyframes slideIn {
             from { right: -350px; }
             to { right: 0; }
+        }
+        
+        /* Fix hiển thị giỏ hàng */
+        .order-panel {
+            z-index: 1002; /* Đảm bảo giỏ hàng hiển thị trên cùng */
+        }
+        
+        @media (min-width: 1920px) {
+            /* Xử lý hiển thị trên màn hình lớn */
+            .order-panel {
+                display: block !important;
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                max-height: calc(100vh - 150px);
+                width: 260px;
+            }
+            
+            /* Ẩn nút toggle-cart trên màn hình lớn */
+            .toggle-cart {
+                display: none !important;
+            }
         }
     </style>
 </head>
@@ -1019,7 +1057,7 @@
                         overlay.addEventListener('click', function() {
                             orderPanel.classList.remove('visible');
                             setTimeout(() => {
-                                if (window.innerWidth <= 1700) {
+                                if (window.innerWidth <= 1919) {
                                     orderPanel.style.display = 'none';
                                 }
                             }, 300); // Đợi animation hoàn thành
@@ -1031,7 +1069,7 @@
                         
                         // Ẩn giỏ hàng sau khi animation kết thúc
                         setTimeout(() => {
-                            if (window.innerWidth <= 1700) {
+                            if (window.innerWidth <= 1919) {
                                 orderPanel.style.display = 'none';
                             }
                         }, 300);
@@ -1701,81 +1739,20 @@
             const proceedBtn = document.getElementById('proceedBtn');
             if (proceedBtn) {
                 proceedBtn.addEventListener('click', function() {
-                    console.log('SỰ KIỆN CLICK THANH TOÁN ĐÃ ĐƯỢC GỌI');
                     const tableId = document.getElementById('tableSelect').value;
-
-                    // Lấy giỏ hàng mới nhất từ localStorage
-                    const cartItems = JSON.parse(localStorage.getItem('cart') || '[]');
-
                     if (!tableId) {
                         alert('Vui lòng chọn bàn trước khi thanh toán!');
                         return;
                     }
-
+                    const cartItems = JSON.parse(localStorage.getItem('cart') || '[]');
                     if (cartItems.length === 0) {
                         alert('Giỏ hàng của bạn đang trống!');
                         return;
                     }
-
-                    // Cấu trúc dữ liệu đơn hàng không bao gồm orderDetails - để backend tự xử lý
-                    let orderData = {
-                        orderTime: new Date().toISOString(),
-                        totalAmount: cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-                        productItems: cartItems.map(item => ({
-                            productId: parseInt(item.id),
-                            quantity: item.quantity,
-                            unitPrice: item.price
-                        }))
-                    };
-                    
-                    if (tableId !== 'takeaway') {
-                        orderData.table = { idTable: parseInt(tableId) };
-                    }
-
-                    // Log JSON gửi lên để debug
-                    console.log('Dữ liệu gửi lên:', JSON.stringify(orderData, null, 2));
-
-                    // Quay lại sử dụng endpoint gốc nhưng với cấu trúc dữ liệu mới
-                    fetch(`${API.BASE_URL}${API.ORDERS}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(orderData)
-                    })
-                    .then(response => {
-                        console.log('API đơn hàng phản hồi status:', response.status);
-                        if (!response.ok) {
-                            // Thêm xử lý lỗi chi tiết hơn
-                            return response.text().then(text => {
-                                console.error('Lỗi chi tiết từ server:', text);
-                                throw new Error(`Lỗi khi đặt hàng! Status: ${response.status}. Chi tiết: ${text}`);
-                            });
-                        }
-                        return response.json();
-                    })
-                    .then(order => {
-                        console.log('Đặt hàng thành công:', order);
-                        
-                        // Lưu thông tin đơn hàng vào localStorage để hiển thị trên trang thanh toán
-                        localStorage.setItem('currentOrder', JSON.stringify({
-                            orderId: order.idOrder || order.ID_Order,
-                            totalAmount: orderData.totalAmount,
-                            items: cartItems,
-                            orderTime: new Date().toISOString(),
-                            tableNumber: tableId
-                        }));
-                        
-                        // Xóa giỏ hàng
-                        localStorage.removeItem('cart');
-                        
-                        // Chuyển đến trang thanh toán
-                        window.location.href = "checkout.html";
-                    })
-                    .catch(error => {
-                        console.error('Lỗi khi đặt hàng:', error);
-                        alert('Không thể đặt hàng. Vui lòng thử lại sau: ' + error.message);
-                    });
+                    // Lưu số bàn đã chọn vào localStorage
+                    localStorage.setItem('selectedTable', tableId);
+                    // Chuyển sang trang checkout
+                    window.location.href = "checkout.html";
                 });
             } else {
                 console.error('Không tìm thấy nút THANH TOÁN (proceedBtn)');
@@ -1793,28 +1770,27 @@
                 }
             });
 
-            // Thêm sự kiện window resize để xử lý responsive
-            window.addEventListener('resize', function() {
+            // Kiểm tra kích thước màn hình khi tải trang và khi thay đổi kích thước
+            function checkScreenSize() {
                 const orderPanel = document.querySelector('.order-panel');
-                const toggleCartBtn = document.querySelector('.toggle-cart');
+                const toggleCartBtn = document.getElementById('toggleCartBtn');
                 
-                if (window.innerWidth <= 1700) {
-                    // Ẩn giỏ hàng khi viewport <= 1700px, trừ khi đang hiện
+                if (window.innerWidth <= 1919) {
+                    // Đảm bảo toggle cart button hiển thị
+                    toggleCartBtn.style.display = 'flex';
+                    
+                    // Thiết lập order panel không hiển thị trừ khi có class visible
                     if (!orderPanel.classList.contains('visible')) {
                         orderPanel.style.display = 'none';
                     }
-                    toggleCartBtn.style.display = 'flex';
-                } else {
-                    // Hiện giỏ hàng khi viewport > 1700px
-                    orderPanel.style.display = 'block';
-                    orderPanel.classList.remove('visible');
-                    toggleCartBtn.style.display = 'none';
-                    
-                    // Xóa overlay nếu có
-                    const overlay = document.querySelector('.cart-overlay');
-                    if (overlay) overlay.remove();
                 }
-            });
+            }
+            
+            // Chạy khi tải trang
+            checkScreenSize();
+            
+            // Chạy khi thay đổi kích thước màn hình
+            window.addEventListener('resize', checkScreenSize);
 
             // Update cart count display
             function updateCartCountDisplay() {

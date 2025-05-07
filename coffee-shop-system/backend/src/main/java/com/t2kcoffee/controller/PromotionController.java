@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -63,6 +64,19 @@ public class PromotionController {
     @GetMapping("/current")
     public ResponseEntity<List<Promotion>> getCurrentPromotions() {
         List<Promotion> promotions = promotionService.getCurrentPromotions();
+        return new ResponseEntity<>(promotions, HttpStatus.OK);
+    }
+    
+    @GetMapping("/by-type/{discountType}")
+    public ResponseEntity<List<Promotion>> getPromotionsByType(@PathVariable String discountType) {
+        List<Promotion> promotions = promotionService.getPromotionRepository().findByDiscountType(discountType);
+        return new ResponseEntity<>(promotions, HttpStatus.OK);
+    }
+    
+    @GetMapping("/applicable")
+    public ResponseEntity<List<Promotion>> getApplicablePromotions(
+            @RequestParam BigDecimal orderAmount) {
+        List<Promotion> promotions = promotionService.getApplicablePromotions(orderAmount);
         return new ResponseEntity<>(promotions, HttpStatus.OK);
     }
 
@@ -122,5 +136,59 @@ public class PromotionController {
         } else {
             return new ResponseEntity<>(response, HttpStatus.OK);
         }
+    }
+    
+    @GetMapping("/calculate-discount")
+    public ResponseEntity<Map<String, Object>> calculateDiscount(
+            @RequestParam String code,
+            @RequestParam BigDecimal orderTotal) {
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("code", code);
+        response.put("orderTotal", orderTotal);
+        
+        // Kiểm tra khuyến mãi có hợp lệ không
+        boolean isValid = promotionService.isPromotionValid(code);
+        response.put("valid", isValid);
+        
+        if (isValid) {
+            // Tính toán giảm giá
+            BigDecimal discountAmount = promotionService.calculateDiscount(code, orderTotal);
+            BigDecimal finalTotal = orderTotal.subtract(discountAmount);
+            
+            // Thêm thông tin khuyến mãi
+            Optional<Promotion> promotion = promotionService.getPromotionByCode(code);
+            promotion.ifPresent(p -> response.put("promotion", p));
+            
+            // Thêm kết quả tính toán
+            response.put("discountAmount", discountAmount);
+            response.put("finalTotal", finalTotal);
+        } else {
+            response.put("discountAmount", BigDecimal.ZERO);
+            response.put("finalTotal", orderTotal);
+        }
+        
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    
+    @PostMapping("/bulk-update")
+    public ResponseEntity<Map<String, Object>> bulkUpdatePromotions(
+            @RequestBody List<Integer> promotionIds,
+            @RequestParam boolean isActive) {
+        
+        Map<String, Object> response = new HashMap<>();
+        int updatedCount = 0;
+        
+        for (Integer id : promotionIds) {
+            Promotion updated = promotionService.updatePromotionStatus(id, isActive);
+            if (updated != null) {
+                updatedCount++;
+            }
+        }
+        
+        response.put("totalUpdated", updatedCount);
+        response.put("status", isActive ? "activated" : "deactivated");
+        
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 } 
