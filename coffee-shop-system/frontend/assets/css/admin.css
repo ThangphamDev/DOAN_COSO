@@ -133,23 +133,7 @@ body {
     cursor: pointer;
 }
 
-.admin-profile:hover .dropdown-menu {
-    display: block;
-}
-
-.avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-#adminName {
-    font-weight: 500;
-}
-
 .dropdown-menu {
-    display: none;
     position: absolute;
     top: 100%;
     right: 0;
@@ -160,6 +144,48 @@ body {
     min-width: 180px;
     margin-top: 0.5rem;
     z-index: 100;
+    
+    /* Improved transition */
+    opacity: 0;
+    visibility: hidden;
+    display: block;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    pointer-events: none;
+}
+
+.admin-profile:hover .dropdown-menu,
+.admin-profile.active .dropdown-menu,
+.dropdown-menu:hover {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+/* Create a buffer zone to help with menu accessibility */
+.dropdown-menu::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 0;
+    width: 100%;
+    height: 20px;
+}
+
+/* Visual feedback when clicked */
+.admin-profile.active .avatar {
+    box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    transition: box-shadow 0.2s ease;
+}
+
+#adminName {
+    font-weight: 500;
 }
 
 .dropdown-menu a {

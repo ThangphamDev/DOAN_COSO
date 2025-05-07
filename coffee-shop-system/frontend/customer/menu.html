@@ -940,6 +940,30 @@
                 display: none !important;
             }
         }
+        
+        /* Thêm hiệu ứng hover cho sản phẩm */
+        .menu-item .product-link {
+            display: block;
+            position: relative;
+            height: 100%;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-item:hover .product-link {
+            cursor: pointer;
+        }
+        
+        .menu-item:hover .menu-item-image img {
+            transform: scale(1.08);
+        }
+        
+        .menu-item:hover h3 {
+            color: #e67e22;
+        }
+        
+        .menu-item .add-to-cart-btn {
+            z-index: 10;
+        }
     </style>
 </head>
 
@@ -1414,27 +1438,33 @@
                     const price = product.price;
                     const productId = product.idProduct || product.ID_Product;
                     
-                        item.innerHTML = `
+                    item.innerHTML = `
                         ${showBadge ? `<div class="badge">${badgeText}</div>` : ''}
-                        <div class="menu-item-image ${imageClass}">
-                            <img src="${imageUrl}" alt="${productName}" loading="lazy" 
-                                onerror="this.parentElement.className='menu-item-image no-image'; this.style.display='none';">
-                        </div>
-                        <div class="menu-item-info">
-                            <div>
-                                <h3>${productName}</h3>
-                                <p>${description}</p>
-                                <div class="menu-item-price">${price.toLocaleString('vi-VN')} đ</div>
+                        <a href="product-detail.html?id=${productId}" class="product-link" style="text-decoration: none; color: inherit; display: block;">
+                            <div class="menu-item-image ${imageClass}">
+                                <img src="${imageUrl}" alt="${productName}" loading="lazy" 
+                                    onerror="this.parentElement.className='menu-item-image no-image'; this.style.display='none';">
                             </div>
-                            <button class="add-to-cart-btn" data-id="${productId}" data-name="${productName}" data-price="${price}">
-                                <i class="fas fa-shopping-cart"></i> Thêm vào giỏ
-                            </button>
-                        </div>
+                            <div class="menu-item-info" style="padding-bottom: 70px;">
+                                <div>
+                                    <h3>${productName}</h3>
+                                    <p>${description}</p>
+                                    <div class="menu-item-price">${price.toLocaleString('vi-VN')} đ</div>
+                                </div>
+                            </div>
+                        </a>
+                        <button class="add-to-cart-btn" data-id="${productId}" data-name="${productName}" data-price="${price}" style="position: absolute; bottom: 20px; left: 20px; width: calc(100% - 40px);">
+                            <i class="fas fa-shopping-cart"></i> Thêm vào giỏ
+                        </button>
                     `;
                     menuContainer.appendChild(item);
                     
                     // Thêm sự kiện click cho nút thêm vào giỏ
-                    item.querySelector('.add-to-cart-btn').addEventListener('click', function() {
+                    item.querySelector('.add-to-cart-btn').addEventListener('click', function(e) {
+                        // Ngăn chặn sự kiện click lan truyền lên phần tử cha
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
                         // Animation khi click
                         this.innerHTML = '<i class="fas fa-check"></i> Đã thêm';
                         this.classList.add('added');
@@ -1447,7 +1477,9 @@
                         const id = this.getAttribute('data-id');
                         const name = this.getAttribute('data-name');
                         const price = parseFloat(this.getAttribute('data-price'));
-                        addToCart(id, name, price);
+                        
+                        // Thêm biến thể mặc định cho sản phẩm
+                        addToCartWithVariants(id, name, price);
                     });
                 });
             }
@@ -1604,22 +1636,51 @@
                 return cart || [];
             }
             
-            function addToCart(id, name, price) {
+            function addToCartWithVariants(id, name, price) {
                 // Kiểm tra xem sản phẩm đã có trong giỏ hàng chưa
                 const cartItems = getCart();
-                const existingItem = cartItems.find(item => item.id === id);
                 
-                if (existingItem) {
-                    existingItem.quantity += 1;
+                // Tạo biến thể mặc định cho sản phẩm
+                const cartItem = {
+                    id: id,
+                    name: name,
+                    basePrice: price,
+                    price: price, // Giá ban đầu không có thêm topping
+                    quantity: 1,
+                    variants: {
+                        size: 'S',
+                        ice: '100', // 100% đá
+                        sugar: '100', // 100% đường
+                        toppings: [] // Không có topping mặc định
+                    },
+                    totalPrice: price
+                };
+
+                // Kiểm tra xem sản phẩm đã có trong giỏ hàng chưa với cùng biến thể
+                const existingItemIndex = cartItems.findIndex(item => {
+                    if (item.id != cartItem.id) return false;
+                    
+                    // So sánh biến thể (nếu sản phẩm cũ không có biến thể, chỉ so sánh id)
+                    if (!item.variants) return true;
+                    
+                    const sameSize = item.variants.size === cartItem.variants.size;
+                    const sameIce = item.variants.ice === cartItem.variants.ice;
+                    const sameSugar = item.variants.sugar === cartItem.variants.sugar;
+                    const noToppings = (!item.variants.toppings || item.variants.toppings.length === 0) && 
+                                      cartItem.variants.toppings.length === 0;
+                    
+                    return sameSize && sameIce && sameSugar && noToppings;
+                });
+
+                if (existingItemIndex !== -1) {
+                    // Nếu sản phẩm đã tồn tại với cùng biến thể, tăng số lượng
+                    cartItems[existingItemIndex].quantity += 1;
+                    cartItems[existingItemIndex].totalPrice = cartItems[existingItemIndex].price * cartItems[existingItemIndex].quantity;
                 } else {
-                    cartItems.push({
-                        id: id,
-                        name: name,
-                        price: price,
-                        quantity: 1
-                    });
+                    // Nếu chưa có, thêm mới vào giỏ hàng
+                    cartItems.push(cartItem);
                 }
-                
+
                 // Lưu giỏ hàng vào localStorage
                 localStorage.setItem('cart', JSON.stringify(cartItems));
                 
@@ -1965,6 +2026,11 @@
             localStorage.removeItem('cart');
             cart = [];
             updateCartDisplay();
+        }
+
+        function addToCart(id, name, price) {
+            // Chuyển hướng sang hàm mới để thêm biến thể mặc định
+            addToCartWithVariants(id, name, price);
         }
     </script>
 </body>

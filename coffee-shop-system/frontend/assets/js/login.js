@@ -119,9 +119,18 @@ document.addEventListener('DOMContentLoaded', function() {
         // Chuyển đổi role về chữ thường để dễ so sánh
         const roleLower = role.toLowerCase();
         
+        // Kiểm tra xem có đường dẫn redirect sau đăng nhập không
+        const redirectPath = localStorage.getItem('redirectAfterLogin');
+        
         // So sánh không phân biệt hoa thường
         if (roleLower.includes('admin')) {
-            window.location.href = '../admin/dashboard.html';
+            // Nếu là Admin và có đường dẫn redirect tới trang admin, sử dụng đường dẫn đó
+            if (redirectPath && redirectPath.includes('/admin/')) {
+                window.location.href = redirectPath;
+                localStorage.removeItem('redirectAfterLogin'); // Xóa sau khi sử dụng
+            } else {
+                window.location.href = '../admin/dashboard.html';
+            }
         } 
         else if (roleLower.includes('staff')) {
             window.location.href = '../staff/table.html';

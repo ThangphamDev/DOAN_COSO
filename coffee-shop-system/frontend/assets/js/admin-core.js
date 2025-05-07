@@ -4,8 +4,14 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Kiểm tra xác thực người dùng
-    checkAdminAuthentication();
+    // Kiểm tra xác thực người dùng - Ưu tiên cao nhất
+    if (!checkAdminAuthentication()) {
+        // Nếu không xác thực, dừng thực thi
+        console.log('Không thể xác thực người dùng - Dừng tải trang admin');
+        return;
+    }
+    
+    // Chỉ chạy các bước tiếp theo nếu đã xác thực thành công
     
     // Kiểm tra kết nối API
     checkApiConnection();
@@ -28,18 +34,24 @@ function checkAdminAuthentication() {
     const role = localStorage.getItem('role');
     
     if (!token || !role || !role.toLowerCase().includes('admin')) {
-        // Hiển thị cảnh báo nhưng không chuyển hướng người dùng
-        console.warn('Người dùng chưa đăng nhập hoặc không phải admin');
-        showNotification('Bạn đang xem dữ liệu admin nhưng chưa đăng nhập. Một số chức năng có thể bị hạn chế.', 'warning');
+        // Người dùng chưa đăng nhập hoặc không phải admin - chuyển hướng đến trang đăng nhập
+        console.warn('Người dùng chưa đăng nhập hoặc không phải admin - chuyển hướng đến trang đăng nhập');
         
-        // Đặt tên mặc định cho admin
-        document.getElementById('adminName').textContent = 'Khách';
-        return;
+        // Lưu URL hiện tại để đăng nhập xong quay lại
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('/admin/')) {
+            localStorage.setItem('redirectAfterLogin', currentPath);
+        }
+        
+        // Chuyển hướng về trang đăng nhập
+        window.location.href = '../auth/login.html';
+        return false;
     }
     
     // Hiển thị thông tin người dùng đã đăng nhập
     const fullName = localStorage.getItem('fullName') || 'Admin';
     document.getElementById('adminName').textContent = fullName;
+    return true;
 }
 
 /**
@@ -113,6 +125,28 @@ function setupSidebar() {
             parent.classList.toggle('open');
         });
     });
+
+    // Thêm xử lý click cho avatar để hiển thị dropdown
+    const adminProfile = document.querySelector('.admin-profile');
+    if (adminProfile) {
+        adminProfile.addEventListener('click', function(e) {
+            e.stopPropagation();
+            this.classList.toggle('active');
+        });
+
+        // Đảm bảo menu dropdown không tự đóng khi click vào nó
+        const dropdownMenu = adminProfile.querySelector('.dropdown-menu');
+        if (dropdownMenu) {
+            dropdownMenu.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
+
+        // Đóng menu khi click bên ngoài
+        document.addEventListener('click', function() {
+            adminProfile.classList.remove('active');
+        });
+    }
 }
 
 /**
@@ -253,6 +287,25 @@ window.AdminCore = {
     logout,
     markActiveMenu,
     loadSidebar,
+    
+    // Bảo vệ trang admin không cho người dùng chưa xác thực truy cập
+    protectAdminPage: function() {
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role');
+        
+        if (!token || !role || !role.toLowerCase().includes('admin')) {
+            // Lưu URL hiện tại để đăng nhập xong quay lại
+            const currentPath = window.location.pathname;
+            if (currentPath.includes('/admin/')) {
+                localStorage.setItem('redirectAfterLogin', currentPath);
+            }
+            
+            // Chuyển hướng về trang đăng nhập
+            window.location.href = '../auth/login.html';
+            return false;
+        }
+        return true;
+    },
     
     // Đảm bảo các hàm khởi tạo chỉ được gọi một lần
     initializeOnce: function(functionName, initFunction) {
