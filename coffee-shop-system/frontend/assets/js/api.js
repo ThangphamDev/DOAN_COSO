@@ -1,6 +1,4 @@
-// api.js - Quản lý tất cả API calls từ frontend
 
-// Các endpoint API
 const API = {
     BASE_URL: 'http://localhost:8081/api',
     ORDERS: '/orders',
@@ -12,17 +10,18 @@ const API = {
     PROMOTIONS: '/promotions',
     STAFFS: '/staffs',
     REPORTS: '/reports',
-    AUTH: '/auth'
+    AUTH: '/auth',
+    VARIANTS: '/variants' 
 };
 
-// Kiểm tra kết nối API
+
 async function checkApiConnection() {
     try {
         console.log("Đang kiểm tra kết nối API đến:", `${API.BASE_URL}${API.ORDERS}`);
         
-        // Thêm timeout để tránh đợi quá lâu khi server không phản hồi
+   
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 giây timeout
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
         
         const response = await fetch(`${API.BASE_URL}${API.ORDERS}`, {
             method: 'GET',
@@ -32,7 +31,7 @@ async function checkApiConnection() {
             signal: controller.signal
         });
         
-        // Xóa timeout nếu request hoàn thành
+  
         clearTimeout(timeoutId);
         
         console.log(`API response status: ${response.status}`);
@@ -45,7 +44,7 @@ async function checkApiConnection() {
     } catch (error) {
         console.error("Lỗi kết nối API:", error);
         
-        // Xử lý chi tiết hơn dựa trên loại lỗi
+
         if (error.name === 'AbortError') {
             console.error("Timeout: Máy chủ không phản hồi sau 5 giây");
             return {
@@ -70,62 +69,61 @@ async function checkApiConnection() {
     }
 }
 
-// Chuyển đổi từ object order backend sang định dạng frontend
+
 function convertOrderFromServer(serverOrder) {
     console.log("API.js - convertOrderFromServer - input:", JSON.stringify(serverOrder, null, 2));
     
-    // Clone đối tượng để không ảnh hưởng đến dữ liệu gốc
+ 
     const order = { ...serverOrder };
     
-    // Map ID
+    
     if (order.idOrder) {
         order.id = order.idOrder;
     }
     
-    // Map table - Cải thiện xử lý bàn
+ 
     if (order.table) {
         if (typeof order.table === 'object') {
-            // Sử dụng tableNumber từ đối tượng table
+         
             if (order.table.tableNumber) {
                 order.tableNumber = order.table.tableNumber;
             } else if (order.table.idTable) {
-                // Nếu không có tableNumber, sử dụng idTable
+             
                 order.tableNumber = order.table.idTable;
             }
             
-            // Kiểm tra nếu là đơn takeaway
+           
             if (order.table.tableNumber === 'takeaway' || order.table.idTable === 'takeaway') {
                 order.tableNumber = 'takeaway';
             }
         } else if (typeof order.table === 'string' || typeof order.table === 'number') {
-            // Nếu table là string hoặc number
+           
             order.tableNumber = order.table;
         }
     }
-    
-    // Xử lý thông tin thanh toán
+ 
     if (order.payment) {
         order.paymentMethod = order.payment.paymentMethod || "cash";
         order.paymentStatus = order.payment.paymentStatus || "pending";
         
-        // Nếu đã thanh toán, cập nhật localStorage
+   
         if (order.payment.paymentStatus === "completed") {
             localStorage.setItem("paymentCompleted", "true");
             localStorage.setItem("paymentMethod", order.payment.paymentMethod || "cash");
         }
         
-        // Log thông tin thanh toán để debug
+  
         console.log("API.js - Tìm thấy thông tin thanh toán:", {
             method: order.paymentMethod,
             status: order.paymentStatus
         });
     } else {
-        // Mặc định thanh toán tiền mặt nếu không có thông tin
+      
         order.paymentMethod = order.paymentMethod || "cash";
         order.paymentStatus = order.paymentStatus || "pending";
     }
     
-    // Map items từ orderDetails
+ 
     if (order.orderDetails && order.orderDetails.length > 0) {
         order.items = order.orderDetails.map(detail => {
             return {
@@ -137,17 +135,17 @@ function convertOrderFromServer(serverOrder) {
         });
     }
     
-    // Chuyển đổi totalAmount từ BigDecimal sang số
+    
     if (order.totalAmount) {
         order.totalAmount = parseFloat(order.totalAmount);
     }
     
-    // Đảm bảo ngày giờ là đúng định dạng
+   
     if (order.orderTime && typeof order.orderTime === 'string') {
         order.orderTime = new Date(order.orderTime).toISOString();
     }
     
-    // Đảm bảo có trạng thái
+    
     if (!order.status) {
         order.status = "processing";
     }
@@ -156,16 +154,16 @@ function convertOrderFromServer(serverOrder) {
     return order;
 }
 
-// Chuyển đổi từ object order frontend sang định dạng backend
+
 function convertOrderToServer(clientOrder) {
-    // Dữ liệu cơ bản
+    
     const serverOrder = {
         totalAmount: clientOrder.finalTotal || clientOrder.totalAmount,
         note: clientOrder.notes || clientOrder.note,
         status: clientOrder.status || "processing"
     };
     
-    // Thêm ID nếu có (cho cập nhật)
+   
     if (clientOrder.id) {
         serverOrder.idOrder = clientOrder.id;
     } else if (clientOrder.idOrder) {

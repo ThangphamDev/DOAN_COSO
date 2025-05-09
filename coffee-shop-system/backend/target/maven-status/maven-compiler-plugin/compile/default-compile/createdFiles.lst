@@ -1,8 +1,11 @@
+com\t2kcoffee\model\ProductVariant.class
+com\t2kcoffee\controller\ProductVariantController.class
 com\t2kcoffee\repository\PromotionRepository.class
 com\t2kcoffee\repository\ProductRepository.class
 com\t2kcoffee\service\ProductService.class
 com\t2kcoffee\repository\CategoryRepository.class
 com\t2kcoffee\model\OrderDetailId.class
+com\t2kcoffee\service\ProductVariantService.class
 com\t2kcoffee\CoffeeT2KApplication.class
 com\t2kcoffee\model\CafeTable.class
 com\t2kcoffee\controller\AccountController.class
@@ -11,6 +14,7 @@ com\t2kcoffee\repository\CafeOrderRepository.class
 com\t2kcoffee\controller\SystemInfoController.class
 com\t2kcoffee\repository\AccountRepository.class
 com\t2kcoffee\repository\CafeTableRepository.class
+com\t2kcoffee\service\OrderVariantService.class
 com\t2kcoffee\controller\ActivityController.class
 com\t2kcoffee\model\CafeOrder.class
 com\t2kcoffee\service\CafeOrderService.class
@@ -24,8 +28,10 @@ com\t2kcoffee\service\PromotionService.class
 com\t2kcoffee\model\Product.class
 com\t2kcoffee\service\CafeTableService.class
 com\t2kcoffee\model\Promotion.class
+com\t2kcoffee\dto\VariantResponse.class
 com\t2kcoffee\controller\CategoryController.class
 com\t2kcoffee\model\Account.class
+com\t2kcoffee\model\OrderVariant.class
 com\t2kcoffee\CoffeeT2KApplication$1.class
 com\t2kcoffee\config\CorsConfig.class
 com\t2kcoffee\controller\PaymentController.class
@@ -35,4 +41,6 @@ com\t2kcoffee\dto\ProductDTO.class
 com\t2kcoffee\controller\CafeTableController.class
 com\t2kcoffee\controller\DashboardController.class
 com\t2kcoffee\controller\CafeOrderController.class
+com\t2kcoffee\repository\OrderVariantRepository.class
+com\t2kcoffee\repository\ProductVariantRepository.class
 com\t2kcoffee\service\CategoryService.class

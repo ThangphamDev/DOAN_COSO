@@ -148,7 +148,13 @@ async function loadOrders() {
             throw new Error(`Lỗi HTTP: ${response.status}`);
         }
         
-        orders = await response.json();
+        const apiOrders = await response.json();
+        
+        // Nếu trước đó có dữ liệu mẫu thì xóa nó
+        if (orders.length > 0 && orders.some(o => o.idOrder >= 200 && o.status === 'processing' && o.totalAmount === 40000)) {
+            orders = [];
+        }
+        orders = apiOrders;
         
         // Sort orders by date, newest first
         orders.sort((a, b) => new Date(b.orderTime) - new Date(a.orderTime));
@@ -160,75 +166,26 @@ async function loadOrders() {
         updateOrderStats();
         
         showLoader(false);
+        // Xóa tất cả notification lỗi/cảnh báo trước đó (nếu có)
+        const notificationContainer = document.getElementById('notificationContainer');
+        if (notificationContainer) {
+            notificationContainer.querySelectorAll('.notification.error, .notification.warning').forEach(n => n.remove());
+        }
         showNotification('Đã tải đơn hàng thành công', 'success');
     } catch (error) {
         console.error('Lỗi khi tải đơn hàng:', error);
         showLoader(false);
-        showNotification('Không thể tải đơn hàng: ' + error.message, 'error');
-        
-        // For demonstration, create sample data if API is not available
+        // Không showNotification lỗi nữa, chỉ dùng dữ liệu mẫu
         createSampleOrders();
     }
 }
 
 // Create sample orders for demonstration when API is not available
 function createSampleOrders() {
-    orders = [
-        {
-            idOrder: 204,
-            orderTime: new Date(2023, 5, 5, 19, 19).toISOString(),
-            status: 'processing',
-            totalAmount: 40000,
-            note: '',
-            orderDetails: [
-                {
-                    product: {
-                        id: 1,
-                        productName: 'Latte',
-                        price: 40000,
-                        description: 'Espresso với sữa'
-                    },
-                    quantity: 1,
-                    unitPrice: 40000
-                }
-            ],
-            table: null
-        },
-        {
-            idOrder: 203,
-            orderTime: new Date(2023, 5, 5, 19, 19).toISOString(),
-            status: 'processing',
-            totalAmount: 35000,
-            note: '',
-            orderDetails: [
-                {
-                    product: {
-                        id: 2,
-                        productName: 'Trà đào',
-                        price: 35000,
-                        description: 'Trà đào thanh mát'
-                    },
-                    quantity: 1,
-                    unitPrice: 35000
-                }
-            ],
-            table: {
-                id: 3,
-                tableNumber: '3',
-                capacity: 4,
-                location: 'Ground',
-                status: 'occupied'
-            }
-        }
-    ];
-    
-    // Update filtered orders
+    orders = [];
     filterOrders();
-    
-    // Update order statistics
     updateOrderStats();
-    
-    showNotification('Đang sử dụng dữ liệu mẫu do không kết nối được API', 'warning');
+    showNotification('Không thể kết nối đến API. Hiện không có dữ liệu đơn hàng.', 'warning');
 }
 
 // Filter orders based on search, status, and date
@@ -900,9 +857,22 @@ async function saveOrderChanges(orderId, orderItems) {
         
         // Hide modal
         const editOrderModal = document.getElementById('editOrderModal');
-        const modal = bootstrap.Modal.getInstance(editOrderModal);
-        if (modal) {
-            modal.hide();
+        let closed = false;
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            const modal = bootstrap.Modal.getInstance(editOrderModal);
+            if (modal) {
+                modal.hide();
+                closed = true;
+            }
+        }
+        if (!closed) {
+            // Fallback: ẩn modal bằng CSS
+            editOrderModal.style.display = 'none';
+            editOrderModal.classList.remove('show');
+            document.body.classList.remove('modal-open');
+            // Xóa backdrop nếu có
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) backdrop.remove();
         }
         
         showNotification('Đơn hàng đã được cập nhật thành công', 'success');
@@ -935,9 +905,22 @@ async function saveOrderChanges(orderId, orderItems) {
             
             // Hide modal
             const editOrderModal = document.getElementById('editOrderModal');
-            const modal = bootstrap.Modal.getInstance(editOrderModal);
-            if (modal) {
-                modal.hide();
+            let closed = false;
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                const modal = bootstrap.Modal.getInstance(editOrderModal);
+                if (modal) {
+                    modal.hide();
+                    closed = true;
+                }
+            }
+            if (!closed) {
+                // Fallback: ẩn modal bằng CSS
+                editOrderModal.style.display = 'none';
+                editOrderModal.classList.remove('show');
+                document.body.classList.remove('modal-open');
+                // Xóa backdrop nếu có
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) backdrop.remove();
             }
             
             showNotification('Đơn hàng đã được cập nhật (chế độ demo)', 'warning');

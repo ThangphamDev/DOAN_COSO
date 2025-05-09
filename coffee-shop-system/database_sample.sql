@@ -61,9 +61,9 @@ CREATE TABLE IF NOT EXISTS `cafeorder` (
   CONSTRAINT `FK2gdg8wvg8gldsn3wx8tbdbg2i` FOREIGN KEY (`ID_Account`) REFERENCES `account` (`ID_Account`),
   CONSTRAINT `FKa7eja5u55lbcvb02yrydak3ct` FOREIGN KEY (`ID_Promotion`) REFERENCES `promotion` (`ID_Promotion`),
   CONSTRAINT `FKsa9rioc5l2lvagl09sonoqx1a` FOREIGN KEY (`ID_Table`) REFERENCES `cafetable` (`ID_Table`)
-) ENGINE=InnoDB AUTO_INCREMENT=244 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=256 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Dumping data for table coffee_t2k.cafeorder: ~48 rows (approximately)
+-- Dumping data for table coffee_t2k.cafeorder: ~61 rows (approximately)
 INSERT INTO `cafeorder` (`ID_Order`, `ID_Table`, `Quantity`, `order_time`, `total_amount`, `note`, `ID_Account`, `ID_Promotion`, `status`) VALUES
 	(189, 4, NULL, '2025-05-02 21:39:15.015000', 210000.00, NULL, NULL, NULL, 'processing'),
 	(190, 4, NULL, '2025-05-02 21:39:18.927000', 210000.00, '', NULL, NULL, 'processing'),
@@ -114,10 +114,22 @@ INSERT INTO `cafeorder` (`ID_Order`, `ID_Table`, `Quantity`, `order_time`, `tota
 	(237, NULL, NULL, '2025-05-07 19:04:30.685000', 318750.00, '', NULL, NULL, 'processing'),
 	(238, 10, NULL, '2025-05-07 19:04:58.079000', 243750.00, '', NULL, NULL, 'processing'),
 	(239, NULL, NULL, '2025-05-07 19:21:45.121000', 170000.00, '', NULL, NULL, 'processing'),
-	(240, 3, NULL, '2025-05-07 19:45:45.998000', 168750.00, '', NULL, NULL, 'processing'),
-	(241, 1, NULL, '2025-05-07 19:52:05.033000', 206250.00, '', NULL, NULL, 'processing'),
-	(242, 1, NULL, '2025-05-07 19:57:00.226000', 100000.00, '', NULL, NULL, 'processing'),
-	(243, 2, NULL, '2025-05-07 20:40:59.689000', 27200.00, '', NULL, NULL, 'processing');
+	(240, 3, NULL, '2025-05-07 19:45:45.998000', 225000.00, '', NULL, NULL, 'completed'),
+	(241, 1, NULL, '2025-05-07 19:52:05.033000', 275000.00, '', NULL, NULL, 'cancelled'),
+	(242, 1, NULL, '2025-05-07 19:57:00.226000', 100000.00, '', NULL, NULL, 'completed'),
+	(243, 2, NULL, '2025-05-07 20:40:59.689000', 156000.00, '', NULL, NULL, 'completed'),
+	(244, NULL, NULL, '2025-05-07 23:13:26.912000', 50000.00, '', NULL, NULL, 'completed'),
+	(245, 1, NULL, '2025-05-10 02:51:47.153000', 210000.00, '', NULL, NULL, 'completed'),
+	(246, 1, NULL, '2025-05-10 03:07:21.806000', 210000.00, '', NULL, NULL, 'processing'),
+	(247, 1, NULL, '2025-05-10 03:08:57.327000', 140000.00, '', NULL, NULL, 'completed'),
+	(248, 1, NULL, '2025-05-10 03:14:49.312000', 210000.00, '', NULL, NULL, 'completed'),
+	(249, 1, NULL, '2025-05-10 03:22:39.798000', 175000.00, '', NULL, NULL, 'completed'),
+	(250, 2, NULL, '2025-05-10 03:27:00.809000', 160000.00, '', NULL, NULL, 'processing'),
+	(251, 3, NULL, '2025-05-10 03:31:33.780000', 140000.00, '', NULL, NULL, 'completed'),
+	(252, 1, NULL, '2025-05-10 03:41:24.213000', 404000.00, '', NULL, NULL, 'processing'),
+	(253, 3, NULL, '2025-05-10 03:47:00.667000', 220000.00, '', NULL, NULL, 'processing'),
+	(254, 2, NULL, '2025-05-10 03:47:15.254000', 150000.00, '', NULL, NULL, 'processing'),
+	(255, NULL, NULL, '2025-05-10 03:54:23.675000', 185000.00, '', NULL, NULL, 'processing');
 
 -- Dumping structure for table coffee_t2k.cafetable
 CREATE TABLE IF NOT EXISTS `cafetable` (
@@ -127,21 +139,22 @@ CREATE TABLE IF NOT EXISTS `cafetable` (
   `location` varchar(255) DEFAULT NULL,
   `table_number` int DEFAULT NULL,
   PRIMARY KEY (`ID_Table`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Dumping data for table coffee_t2k.cafetable: ~10 rows (approximately)
+-- Dumping data for table coffee_t2k.cafetable: ~12 rows (approximately)
 INSERT INTO `cafetable` (`ID_Table`, `status`, `Capacity`, `location`, `table_number`) VALUES
-	(1, 'Available', 3, 'First Floor', 1),
+	(1, 'Occupied', 3, 'First Floor', 1),
 	(2, 'Available', 2, 'First Floor', 2),
 	(3, 'Available', 4, 'Ground Floor', 3),
-	(4, 'Reserved', 4, 'Ground Floor', 4),
-	(5, 'Occupied', 7, 'Ground Floor', 5),
-	(6, 'Occupied', 2, 'First Floor', 6),
+	(4, 'Available', 4, 'Ground Floor', 4),
+	(5, 'Available', 7, 'Ground Floor', 5),
+	(6, 'Available', 2, 'First Floor', 6),
 	(7, 'Available', 4, 'First Floor', 7),
-	(8, 'Cleaning', 8, 'First Floor', 8),
-	(9, 'Occupied', 2, 'Outdoor', 9),
+	(8, 'Available', 8, 'First Floor', 8),
+	(9, 'Available', 2, 'Outdoor', 9),
 	(10, 'Available', 4, 'Outdoor', 10),
-	(11, 'Available', 3, 'First Floor', 11);
+	(11, 'Available', 3, 'First Floor', 11),
+	(12, 'Available', 6, 'Ground Floor', 12);
 
 -- Dumping structure for table coffee_t2k.category
 CREATE TABLE IF NOT EXISTS `category` (
@@ -174,12 +187,18 @@ CREATE TABLE IF NOT EXISTS `order_detail` (
   CONSTRAINT `order_detail_ibfk_2` FOREIGN KEY (`ID_Order`) REFERENCES `cafeorder` (`ID_Order`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Dumping data for table coffee_t2k.order_detail: ~94 rows (approximately)
+-- Dumping data for table coffee_t2k.order_detail: ~116 rows (approximately)
 INSERT INTO `order_detail` (`ID_Product`, `ID_Order`, `Quantity`, `unit_price`, `subtotal`) VALUES
 	(1, 198, 5, 25000.00, NULL),
 	(1, 200, 2, 25000.00, NULL),
 	(1, 211, 2, 35000.00, NULL),
 	(1, 241, 1, 35000.00, NULL),
+	(1, 244, 1, 50000.00, NULL),
+	(1, 245, 2, 35000.00, NULL),
+	(1, 247, 2, 35000.00, NULL),
+	(1, 249, 5, 35000.00, NULL),
+	(1, 252, 2, 35000.00, NULL),
+	(1, 253, 2, 35000.00, NULL),
 	(2, 189, 2, 35000.00, NULL),
 	(2, 191, 1, 35000.00, NULL),
 	(2, 197, 1, 35000.00, NULL),
@@ -199,6 +218,13 @@ INSERT INTO `order_detail` (`ID_Product`, `ID_Order`, `Quantity`, `unit_price`, 
 	(2, 238, 3, 35000.00, NULL),
 	(2, 240, 3, 35000.00, NULL),
 	(2, 241, 1, 35000.00, NULL),
+	(2, 245, 4, 35000.00, NULL),
+	(2, 247, 2, 35000.00, NULL),
+	(2, 248, 2, 35000.00, NULL),
+	(2, 252, 4, 35000.00, NULL),
+	(2, 253, 2, 35000.00, NULL),
+	(2, 254, 2, 35000.00, NULL),
+	(2, 255, 3, 35000.00, NULL),
 	(3, 189, 2, 40000.00, NULL),
 	(3, 197, 1, 40000.00, NULL),
 	(3, 199, 2, 40000.00, NULL),
@@ -225,6 +251,13 @@ INSERT INTO `order_detail` (`ID_Product`, `ID_Order`, `Quantity`, `unit_price`, 
 	(3, 239, 2, 40000.00, NULL),
 	(3, 240, 3, 40000.00, NULL),
 	(3, 242, 1, 40000.00, NULL),
+	(3, 246, 3, 40000.00, NULL),
+	(3, 248, 2, 40000.00, NULL),
+	(3, 250, 4, 40000.00, NULL),
+	(3, 252, 2, 40000.00, NULL),
+	(3, 253, 2, 40000.00, NULL),
+	(3, 254, 2, 40000.00, NULL),
+	(3, 255, 2, 40000.00, NULL),
 	(4, 189, 2, 30000.00, NULL),
 	(4, 199, 3, 30000.00, NULL),
 	(4, 205, 2, 30000.00, NULL),
@@ -239,9 +272,12 @@ INSERT INTO `order_detail` (`ID_Product`, `ID_Order`, `Quantity`, `unit_price`, 
 	(4, 238, 2, 30000.00, NULL),
 	(4, 239, 3, 30000.00, NULL),
 	(4, 242, 2, 30000.00, NULL),
+	(4, 246, 3, 30000.00, NULL),
+	(4, 248, 2, 30000.00, NULL),
 	(5, 232, 4, 45000.00, NULL),
 	(5, 233, 4, 45000.00, NULL),
 	(5, 234, 4, 45000.00, NULL),
+	(5, 251, 2, 45000.00, NULL),
 	(6, 193, 1, 25000.00, NULL),
 	(6, 222, 3, 25000.00, NULL),
 	(6, 223, 3, 25000.00, NULL),
@@ -251,6 +287,7 @@ INSERT INTO `order_detail` (`ID_Product`, `ID_Order`, `Quantity`, `unit_price`, 
 	(6, 234, 4, 25000.00, NULL),
 	(6, 237, 8, 25000.00, NULL),
 	(6, 241, 3, 25000.00, NULL),
+	(6, 251, 2, 25000.00, NULL),
 	(7, 193, 1, 35000.00, NULL),
 	(7, 203, 1, 35000.00, NULL),
 	(7, 222, 1, 35000.00, NULL),
@@ -268,7 +305,9 @@ INSERT INTO `order_detail` (`ID_Product`, `ID_Order`, `Quantity`, `unit_price`, 
 	(10, 231, 3, 25000.00, NULL),
 	(10, 235, 3, 25000.00, NULL),
 	(10, 236, 3, 25000.00, NULL),
+	(10, 252, 2, 25000.00, NULL),
 	(11, 243, 3, 52000.00, NULL),
+	(11, 252, 2, 32000.00, NULL),
 	(14, 235, 2, 32000.00, NULL),
 	(14, 236, 2, 32000.00, NULL),
 	(17, 235, 2, 45000.00, NULL),
@@ -297,6 +336,24 @@ CREATE TABLE IF NOT EXISTS `order_item_variant` (
 
 -- Dumping data for table coffee_t2k.order_item_variant: ~0 rows (approximately)
 
+-- Dumping structure for table coffee_t2k.order_variants
+CREATE TABLE IF NOT EXISTS `order_variants` (
+  `id_order_variant` int NOT NULL AUTO_INCREMENT,
+  `additional_price` double DEFAULT NULL,
+  `ice_percent` int DEFAULT NULL,
+  `size` varchar(255) DEFAULT NULL,
+  `sugar_percent` int DEFAULT NULL,
+  `toppings` varchar(255) DEFAULT NULL,
+  `variant_note` varchar(255) DEFAULT NULL,
+  `id_order` int DEFAULT NULL,
+  `id_product` int DEFAULT NULL,
+  PRIMARY KEY (`id_order_variant`),
+  KEY `FK7tw03rm07ow5ylxihbw0e5o6h` (`id_order`,`id_product`),
+  CONSTRAINT `FK7tw03rm07ow5ylxihbw0e5o6h` FOREIGN KEY (`id_order`, `id_product`) REFERENCES `order_detail` (`ID_Order`, `ID_Product`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Dumping data for table coffee_t2k.order_variants: ~0 rows (approximately)
+
 -- Dumping structure for table coffee_t2k.payment
 CREATE TABLE IF NOT EXISTS `payment` (
   `ID_Payment` int NOT NULL AUTO_INCREMENT,
@@ -309,9 +366,9 @@ CREATE TABLE IF NOT EXISTS `payment` (
   KEY `ID_Order` (`ID_Order`),
   CONSTRAINT `FKk9qpkedyh8x8diq42o0qj48y8` FOREIGN KEY (`ID_Order`) REFERENCES `cafeorder` (`ID_Order`),
   CONSTRAINT `payment_ibfk_1` FOREIGN KEY (`ID_Order`) REFERENCES `cafeorder` (`ID_Order`)
-) ENGINE=InnoDB AUTO_INCREMENT=44 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Dumping data for table coffee_t2k.payment: ~14 rows (approximately)
+-- Dumping data for table coffee_t2k.payment: ~28 rows (approximately)
 INSERT INTO `payment` (`ID_Payment`, `ID_Order`, `create_at`, `payment_method`, `payment_status`) VALUES
 	(28, 190, '2025-05-02 21:39:18.927000', 'transfer', 'completed'),
 	(29, 192, '2025-05-02 21:41:57.193000', 'cash', 'completed'),
@@ -328,7 +385,19 @@ INSERT INTO `payment` (`ID_Payment`, `ID_Order`, `create_at`, `payment_method`, 
 	(40, 240, '2025-05-07 19:45:45.999000', 'transfer', 'pending'),
 	(41, 241, '2025-05-07 19:52:05.036000', 'transfer', 'pending'),
 	(42, 242, '2025-05-07 19:57:00.228000', 'cash', 'pending'),
-	(43, 243, '2025-05-07 20:40:59.689000', 'cash', 'pending');
+	(43, 243, '2025-05-07 20:40:59.689000', 'cash', 'pending'),
+	(44, 244, '2025-05-07 23:13:26.912000', 'cash', 'pending'),
+	(45, 245, '2025-05-10 02:51:47.155000', 'cash', 'pending'),
+	(46, 246, '2025-05-10 03:07:21.807000', 'cash', 'pending'),
+	(47, 247, '2025-05-10 03:08:57.328000', 'cash', 'pending'),
+	(48, 248, '2025-05-10 03:14:49.312000', 'cash', 'completed'),
+	(49, 249, '2025-05-10 03:22:39.798000', 'transfer', 'completed'),
+	(50, 250, '2025-05-10 03:27:00.810000', 'cash', 'completed'),
+	(51, 251, '2025-05-10 03:31:33.780000', 'cash', 'completed'),
+	(52, 252, '2025-05-10 03:41:24.215000', 'transfer', 'completed'),
+	(53, 253, '2025-05-10 03:47:00.668000', 'transfer', 'completed'),
+	(54, 254, '2025-05-10 03:47:15.255000', 'cash', 'completed'),
+	(55, 255, '2025-05-10 03:54:23.675000', 'transfer', 'completed');
 
 -- Dumping structure for table coffee_t2k.product
 CREATE TABLE IF NOT EXISTS `product` (
@@ -370,6 +439,23 @@ INSERT INTO `product` (`ID_Product`, `product_name`, `price`, `description`, `im
 	(24, 'Sinh tố chuối', 35000, 'Sinh tố chuối mát lành', '24_875193c9-6e3d-4924-bfa0-0c118480ee6e.jfif', 1, 5),
 	(30, 'Frosty Caramel Arabica', 30000, '', '30_9a317ad8-000e-4750-92f9-2c3103638ea9.jpg', 1, 4),
 	(31, 'Frosty Trà Xanh', 32000, '', '31_54133549-7a10-4756-8672-0e0ae02ba9e7.jpg', 1, 4);
+
+-- Dumping structure for table coffee_t2k.product_variants
+CREATE TABLE IF NOT EXISTS `product_variants` (
+  `id_variant` int NOT NULL AUTO_INCREMENT,
+  `additional_price` double DEFAULT NULL,
+  `display_order` int DEFAULT NULL,
+  `is_default` bit(1) DEFAULT NULL,
+  `variant_name` varchar(255) NOT NULL,
+  `variant_type` varchar(255) NOT NULL,
+  `variant_value` varchar(255) NOT NULL,
+  `id_category` int DEFAULT NULL,
+  PRIMARY KEY (`id_variant`),
+  KEY `FKe56lper054yacdqpbcuchh7v0` (`id_category`),
+  CONSTRAINT `FKe56lper054yacdqpbcuchh7v0` FOREIGN KEY (`id_category`) REFERENCES `category` (`ID_Category`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Dumping data for table coffee_t2k.product_variants: ~0 rows (approximately)
 
 -- Dumping structure for table coffee_t2k.promotion
 CREATE TABLE IF NOT EXISTS `promotion` (

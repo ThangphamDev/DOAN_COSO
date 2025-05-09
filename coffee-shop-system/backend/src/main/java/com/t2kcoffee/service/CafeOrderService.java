@@ -62,23 +62,26 @@ public class CafeOrderService {
 
     @Transactional
     public CafeOrder createOrder(CafeOrder order) {
-        System.out.println("DEBUG - createOrder service called");
-        
+        // Nếu có payment thì mặc định paymentStatus là 'completed'
+        if (order.getPayment() != null) {
+            order.getPayment().setPaymentStatus("completed");
+        }
         // Set order time to current time if not set
         if (order.getOrderTime() == null) {
             order.setOrderTime(new Date());
         }
-        
         // Clear order details to avoid session conflicts
         if (order.getOrderDetails() != null) {
             order.setOrderDetails(new ArrayList<>());
         }
-        
-        // Save the order to get an ID
-        System.out.println("DEBUG - Saving order without details");
         CafeOrder savedOrder = cafeOrderRepository.save(order);
-        System.out.println("DEBUG - Order saved with ID: " + savedOrder.getIdOrder());
-        
+
+        // Cập nhật trạng thái bàn thành Occupied nếu có bàn
+        if (savedOrder.getTable() != null) {
+            Integer tableId = savedOrder.getTable().getIdTable();
+            cafeTableRepository.updateTableStatus(tableId, "Occupied");
+        }
+
         return savedOrder;
     }
 
@@ -87,6 +90,11 @@ public class CafeOrderService {
         Optional<CafeOrder> orderOpt = cafeOrderRepository.findById(id);
         if (orderOpt.isPresent()) {
             CafeOrder existingOrder = orderOpt.get();
+            
+            // Cập nhật trạng thái đơn hàng
+            if (orderDetails.getStatus() != null) {
+                existingOrder.setStatus(orderDetails.getStatus());
+            }
             
             // Update fields that can be changed after order creation
             if (orderDetails.getTable() != null) {
@@ -209,6 +217,15 @@ public class CafeOrderService {
         if(orderOpt.isPresent()) {
             CafeOrder order = orderOpt.get();
             order.setStatus(status);
+
+            // Nếu hủy đơn và có bàn, trả bàn về trạng thái Available
+            if (order.getTable() != null && 
+                ("cancelled".equalsIgnoreCase(status) || "canceled".equalsIgnoreCase(status))) {
+                CafeTable table = order.getTable();
+                table.setStatus("Available");
+                cafeTableRepository.save(table);
+            }
+
             return cafeOrderRepository.save(order);
         }
         return null;
@@ -223,24 +240,28 @@ public class CafeOrderService {
         
         CafeOrder order = orderOpt.get();
         
+        // Luôn đặt trạng thái thanh toán là 'completed' khi xác nhận thanh toán
+        String finalPaymentStatus = "completed";
+        
         // Kiểm tra xem đơn hàng đã có payment chưa
         if (order.getPayment() == null) {
             // Tạo mới payment
             Payment payment = new Payment();
             payment.setOrder(order);
             payment.setPaymentMethod(paymentMethod);
-            payment.setPaymentStatus(paymentStatus);
+            payment.setPaymentStatus(finalPaymentStatus);
             payment.setCreateAt(new Date());
-            
             // Lưu payment vào order
             order.setPayment(payment);
         } else {
             // Cập nhật payment hiện có
             Payment payment = order.getPayment();
             payment.setPaymentMethod(paymentMethod);
-            payment.setPaymentStatus(paymentStatus);
+            payment.setPaymentStatus(finalPaymentStatus);
             // Không cập nhật createAt vì đã có
         }
+        
+        // Không cập nhật trạng thái bàn ở đây nữa
         
         // Lưu đơn hàng với thông tin thanh toán mới
         return cafeOrderRepository.save(order);

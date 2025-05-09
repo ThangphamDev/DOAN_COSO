@@ -95,44 +95,27 @@ async function fetchAndDisplayOrder(orderId) {
         showNoOrderMessage();
         return;
     }
-    
     try {
         const numericOrderId = typeof orderId === "string" && orderId.startsWith("HD") ? parseInt(orderId.replace("HD", ""), 10) : parseInt(orderId, 10);
-        console.log("Đang gọi API với orderId:", numericOrderId);
-        
-        // Thêm timeout để tránh đợi quá lâu nếu API không phản hồi
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 giây timeout
-        
-        const order = await Promise.race([
-            window.CafeAPI.getOrderById(numericOrderId),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout: Yêu cầu đã quá thời gian chờ")), 10000))
-        ]);
-        
-        clearTimeout(timeoutId);
-        
-        console.log("Dữ liệu đơn hàng từ API:", JSON.stringify(order, null, 2));
-        
-        // Nếu order null hoặc không có dữ liệu
-        if (!order || Object.keys(order).length === 0) {
-            throw new Error("Không tìm thấy đơn hàng");
+        // Lấy đơn hàng hiện tại
+        const order = await window.CafeAPI.getOrderById(numericOrderId);
+        // Lấy danh sách payment
+        const payments = await fetch("http://localhost:8081/api/payments").then(res => res.json());
+        // Tìm payment cho đơn hàng này
+        const payment = payments.find(p => p.order && p.order.idOrder === order.idOrder);
+        if (payment) {
+            order.payment = {
+                paymentMethod: payment.paymentMethod,
+                paymentStatus: payment.paymentStatus
+            };
         }
-        
-        // Kiểm tra cấu trúc dữ liệu trả về
-        console.log("Table info:", order.table);
-        console.log("Payment info:", order.payment);
-        
         displayCurrentOrder(order);
-        
         if (order.status === "processing") {
             startOrderTimer(order.estimatedTime || 15);
         }
     } catch (error) {
         console.error("Chi tiết lỗi khi lấy đơn hàng:", error);
-        
-        // Hiển thị thông báo lỗi phù hợp với người dùng
         let errorMessage = "Không thể lấy thông tin đơn hàng";
-        
         if (error.message.includes("Timeout")) {
             errorMessage = "Máy chủ không phản hồi kịp thời. Vui lòng thử lại sau.";
         } else if (error.message.includes("Failed to fetch")) {
@@ -142,7 +125,6 @@ async function fetchAndDisplayOrder(orderId) {
         } else if (error.status === 404) {
             errorMessage = "Đơn hàng không tồn tại.";
         }
-        
         showErrorMessage(errorMessage);
         showNoOrderMessage();
     }
@@ -198,58 +180,38 @@ async function fetchOrderHistory() {
         showErrorMessage("API không khả dụng");
         return;
     }
-    
     try {
         console.log("Đang lấy lịch sử đơn hàng...");
-        
-        // Thêm timeout để tránh đợi quá lâu
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 giây timeout
-        
-        const orders = await Promise.race([
+        // Lấy cả orders và payments song song
+        const [orders, payments] = await Promise.all([
             window.CafeAPI.getRecentOrders(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout: Yêu cầu đã quá thời gian chờ")), 10000))
+            fetch("http://localhost:8081/api/payments").then(res => res.json())
         ]);
-        
-        clearTimeout(timeoutId);
-        
-        // Ghi log để debug
-        console.log("Lịch sử đơn hàng từ API:", orders ? orders.length : 0, "đơn hàng");
-        console.log("Chi tiết đơn hàng đầu tiên:", orders && orders[0] ? JSON.stringify(orders[0].payment, null, 2) : "Không có đơn hàng");
-        
-        // Kiểm tra nếu dữ liệu trả về không hợp lệ
-        if (!orders || !Array.isArray(orders)) {
-            console.warn("API getRecentOrders trả về dữ liệu không hợp lệ:", orders);
-            displayOrderHistory([]); // Hiển thị danh sách trống
-            return;
-        }
-        
-        // Xử lý lại dữ liệu từng đơn hàng để đảm bảo nhất quán
+        // Gắn payment vào từng order
         const processedOrders = orders.map(order => {
-            try {
-                // Chuyển đổi tất cả các đơn hàng để đảm bảo định dạng nhất quán
-                return window.CafeAPI.convertOrderFromServer(order);
-            } catch (e) {
-                console.error("Lỗi khi xử lý đơn hàng:", e);
-                return null; // Trả về null để lọc bỏ ở bước tiếp theo
+            // Tìm payment có order.idOrder trùng với order.idOrder
+            const payment = payments.find(p => p.order && p.order.idOrder === order.idOrder);
+            if (payment) {
+                order.payment = {
+                    paymentMethod: payment.paymentMethod,
+                    paymentStatus: payment.paymentStatus
+                };
             }
-        }).filter(order => order !== null); // Lọc bỏ các đơn hàng lỗi
-        
+            // Chuyển đổi order sang định dạng frontend
+            return window.CafeAPI && window.CafeAPI.convertOrderFromServer
+                ? window.CafeAPI.convertOrderFromServer(order)
+                : convertOrderFromServer(order);
+        });
         displayOrderHistory(processedOrders);
     } catch (error) {
         console.error("Lỗi khi lấy lịch sử đơn hàng:", error);
-        
-        // Hiển thị thông báo lỗi phù hợp với người dùng
         let errorMessage = "Không thể lấy lịch sử đơn hàng";
-        
-        if (error.message.includes("Timeout")) {
+        if (error.message && error.message.includes("Timeout")) {
             errorMessage = "Máy chủ không phản hồi kịp thời khi lấy lịch sử đơn hàng.";
-        } else if (error.message.includes("Failed to fetch")) {
+        } else if (error.message && error.message.includes("Failed to fetch")) {
             errorMessage = "Không thể kết nối đến máy chủ khi lấy lịch sử đơn hàng.";
         }
-        
         showErrorMessage(errorMessage);
-        // Hiển thị danh sách trống
         displayOrderHistory([]);
     }
 }
@@ -927,12 +889,11 @@ function convertOrderFromServer(serverOrder) {
         if (typeof order.table === 'object') {
             // Sử dụng tableNumber từ đối tượng table
             if (order.table.tableNumber) {
-        order.tableNumber = order.table.tableNumber;
+                order.tableNumber = order.table.tableNumber;
             } else if (order.table.idTable) {
                 // Nếu không có tableNumber, sử dụng idTable
                 order.tableNumber = order.table.idTable;
             }
-            
             // Kiểm tra nếu là đơn takeaway
             if (order.table.tableNumber === 'takeaway' || order.table.idTable === 'takeaway') {
                 order.tableNumber = 'takeaway';
@@ -948,37 +909,15 @@ function convertOrderFromServer(serverOrder) {
         console.log("Status.js - Thông tin payment từ API:", order.payment);
         order.paymentMethod = order.payment.paymentMethod || "cash"; // Mặc định là tiền mặt
         order.paymentStatus = order.payment.paymentStatus || "pending";
-        
-        // Nếu đã thanh toán, cập nhật localStorage
-        if (order.payment.paymentStatus === "completed") {
-            localStorage.setItem("paymentCompleted", "true");
-            localStorage.setItem("paymentMethod", order.payment.paymentMethod || "cash");
-        }
-        
         // Log thông tin thanh toán để debug
         console.log("Status.js - Tìm thấy thông tin thanh toán từ order.payment:", {
             method: order.paymentMethod,
             status: order.paymentStatus
         });
     } else {
-        // Nếu không có thông tin thanh toán từ API, kiểm tra thông tin từ localStorage
-        const localPaymentCompleted = localStorage.getItem("paymentCompleted");
-        const localPaymentMethod = localStorage.getItem("paymentMethod");
-        
-        if (localPaymentCompleted === "true" && localPaymentMethod) {
-            // Sử dụng thông tin từ localStorage
-            order.paymentMethod = localPaymentMethod;
-            order.paymentStatus = "completed";
-            
-            console.log("Status.js - Sử dụng thông tin thanh toán từ localStorage:", {
-                method: order.paymentMethod,
-                status: order.paymentStatus
-            });
-        } else {
-            // Mặc định thanh toán tiền mặt nếu không có thông tin
-            order.paymentMethod = order.paymentMethod || "cash";
-            order.paymentStatus = order.paymentStatus || "pending";
-        }
+        // KHÔNG lấy paymentMethod từ localStorage nữa, chỉ lấy từ object đơn hàng
+        order.paymentMethod = order.paymentMethod || "cash";
+        order.paymentStatus = order.paymentStatus || "pending";
     }
     
     // Map items từ orderDetails
@@ -1107,6 +1046,33 @@ function createLocalOrder(order) {
     localStorage.setItem("lastOrderId", order.id);
     
     return order;
+}
+
+// Hàm cập nhật trạng thái đơn hàng và phương thức thanh toán
+async function updateOrderStatusAndPayment(orderId, newStatus, newPaymentMethod) {
+    try {
+        // 1. Cập nhật trạng thái đơn hàng
+        await fetch(`${API_BASE_URL}/${orderId}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+        });
+        // 2. Nếu có phương thức thanh toán mới, cập nhật paymentMethod
+        if (newPaymentMethod) {
+            await fetch(`${API_BASE_URL}/${orderId}/payment`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ paymentMethod: newPaymentMethod })
+            });
+        }
+        // Reload lại đơn hàng hoặc giao diện nếu cần
+        if (typeof fetchAndDisplayOrder === 'function') {
+            await fetchAndDisplayOrder(orderId);
+        }
+        showNotification('Cập nhật trạng thái và phương thức thanh toán thành công!', 'success');
+    } catch (error) {
+        showNotification('Lỗi khi cập nhật trạng thái hoặc phương thức thanh toán: ' + error.message, 'error');
+    }
 }
 
 // Hàm cập nhật hiển thị trạng thái đơn hàng

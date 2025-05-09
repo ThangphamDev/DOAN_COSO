@@ -479,9 +479,7 @@
                             <div class="variant-group">
                                 <div class="variant-title">Kích thước</div>
                                 <div class="variant-options size-options" id="sizeOptions">
-                                    <div class="variant-option selected" data-value="S" data-price="0">S</div>
-                                    <div class="variant-option" data-value="M" data-price="5000">M (+5,000 đ)</div>
-                                    <div class="variant-option" data-value="L" data-price="10000">L (+10,000 đ)</div>
+                                    <!-- Kích thước sẽ được tải động -->
                                 </div>
                             </div>
 
@@ -489,11 +487,7 @@
                             <div class="variant-group">
                                 <div class="variant-title">Đá</div>
                                 <div class="variant-options ice-options" id="iceOptions">
-                                    <div class="variant-option selected" data-value="100">100% đá</div>
-                                    <div class="variant-option" data-value="70">70% đá</div>
-                                    <div class="variant-option" data-value="50">50% đá</div>
-                                    <div class="variant-option" data-value="30">30% đá</div>
-                                    <div class="variant-option" data-value="0">Không đá</div>
+                                    <!-- Tùy chọn đá sẽ được tải động -->
                                 </div>
                             </div>
 
@@ -501,11 +495,7 @@
                             <div class="variant-group">
                                 <div class="variant-title">Đường</div>
                                 <div class="variant-options sugar-options" id="sugarOptions">
-                                    <div class="variant-option selected" data-value="100">100% đường</div>
-                                    <div class="variant-option" data-value="70">70% đường</div>
-                                    <div class="variant-option" data-value="50">50% đường</div>
-                                    <div class="variant-option" data-value="30">30% đường</div>
-                                    <div class="variant-option" data-value="0">Không đường</div>
+                                    <!-- Tùy chọn đường sẽ được tải động -->
                                 </div>
                             </div>
 
@@ -513,18 +503,7 @@
                             <div class="variant-group">
                                 <div class="variant-title">Topping</div>
                                 <div class="variant-options topping-options" id="toppingOptions">
-                                    <div class="variant-option" data-value="tranchau" data-price="10000">
-                                        <span>Trân châu đen</span>
-                                        <span class="variant-price">+10,000 đ</span>
-                                    </div>
-                                    <div class="variant-option" data-value="thachcafe" data-price="10000">
-                                        <span>Thạch cà phê</span>
-                                        <span class="variant-price">+10,000 đ</span>
-                                    </div>
-                                    <div class="variant-option" data-value="flan" data-price="15000">
-                                        <span>Bánh flan</span>
-                                        <span class="variant-price">+15,000 đ</span>
-                                    </div>
+                                    <!-- Tùy chọn topping sẽ được tải động -->
                                 </div>
                             </div>
                         </div>
@@ -604,7 +583,7 @@
             setupActionButtons();
         });
 
-        // Hàm tải thông tin sản phẩm
+        // Tải thông tin sản phẩm
         function loadProductDetails(productId) {
             // Hiển thị trạng thái đang tải
             document.getElementById('productTitle').textContent = 'Đang tải sản phẩm...';
@@ -706,6 +685,9 @@
                         document.getElementById('productMainImage').src = defaultImage;
                     }
 
+                    // Tải các tùy chọn biến thể
+                    loadProductVariants(normalizedProduct.category.idCategory);
+
                     // Lưu thông tin sản phẩm để sử dụng khi thêm vào giỏ hàng - đặt trước khi cập nhật giá
                     window.currentProduct = normalizedProduct;
                     
@@ -730,8 +712,225 @@
                     };
                     
                     window.currentProduct = sampleProduct;
+                    
+                    // Tải các tùy chọn biến thể mặc định
+                    loadDefaultVariants();
+                    
                     updateTotalPrice();
                 });
+        }
+        
+        // Hàm tải các biến thể sản phẩm từ API hoặc cơ sở dữ liệu
+        function loadProductVariants(categoryId) {
+            try {
+                // Tải biến thể sản phẩm từ API
+                fetch(`${API.BASE_URL}${API.VARIANTS}/category/${categoryId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Không thể tải biến thể cho danh mục ${categoryId}: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Dữ liệu biến thể từ API:', data);
+                        // Xử lý dữ liệu biến thể và hiển thị
+                        displayVariants(data);
+                    })
+                    .catch(error => {
+                        console.error('Lỗi khi tải biến thể sản phẩm:', error);
+                        loadDefaultVariants();
+                    });
+            } catch (error) {
+                console.error('Lỗi khi tải biến thể sản phẩm:', error);
+                loadDefaultVariants();
+            }
+        }
+        
+        // Hàm tải các biến thể mặc định nếu không lấy được từ API
+        function loadDefaultVariants() {
+            // Tải tùy chọn kích thước
+            const sizeOptions = document.getElementById('sizeOptions');
+            sizeOptions.innerHTML = `
+                <div class="variant-option selected" data-value="S" data-price="0">S</div>
+                <div class="variant-option" data-value="M" data-price="5000">M (+5,000 đ)</div>
+                <div class="variant-option" data-value="L" data-price="10000">L (+10,000 đ)</div>
+            `;
+            
+            // Tải tùy chọn đá
+            const iceOptions = document.getElementById('iceOptions');
+            iceOptions.innerHTML = `
+                <div class="variant-option selected" data-value="100">100% đá</div>
+                <div class="variant-option" data-value="70">70% đá</div>
+                <div class="variant-option" data-value="50">50% đá</div>
+                <div class="variant-option" data-value="30">30% đá</div>
+                <div class="variant-option" data-value="0">Không đá</div>
+            `;
+            
+            // Tải tùy chọn đường
+            const sugarOptions = document.getElementById('sugarOptions');
+            sugarOptions.innerHTML = `
+                <div class="variant-option selected" data-value="100">100% đường</div>
+                <div class="variant-option" data-value="70">70% đường</div>
+                <div class="variant-option" data-value="50">50% đường</div>
+                <div class="variant-option" data-value="30">30% đường</div>
+                <div class="variant-option" data-value="0">Không đường</div>
+            `;
+            
+            // Tải tùy chọn topping
+            const toppingOptions = document.getElementById('toppingOptions');
+            toppingOptions.innerHTML = `
+                <div class="variant-option" data-value="tranchau" data-price="10000">
+                    <span>Trân châu đen</span>
+                    <span class="variant-price">+10,000 đ</span>
+                </div>
+                <div class="variant-option" data-value="thachcafe" data-price="10000">
+                    <span>Thạch cà phê</span>
+                    <span class="variant-price">+10,000 đ</span>
+                </div>
+                <div class="variant-option" data-value="flan" data-price="15000">
+                    <span>Bánh flan</span>
+                    <span class="variant-price">+15,000 đ</span>
+                </div>
+            `;
+            
+            // Thiết lập lại sự kiện cho các tùy chọn biến thể
+            setupVariantSelectors();
+        }
+        
+        // Hiển thị các biến thể dựa trên dữ liệu API
+        function displayVariants(variantData) {
+            if (!variantData) {
+                loadDefaultVariants();
+                return;
+            }
+            
+            try {
+                // Hiển thị tùy chọn kích thước
+                if (variantData.sizes && variantData.sizes.length > 0) {
+                    const sizeOptions = document.getElementById('sizeOptions');
+                    sizeOptions.innerHTML = '';
+                    
+                    variantData.sizes.forEach((size, index) => {
+                        const sizeElement = document.createElement('div');
+                        sizeElement.className = 'variant-option' + (index === 0 ? ' selected' : '');
+                        sizeElement.setAttribute('data-value', size.value);
+                        sizeElement.setAttribute('data-price', size.price || 0);
+                        
+                        if (size.price > 0) {
+                            sizeElement.textContent = `${size.name} (+${formatPrice(size.price)})`;
+                        } else {
+                            sizeElement.textContent = size.name;
+                        }
+                        
+                        sizeOptions.appendChild(sizeElement);
+                    });
+                } else {
+                    // Tải tùy chọn kích thước mặc định nếu không có dữ liệu
+                    const sizeOptions = document.getElementById('sizeOptions');
+                    sizeOptions.innerHTML = `
+                        <div class="variant-option selected" data-value="S" data-price="0">S</div>
+                        <div class="variant-option" data-value="M" data-price="5000">M (+5,000 đ)</div>
+                        <div class="variant-option" data-value="L" data-price="10000">L (+10,000 đ)</div>
+                    `;
+                }
+                
+                // Hiển thị tùy chọn đá
+                if (variantData.ice && variantData.ice.length > 0) {
+                    const iceOptions = document.getElementById('iceOptions');
+                    iceOptions.innerHTML = '';
+                    
+                    variantData.ice.forEach((ice, index) => {
+                        const iceElement = document.createElement('div');
+                        iceElement.className = 'variant-option' + (index === 0 ? ' selected' : '');
+                        iceElement.setAttribute('data-value', ice.value);
+                        iceElement.textContent = ice.name;
+                        
+                        iceOptions.appendChild(iceElement);
+                    });
+                } else {
+                    // Tải tùy chọn đá mặc định nếu không có dữ liệu
+                    const iceOptions = document.getElementById('iceOptions');
+                    iceOptions.innerHTML = `
+                        <div class="variant-option selected" data-value="100">100% đá</div>
+                        <div class="variant-option" data-value="70">70% đá</div>
+                        <div class="variant-option" data-value="50">50% đá</div>
+                        <div class="variant-option" data-value="30">30% đá</div>
+                        <div class="variant-option" data-value="0">Không đá</div>
+                    `;
+                }
+                
+                // Hiển thị tùy chọn đường
+                if (variantData.sugar && variantData.sugar.length > 0) {
+                    const sugarOptions = document.getElementById('sugarOptions');
+                    sugarOptions.innerHTML = '';
+                    
+                    variantData.sugar.forEach((sugar, index) => {
+                        const sugarElement = document.createElement('div');
+                        sugarElement.className = 'variant-option' + (index === 0 ? ' selected' : '');
+                        sugarElement.setAttribute('data-value', sugar.value);
+                        sugarElement.textContent = sugar.name;
+                        
+                        sugarOptions.appendChild(sugarElement);
+                    });
+                } else {
+                    // Tải tùy chọn đường mặc định nếu không có dữ liệu
+                    const sugarOptions = document.getElementById('sugarOptions');
+                    sugarOptions.innerHTML = `
+                        <div class="variant-option selected" data-value="100">100% đường</div>
+                        <div class="variant-option" data-value="70">70% đường</div>
+                        <div class="variant-option" data-value="50">50% đường</div>
+                        <div class="variant-option" data-value="30">30% đường</div>
+                        <div class="variant-option" data-value="0">Không đường</div>
+                    `;
+                }
+                
+                // Hiển thị tùy chọn topping
+                if (variantData.toppings && variantData.toppings.length > 0) {
+                    const toppingOptions = document.getElementById('toppingOptions');
+                    toppingOptions.innerHTML = '';
+                    
+                    variantData.toppings.forEach(topping => {
+                        const toppingElement = document.createElement('div');
+                        toppingElement.className = 'variant-option';
+                        toppingElement.setAttribute('data-value', topping.value);
+                        toppingElement.setAttribute('data-price', topping.price || 0);
+                        
+                        toppingElement.innerHTML = `
+                            <span>${topping.name}</span>
+                            <span class="variant-price">+${formatPrice(topping.price)}</span>
+                        `;
+                        
+                        toppingOptions.appendChild(toppingElement);
+                    });
+                } else {
+                    // Tải tùy chọn topping mặc định nếu không có dữ liệu
+                    const toppingOptions = document.getElementById('toppingOptions');
+                    toppingOptions.innerHTML = `
+                        <div class="variant-option" data-value="tranchau" data-price="10000">
+                            <span>Trân châu đen</span>
+                            <span class="variant-price">+10,000 đ</span>
+                        </div>
+                        <div class="variant-option" data-value="thachcafe" data-price="10000">
+                            <span>Thạch cà phê</span>
+                            <span class="variant-price">+10,000 đ</span>
+                        </div>
+                        <div class="variant-option" data-value="flan" data-price="15000">
+                            <span>Bánh flan</span>
+                            <span class="variant-price">+15,000 đ</span>
+                        </div>
+                    `;
+                }
+                
+                // Thiết lập lại sự kiện cho các tùy chọn biến thể
+                setupVariantSelectors();
+                
+                // Cập nhật tổng giá ban đầu
+                updateTotalPrice();
+                
+            } catch (error) {
+                console.error('Lỗi khi hiển thị biến thể:', error);
+                loadDefaultVariants();
+            }
         }
 
         // Thiết lập sự kiện cho các lựa chọn biến thể
