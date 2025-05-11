@@ -1,9 +1,8 @@
-// checkout.js
-
-// API endpoint gốc
 const API_BASE_URL = 'http://localhost:8081/api/orders';
 
 document.addEventListener("DOMContentLoaded", function () {
+    // Xóa currentOrder để luôn bắt đầu đơn mới
+    localStorage.removeItem('currentOrder');
     // Kiểm tra xem có đơn hàng hiện tại không
     const currentOrder = JSON.parse(localStorage.getItem("currentOrder"));
     
@@ -302,13 +301,15 @@ async function completeTransferPayment(order) {
             orderId = order.orderId || generateOrderCode();
             fallbackToLocalStorage(order);
         }
+        order.idOrder = orderId;
+        localStorage.setItem("currentOrder", JSON.stringify(order));
         localStorage.setItem("lastOrderId", orderId);
-        localStorage.removeItem("currentOrder");
         localStorage.removeItem("cart");
         localStorage.removeItem("appliedPromotion");
         localStorage.removeItem("selectedTable");
         setTimeout(() => {
-            window.location.href = "status.html";
+            window.location.href = "order-success.html";
+            setTimeout(() => { localStorage.removeItem("currentOrder"); }, 1000);
         }, 2000);
     } catch (error) {
         console.error("Lỗi khi xử lý thanh toán:", error);
@@ -465,8 +466,12 @@ function setupPlaceOrder() {
                 // Xóa bàn đã chọn
                 localStorage.removeItem("selectedTable");
                 
+                // Lưu thông tin đơn hàng vào localStorage
+                order.idOrder = orderId;
+                localStorage.setItem("currentOrder", JSON.stringify(order));
+                
                 // Chuyển hướng đến trang xem tình trạng đơn hàng
-                window.location.href = "status.html";
+                window.location.href = "order-success.html";
             } catch (error) {
                 console.error("Lỗi khi xử lý đặt hàng:", error);
                 alert("Đã xảy ra lỗi khi xử lý đơn hàng. Vui lòng thử lại sau.");
@@ -572,7 +577,7 @@ function showVietQR(order) {
             localStorage.setItem("paymentCompleted", "true");
             localStorage.setItem("paymentMethod", "transfer");
             setTimeout(() => {
-                window.location.href = "status.html";
+                window.location.href = "order-success.html";
             }, 1000);
         } else {
             // Xử lý đơn hàng mới như bình thường
@@ -680,16 +685,16 @@ function displayCurrentOrder(order) {
             // Xử lý thanh toán tiền mặt
             alert("Cảm ơn quý khách! Đơn hàng của bạn sẽ được xử lý và phục vụ ngay.");
             
-            // Lưu thông tin thanh toán và chuyển đến trang status
-            localStorage.removeItem("currentOrder");
+            // Lưu thông tin đơn hàng hiện tại vào localStorage
+            localStorage.setItem("currentOrder", JSON.stringify(order));
             localStorage.setItem("paymentCompleted", "true");
             localStorage.setItem("paymentMethod", "cash");
             
             setTimeout(() => {
-                window.location.href = "status.html";
+                window.location.href = "order-success.html";
             }, 1000);
         }
-        // Với chuyển khoản, người dùng sẽ nhấn "Đã thanh toán xong" trong phần QR
+        
     });
 } 
   
