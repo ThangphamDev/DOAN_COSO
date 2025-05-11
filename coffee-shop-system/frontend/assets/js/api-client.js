@@ -1,9 +1,4 @@
-/**
- * API Client cho T2K Coffee
- * File này cung cấp các hàm gọi API backend
- */
 
-// URL cơ bản của API
 const API_BASE_URL = 'http://localhost:8081/api';
 
 // Token JWT cho authentication

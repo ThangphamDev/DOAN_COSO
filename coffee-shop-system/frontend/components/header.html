@@ -10,30 +10,25 @@
         
         <nav class="main-nav" id="mainNav">
             <ul>
-                <li><a href="/customer/menu.html"><i class="fas fa-utensils"></i> Menu</a></li>
-                <li><a href="/customer/status.html"><i class="fas fa-clock"></i> Order Status</a></li>
-                <li><a href="/customer/about.html"><i class="fas fa-info-circle"></i> About Us</a></li>
-                <li><a href="/customer/contact.html"><i class="fas fa-envelope"></i> Contact</a></li>
+                <li><a href="/customer/menu.html"><i class="fas fa-utensils"></i> Thực đơn</a></li>
+                <li><a href="/customer/promo.html"><i class="fas fa-tag"></i> Khuyễn Mãi</a></li>
+                <li><a href="/customer/about.html"><i class="fas fa-info-circle"></i> Giới thiệu</a></li>
+                <li><a href="/customer/contact.html"><i class="fas fa-envelope"></i> Liên hệ</a></li>
             </ul>
         </nav>
-        
         <div class="user-actions">
-            <div class="cart-icon">
-                <a href="/customer/cart.html"><i class="fas fa-shopping-cart"></i></a>
-                <span class="cart-count" id="cartCount">0</span>
-            </div>
-            <a href="/auth/login.html" class="btn-login">Login</a>
-            <a href="/auth/signup.html" class="btn-signup">Sign Up</a>
+            <a href="/auth/login.html" class="btn-login">Đăng nhập</a>
+            <a href="/auth/signup.html" class="btn-signup">Đăng ký</a>
         </div>
     </div>
 </header>
 
 <script>
-    // Toggle mobile menu
+    // Đóng/mở menu trên thiết bị di động
     document.getElementById('mobileMenuToggle').addEventListener('click', function() {
         document.getElementById('mainNav').classList.toggle('active');
         
-        // Change icon based on state
+        // Đổi icon dựa trên trạng thái
         const icon = this.querySelector('i');
         if (icon.classList.contains('fa-bars')) {
             icon.classList.remove('fa-bars');
@@ -44,12 +39,12 @@
         }
     });
     
-    // Handle active menu item highlighting
+    // Xử lý làm nổi bật mục menu đang chọn
     document.addEventListener('DOMContentLoaded', function() {
-        // Get current page path
+        // Lấy đường dẫn trang hiện tại
         const currentPath = window.location.pathname;
         
-        // Mark active menu item
+        // Đánh dấu mục menu đang chọn
         const navLinks = document.querySelectorAll('.main-nav a');
         navLinks.forEach(link => {
             const linkPath = link.getAttribute('href');
@@ -58,7 +53,7 @@
             }
         });
         
-        // Load cart count from localStorage
+        // Lấy số lượng sản phẩm trong giỏ hàng từ localStorage
         const cart = JSON.parse(localStorage.getItem('cart')) || [];
         let totalItems = 0;
         cart.forEach(item => {

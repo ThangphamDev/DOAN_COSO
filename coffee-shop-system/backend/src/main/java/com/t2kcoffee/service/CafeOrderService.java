@@ -261,9 +261,7 @@ public class CafeOrderService {
             // Không cập nhật createAt vì đã có
         }
         
-        // Không cập nhật trạng thái bàn ở đây nữa
         
-        // Lưu đơn hàng với thông tin thanh toán mới
         return cafeOrderRepository.save(order);
     }
 } 
