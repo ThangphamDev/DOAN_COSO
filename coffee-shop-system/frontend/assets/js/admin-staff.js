@@ -7,11 +7,11 @@
 const DEFAULT_AVATAR = '../assets/images/default-avatar.png';
 
 // Biến toàn cục
-let staffList = [];        // Danh sách nhân viên đã tải
-let originalList = [];     // Bản sao danh sách nhân viên để tìm kiếm
-let currentPage = 1;       // Trang hiện tại
-let itemsPerPage = 10;     // Số lượng mục trên mỗi trang
-let totalPages = 1;        // Tổng số trang
+let staffList = [];        
+let originalList = [];     
+let currentPage = 1;       
+let itemsPerPage = 10;     
+let totalPages = 1;        
 
 // Khởi tạo khi trang tải xong
 document.addEventListener('DOMContentLoaded', function() {
@@ -315,20 +315,13 @@ function updateStaffTable() {
         
         // Xác định ảnh đại diện
         let avatarSrc = DEFAULT_AVATAR;
-        
-        // Kiểm tra xem có ảnh trong localStorage không
-        if (staffImages[staffId]) {
-            avatarSrc = staffImages[staffId];
-            console.log(`Sử dụng ảnh từ localStorage cho nhân viên ID: ${staffId}`);
-        } 
-        // Nếu không có trong localStorage, kiểm tra từ data
-        else if (staff.image) {
-            // Nếu là base64 hoặc URL đầy đủ, sử dụng trực tiếp
+        if (staff.image) {
             if (staff.image.startsWith('data:') || staff.image.startsWith('http')) {
                 avatarSrc = staff.image;
+            } else if (staff.image.startsWith('/uploads/')) {
+                avatarSrc = `http://localhost:8081${staff.image}`;
             } else {
-                // Nếu là path tương đối, thêm domain API
-                avatarSrc = `http://localhost:8081/api/accounts/images/${staff.image}`;
+                avatarSrc = DEFAULT_AVATAR;
             }
         }
         
@@ -655,18 +648,11 @@ async function confirmDeleteStaff() {
 // Xử lý gửi form nhân viên
 async function handleStaffFormSubmit(event) {
     event.preventDefault();
-    
-    // Xóa thông báo lỗi cũ nếu có
     hideFormError();
-    
     showLoader(true, 'Đang lưu thông tin nhân viên...');
-    
     try {
-        // Lấy ID nhân viên (nếu có)
         const staffId = document.getElementById('staffId').value;
         const isNewStaff = !staffId;
-        
-        // Lấy dữ liệu từ form
         const userName = document.getElementById('userName').value.trim();
         const fullName = document.getElementById('fullName').value.trim();
         const passWord = document.getElementById('password').value;
@@ -675,27 +661,17 @@ async function handleStaffFormSubmit(event) {
         const email = document.getElementById('email').value.trim();
         const role = document.getElementById('role').value;
         const status = document.getElementById('staffStatus').value;
-        
-        // Kiểm tra chi tiết các trường bắt buộc
         const errors = [];
-        
         if (!userName) errors.push('Tên đăng nhập không được để trống');
         if (!fullName) errors.push('Họ và tên không được để trống');
         if (isNewStaff && !passWord) errors.push('Mật khẩu không được để trống cho tài khoản mới');
         if (passWord && passWord.length < 6) errors.push('Mật khẩu phải có ít nhất 6 ký tự');
-        
-        // Kiểm tra định dạng email nếu có
         if (email && !validateEmail(email)) errors.push('Email không đúng định dạng');
-        
-        // Nếu có lỗi, hiển thị và dừng
         if (errors.length > 0) {
             showFormError(errors[0]);
-            console.error('Lỗi form:', errors);
             showLoader(false);
             return;
         }
-        
-        // Chuẩn bị dữ liệu
         const staffData = {
             userName,
             fullName,
@@ -703,70 +679,63 @@ async function handleStaffFormSubmit(event) {
             address,
             email,
             isActive: status === 'active',
-            // Chữ cái đầu viết hoa cho role (Admin, Staff, Customer)
             role: role.charAt(0).toUpperCase() + role.slice(1)
         };
-        
-        // Thêm ID nếu đang cập nhật
-        if (staffId) {
-            staffData.idAccount = parseInt(staffId);
-        }
-        
-        // Thêm mật khẩu nếu có
-        if (passWord) {
-            staffData.passWord = passWord;
-        }
-        
-        // Xử lý ảnh đại diện (nếu có)
+        if (staffId) staffData.idAccount = parseInt(staffId);
+        if (passWord) staffData.passWord = passWord;
         const imageInput = document.getElementById('staffImage');
+        let avatarUrl = null;
         if (imageInput && imageInput.files && imageInput.files[0]) {
-            try {
-                console.log('Đang xử lý file ảnh...');
-                const imageBase64 = await convertImageToBase64(imageInput.files[0]);
-                staffData.image = imageBase64;
-                console.log('Đã chuyển đổi ảnh thành base64 thành công');
-            } catch (imageError) {
-                console.error('Lỗi khi chuyển đổi ảnh:', imageError);
-                showFormError('Lỗi khi xử lý ảnh đại diện');
-                showLoader(false);
-                return;
+            // Nếu là cập nhật nhân viên
+            if (staffId) {
+                const formData = new FormData();
+                formData.append('avatar', imageInput.files[0]);
+                const uploadRes = await fetch(`http://localhost:8081/api/accounts/${staffId}/avatar`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const uploadData = await uploadRes.json();
+                if (uploadData.success) {
+                    avatarUrl = uploadData.avatar;
+                    staffData.image = avatarUrl;
+                }
             }
         }
-        
-        console.log(`Đang ${isNewStaff ? 'tạo mới' : 'cập nhật'} nhân viên với dữ liệu:`, staffData);
-        
         let result;
         try {
             if (staffId) {
-                // Cập nhật nhân viên
                 result = await window.ApiClient.Staff.updateStaff(staffId, staffData);
-                console.log('Kết quả cập nhật:', result);
                 showNotification('Cập nhật tài khoản thành công', 'success');
             } else {
-                // Thêm nhân viên mới
                 result = await window.ApiClient.Staff.createStaff(staffData);
-                console.log('Kết quả tạo mới:', result);
+                // Nếu có ảnh, upload sau khi tạo mới để lấy id
+                if (imageInput && imageInput.files && imageInput.files[0] && result && result.idAccount) {
+                    const formData = new FormData();
+                    formData.append('avatar', imageInput.files[0]);
+                    const uploadRes = await fetch(`http://localhost:8081/api/accounts/${result.idAccount}/avatar`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const uploadData = await uploadRes.json();
+                    if (uploadData.success) {
+                        avatarUrl = uploadData.avatar;
+                        // Gọi lại cập nhật để lưu đường dẫn ảnh
+                        await window.ApiClient.Staff.updateStaff(result.idAccount, { image: avatarUrl });
+                    }
+                }
                 showNotification('Tạo tài khoản mới thành công', 'success');
             }
         } catch (apiError) {
-            console.error('Lỗi API:', apiError);
             showFormError(apiError.message || 'Lỗi khi gửi dữ liệu đến server');
             showLoader(false);
             return;
         }
-        
-        // Đóng modal
         closeModal();
-        
-        // Xóa cache API để đảm bảo lấy dữ liệu mới nhất
         if (window.ApiClient && window.ApiClient.clearCache) {
             window.ApiClient.clearCache();
         }
-        
-        // Làm mới danh sách
         await loadStaffData();
     } catch (error) {
-        console.error('Lỗi khi lưu thông tin:', error);
         showFormError(error.message || 'Không thể lưu thông tin. Vui lòng thử lại sau.');
     } finally {
         showLoader(false);

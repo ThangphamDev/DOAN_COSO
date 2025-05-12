@@ -29,9 +29,8 @@ public class Account {
     @Column(name = "address")
     private String address;
 
-    @Lob
     @Column(name = "image")
-    private byte[] image;
+    private String image;
 
     @Column(name = "role")
     private String role;

@@ -130,9 +130,9 @@
         <table class="order-info-table" id="orderInfoTable">
           <!-- Thông tin đơn hàng sẽ được render ở đây -->
         </table>
-        <ul class="order-items-list" id="orderItemsList">
+        <div class="order-items-list" id="orderItemsList">
           <!-- Danh sách món sẽ được render ở đây -->
-        </ul>
+        </div>
         <div class="order-success-actions">
           <a href="menu.html" class="btn-menu"><i class="fas fa-arrow-left"></i> Về trang menu</a>
           <a href="status.html" class="btn-history"><i class="fas fa-list"></i> Xem lịch sử đơn hàng</a>
@@ -171,29 +171,103 @@
       }
       // Hiển thị thông tin đơn hàng
       const infoTable = document.getElementById('orderInfoTable');
+      let priceRows = '';
+      // Nếu có giá gốc và giá sau khuyến mãi
+      if (order.originalTotal && order.originalTotal > order.totalAmount) {
+        priceRows = `
+          <tr><td class="label">Giá gốc:</td><td class="value"><s style='color:#888'>${formatPrice(order.originalTotal)}</s></td></tr>
+          <tr><td class="label">Giá sau khuyến mãi:</td><td class="value" style='color:#e67e22;font-weight:600;'>${formatPrice(order.totalAmount)}</td></tr>
+        `;
+      } else {
+        priceRows = `<tr><td class="label">Tổng tiền:</td><td class="value">${formatPrice(order.totalAmount)}</td></tr>`;
+      }
       infoTable.innerHTML = `
         <tr><td class="label">Mã đơn hàng:</td><td class="value">${order.idOrder || order.id || ''}</td></tr>
         <tr><td class="label">Bàn:</td><td class="value">${order.tableNumber ? (order.tableNumber==='takeaway'?'Mang đi':order.tableNumber) : '---'}</td></tr>
         <tr><td class="label">Thời gian đặt:</td><td class="value">${order.orderTime ? (new Date(order.orderTime)).toLocaleString('vi-VN') : ''}</td></tr>
         <tr><td class="label">Trạng thái:</td><td class="value">${order.status ? (order.status==='completed'?'Hoàn thành':(order.status==='processing'?'Đang xử lý':order.status)) : ''}</td></tr>
-        <tr><td class="label">Tổng tiền:</td><td class="value">${formatPrice(order.totalAmount)}</td></tr>
+        ${priceRows}
         <tr><td class="label">Phương thức thanh toán:</td><td class="value">${order.paymentMethod ? (order.paymentMethod==='transfer'?'Chuyển khoản':'Tiền mặt') : 'Tiền mặt'}</td></tr>
         <tr><td class="label">Ghi chú:</td><td class="value">${order.note || order.notes || ''}</td></tr>
       `;
+      
       // Hiển thị danh sách món
       const itemsList = document.getElementById('orderItemsList');
       let items = order.items || order.orderDetails || [];
       if (items.length === 0 && order.cart) items = order.cart;
+      
+      // Hiển thị danh sách món theo dạng bảng ngay ngắn
+      let html = `
+        <div style="width:100%; margin-bottom:20px;">
+          <div style="font-weight:600; color:#2c3e50; margin-bottom:8px;">Món đã gọi:</div>
+          <table style="width:100%; border-spacing:0; border-collapse:collapse;">
+            <tr style="border-bottom:1px solid #f0f0f0;">
+              <th style="padding:8px 5px; text-align:left; width:50%;">Tên món</th>
+              <th style="padding:8px 5px; text-align:center; width:20%;">Số lượng</th>
+              <th style="padding:8px 5px; text-align:right; width:30%;">Giá tiền</th>
+            </tr>
+      `;
+      
       if (items.length === 0) {
-        itemsList.innerHTML = '<li>Không có sản phẩm nào trong đơn hàng.</li>';
+        html += '<tr><td colspan="3" style="padding:8px 5px; text-align:center;">Không có sản phẩm nào trong đơn hàng.</td></tr>';
       } else {
-        itemsList.innerHTML = items.map(item => {
+        html += items.map(item => {
           const name = item.name || (item.product ? item.product.productName : 'Sản phẩm');
           const qty = item.quantity || 1;
           const price = item.price || item.unitPrice || (item.product ? item.product.price : 0);
-          return `<li>${qty} x ${name} <span style='float:right;'>${formatPrice(price*qty)}</span></li>`;
+          
+          // Hiển thị variant chỉ khi có thông tin
+          let variantHtml = '';
+          if (item.variants) {
+            const v = item.variants;
+            
+            // Kiểm tra chặt chẽ hơn để chỉ hiển thị các variant có ý nghĩa
+            const hasIce = v.ice && v.ice !== '' && v.ice !== '100' && v.ice !== 100;
+            const hasSugar = v.sugar && v.sugar !== '' && v.sugar !== '100' && v.sugar !== 100;
+            const hasToppings = v.toppings && Array.isArray(v.toppings) && v.toppings.length > 0;
+            
+            // Kiểm tra đá/đường để dùng trong điều kiện hiển thị size
+            const hasIceOrSugar = hasIce || hasSugar;
+            
+            // Size chỉ hiển thị nếu có giá trị hợp lý và không phải là mặc định 'S' 
+            // hoặc nếu là S nhưng đi kèm với các tùy chọn khác
+            const showSize = v.size && v.size !== '' && v.size !== '100' && v.size !== 100 && 
+                            (v.size.toLowerCase() !== 's' || (v.size.toLowerCase() === 's' && (hasIceOrSugar || hasToppings)));
+            
+            // Chỉ hiển thị variant khi có ít nhất một tùy chọn đáng kể
+            const hasVariants = showSize || hasIce || hasSugar || hasToppings;
+            
+            if (hasVariants) {
+              const variantParts = [];
+              if (showSize) variantParts.push(`Size: ${v.size}`);
+              if (hasIce) variantParts.push(`Đá: ${v.ice}`);
+              if (hasSugar) variantParts.push(`Đường: ${v.sugar}`);
+              if (hasToppings) {
+                variantParts.push(`Topping: ${v.toppings.map(t=>t.name).join(', ')}`);
+              }
+              
+              if (variantParts.length > 0) {
+                variantHtml = `<div style="font-size:12px; color:#888; margin-top:3px;">${variantParts.join(' | ')}</div>`;
+              }
+            }
+          }
+          
+          return `
+            <tr style="border-bottom:1px solid #f0f0f0;">
+              <td style="padding:8px 5px; text-align:left;">
+                <div>${name}</div>
+                ${variantHtml}
+              </td>
+              <td style="padding:8px 5px; text-align:center;">${qty}</td>
+              <td style="padding:8px 5px; text-align:right; font-weight:500; color:#e67e22;">${formatPrice(price*qty)}</td>
+            </tr>
+          `;
         }).join('');
       }
+      
+      html += `</table></div>`;
+      itemsList.innerHTML = html;
+      
       // Xóa giỏ hàng sau khi hiển thị thành công
       localStorage.removeItem('cart');
     }

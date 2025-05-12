@@ -7,12 +7,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
+import org.springframework.util.StringUtils;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/accounts")
@@ -47,14 +51,13 @@ public class AccountController {
 
     @PostMapping("/with-image")
     public ResponseEntity<Account> createAccountWithImage(
-            @RequestParam("image") MultipartFile file,
             @RequestParam("userName") String userName,
             @RequestParam("fullName") String fullName,
             @RequestParam("passWord") String passWord,
             @RequestParam(required = false) String phone,
             @RequestParam(required = false) String address,
-            @RequestParam("role") String role) {
-        
+            @RequestParam("role") String role,
+            @RequestParam(required = false) String image) {
         try {
             Account account = new Account();
             account.setUserName(userName);
@@ -63,15 +66,12 @@ public class AccountController {
             account.setPhone(phone);
             account.setAddress(address);
             account.setRole(role);
-            
-            // Set image
-            if (!file.isEmpty()) {
-                account.setImage(file.getBytes());
+            if (image != null && !image.isEmpty()) {
+                account.setImage(image);
             }
-            
             Account savedAccount = accountService.saveAccount(account);
             return new ResponseEntity<>(savedAccount, HttpStatus.CREATED);
-        } catch (IOException e) {
+        } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -95,18 +95,16 @@ public class AccountController {
             @RequestParam(required = false) String phone,
             @RequestParam(required = false) String address,
             @RequestParam(required = false) String role,
-            @RequestParam(required = false) MultipartFile image) {
-        
+            @RequestParam(required = false) String image) {
         try {
             Account updatedAccount = accountService.updateAccountWithImage(
                     id, userName, fullName, passWord, phone, address, role, image);
-            
             if (updatedAccount != null) {
                 return new ResponseEntity<>(updatedAccount, HttpStatus.OK);
             } else {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -155,5 +153,24 @@ public class AccountController {
         Map<String, String> response = new HashMap<>();
         response.put("message", "Invalid username or password");
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+
+    @PostMapping("/{id}/avatar")
+    public ResponseEntity<?> uploadAvatar(@PathVariable Integer id, @RequestParam("avatar") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body("No file uploaded");
+        }
+        try {
+            // Lưu file avatar và lấy tên file
+            String fileName = accountService.storeAvatarFile(file, id);
+            String avatarPath = "/uploads/images/avatar/" + fileName;
+            accountService.updateAvatarPath(id, avatarPath);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("avatar", avatarPath);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Upload failed: " + e.getMessage());
+        }
     }
 }

@@ -163,57 +163,75 @@
         }
         
         .team-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
             gap: 30px;
         }
         
         .team-card {
+            width: 300px;
+            margin-bottom: 30px;
             background-color: var(--white);
             border-radius: 8px;
             overflow: hidden;
             box-shadow: var(--shadow);
-            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .team-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
         }
         
         .team-image {
             height: 250px;
             overflow: hidden;
+            position: relative;
         }
         
         .team-image img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .team-card:hover .team-image img {
+            transform: scale(1.05);
         }
         
         .team-info {
-            padding: 20px;
+            padding: 25px 20px;
+            text-align: center;
+            background-color: var(--white);
         }
         
         .team-info h3 {
-            font-size: 20px;
+            font-size: 22px;
             color: var(--primary-color);
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            font-weight: 600;
         }
         
         .team-info p {
             color: var(--light-text);
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            font-size: 16px;
         }
         
         .team-social {
             display: flex;
             justify-content: center;
-            gap: 10px;
+            gap: 15px;
         }
         
         .team-social a {
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 35px;
-            height: 35px;
+            width: 40px;
+            height: 40px;
             background-color: var(--secondary-color);
             color: var(--primary-color);
             border-radius: 50%;
@@ -223,7 +241,7 @@
         .team-social a:hover {
             background-color: var(--primary-color);
             color: var(--white);
-            transform: translateY(-3px);
+            transform: translateY(-5px);
         }
         
         .cta-section {
@@ -380,11 +398,26 @@
             <div class="team-grid">
                 <div class="team-card">
                     <div class="team-image">
-                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80" alt="Nhà sáng lập">
+                        <img src="/assets/images/me.jpg" alt="Nhà sáng lập">
                     </div>
                     <div class="team-info">
-                        <h3>Nguyễn Văn A</h3>
-                        <p>Nhà Sáng Lập & CEO</p>
+                        <h3>Phạm Xuân Thắng</h3>
+                        <p>Đồng sáng lập thương hiệu</p>
+                        <div class="team-social">
+                            <a href="https://www.facebook.com/thangthang097" target="_blank"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#"><i class="fab fa-twitter"></i></a>
+                            <a href="https://www.instagram.com/thangthang097/" target="_blank"><i class="fab fa-instagram"></i></a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="team-card">
+                    <div class="team-image">
+                        <img src="/assets/images/Kiet.png" alt="Giám đốc điều hành">
+                    </div>
+                    <div class="team-info">
+                        <h3>Nguyễn Bảo Kiệt</h3>
+                        <p>Đồng sáng lập thương hiệu</p>
                         <div class="team-social">
                             <a href="#"><i class="fab fa-facebook-f"></i></a>
                             <a href="#"><i class="fab fa-twitter"></i></a>
@@ -395,11 +428,11 @@
                 
                 <div class="team-card">
                     <div class="team-image">
-                        <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=776&q=80" alt="Giám đốc điều hành">
+                        <img src="/assets/images/Kien.png" alt="Bếp trưởng">
                     </div>
                     <div class="team-info">
-                        <h3>Trần Thị B</h3>
-                        <p>Giám Đốc Marketing</p>
+                        <h3>Nguyễn Trung Kiên</h3>
+                        <p>Đồng sáng lập thương hiệu</p>
                         <div class="team-social">
                             <a href="#"><i class="fab fa-facebook-f"></i></a>
                             <a href="#"><i class="fab fa-twitter"></i></a>
@@ -407,36 +440,7 @@
                         </div>
                     </div>
                 </div>
-                
-                <div class="team-card">
-                    <div class="team-image">
-                        <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80" alt="Bếp trưởng">
-                    </div>
-                    <div class="team-info">
-                        <h3>Lê Văn C</h3>
-                        <p>Chuyên Gia Cà Phê</p>
-                        <div class="team-social">
-                            <a href="#"><i class="fab fa-facebook-f"></i></a>
-                            <a href="#"><i class="fab fa-twitter"></i></a>
-                            <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="team-card">
-                    <div class="team-image">
-                        <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=761&q=80" alt="Chuyên gia hương vị">
-                    </div>
-                    <div class="team-info">
-                        <h3>Phạm Thị D</h3>
-                        <p>Giám Đốc Chi Nhánh</p>
-                        <div class="team-social">
-                            <a href="#"><i class="fab fa-facebook-f"></i></a>
-                            <a href="#"><i class="fab fa-twitter"></i></a>
-                            <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                        </div>
-                    </div>
-                </div>
+
             </div>
         </section>
         

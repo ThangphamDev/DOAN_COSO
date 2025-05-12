@@ -239,70 +239,8 @@
     </div>
     
     <div class="container">
-        <div class="promo-cards">
-            <div class="promo-card">
-                <div class="promo-card-img">
-                    <img src="https://images.unsplash.com/photo-1541167760496-1628856ab772?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1037&q=80" alt="Khuyến mãi mùa hè">
-                </div>
-                <div class="promo-card-content">
-                    <span class="promo-card-badge">Mới</span>
-                    <h3>Mùa Hè Sảng Khoái</h3>
-                    <p>Giảm 30% cho tất cả đồ uống đá từ 14h - 17h hàng ngày. Áp dụng cho tất cả các chi nhánh.</p>
-                    <div class="promo-dates">
-                        <i class="far fa-calendar-alt"></i>
-                        <span>01/06/2023 - 31/08/2023</span>
-                    </div>
-                    <a href="#" class="promo-btn">Xem chi tiết</a>
-                </div>
-            </div>
-            
-            <div class="promo-card">
-                <div class="promo-card-img">
-                    <img src="https://images.unsplash.com/photo-1567696153798-9111f9cd3d0d?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1050&q=80" alt="Ưu đãi sinh nhật">
-                </div>
-                <div class="promo-card-content">
-                    <span class="promo-card-badge">Hàng tháng</span>
-                    <h3>Ưu Đãi Sinh Nhật</h3>
-                    <p>Miễn phí 1 đồ uống bất kỳ trong ngày sinh nhật của bạn. Yêu cầu xuất trình CMND/CCCD.</p>
-                    <div class="promo-dates">
-                        <i class="far fa-calendar-alt"></i>
-                        <span>Áp dụng cả năm</span>
-                    </div>
-                    <a href="#" class="promo-btn">Xem chi tiết</a>
-                </div>
-            </div>
-            
-            <div class="promo-card">
-                <div class="promo-card-img">
-                    <img src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80" alt="Khuyến mãi thứ 2">
-                </div>
-                <div class="promo-card-content">
-                    <span class="promo-card-badge">Hàng tuần</span>
-                    <h3>Thứ Hai Vui Vẻ</h3>
-                    <p>Mua 1 tặng 1 cho tất cả các loại cà phê Việt Nam vào thứ 2 hàng tuần từ 9h - 11h.</p>
-                    <div class="promo-dates">
-                        <i class="far fa-calendar-alt"></i>
-                        <span>Thứ 2 hàng tuần</span>
-                    </div>
-                    <a href="#" class="promo-btn">Xem chi tiết</a>
-                </div>
-            </div>
-            
-            <div class="promo-card">
-                <div class="promo-card-img">
-                    <img src="https://images.unsplash.com/photo-1518057111178-44a106bad636?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=688&q=80" alt="Khuyến mãi thành viên">
-                </div>
-                <div class="promo-card-content">
-                    <span class="promo-card-badge">Thành viên</span>
-                    <h3>Ưu Đãi Thành Viên</h3>
-                    <p>Tích điểm 10% giá trị đơn hàng và đổi quà hấp dẫn. Đăng ký thành viên hoàn toàn miễn phí.</p>
-                    <div class="promo-dates">
-                        <i class="far fa-calendar-alt"></i>
-                        <span>Không thời hạn</span>
-                    </div>
-                    <a href="#" class="promo-btn">Tham gia ngay</a>
-                </div>
-            </div>
+        <div class="promo-cards" id="promotionList">
+            <!-- Danh sách khuyến mãi sẽ được render ở đây bằng JS -->
         </div>
         
         <div class="newsletter">
@@ -364,11 +302,56 @@
             document.querySelector('.newsletter-form').addEventListener('submit', function(e) {
                 e.preventDefault();
                 const email = e.target.querySelector('input[type="email"]').value;
-                
-                // Hiển thị thông báo
                 alert(`Cảm ơn bạn đã đăng ký nhận tin khuyến mãi với email: ${email}`);
                 e.target.reset();
             });
+
+            // Fetch and render promotions
+            fetch('http://localhost:8081/api/promotions')
+                .then(res => res.json())
+                .then(promotions => {
+                    const container = document.getElementById('promotionList');
+                    if (!container) return;
+                    if (!Array.isArray(promotions) || promotions.length === 0) {
+                        container.innerHTML = '<p>Hiện chưa có chương trình khuyến mãi nào.</p>';
+                        return;
+                    }
+                    container.innerHTML = promotions.map(promo => `
+                        <div class="promo-card">
+                            <div class="promo-card-img">
+                                <img src="../assets/images/promo-default.jpg" alt="${promo.namePromotion || 'Khuyến mãi'}">
+                            </div>
+                            <div class="promo-card-content">
+                                <span class="promo-card-badge">${promo.isActive ? 'Đang diễn ra' : 'Đã kết thúc'}</span>
+                                <h3>${promo.namePromotion || ''}</h3>
+                                <p>${promo.description || ''}</p>
+                                <div class="promo-dates">
+                                    <i class="far fa-calendar-alt"></i>
+                                    <span>${promo.startDate || ''} - ${promo.endDate || ''}</span>
+                                </div>
+                                <p><b>Mã:</b> <span style="color:#e67e22;font-weight:600;">${promo.code}</span></p>
+                                <p><b>Loại:</b> ${promo.discountType === 'PERCENT' ? 'Giảm %' : 'Giảm tiền'}</p>
+                                <p><b>Giá trị:</b> ${promo.discountType === 'PERCENT' ? promo.discountValue + '%' : (promo.discountValue ? promo.discountValue.toLocaleString('vi-VN') + 'đ' : '')}</p>
+                                <p><b>Đơn tối thiểu:</b> ${promo.minimumOrderAmount ? promo.minimumOrderAmount.toLocaleString('vi-VN') + 'đ' : 'Không'}</p>
+                                <a href="#" class="promo-btn">Sao chép mã</a>
+                            </div>
+                        </div>
+                    `).join('');
+                    // Thêm sự kiện copy mã khuyến mãi
+                    container.querySelectorAll('.promo-btn').forEach((btn, idx) => {
+                        btn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            const code = promotions[idx].code;
+                            navigator.clipboard.writeText(code);
+                            btn.textContent = 'Đã sao chép!';
+                            setTimeout(() => btn.textContent = 'Sao chép mã', 1500);
+                        });
+                    });
+                })
+                .catch(() => {
+                    const container = document.getElementById('promotionList');
+                    if (container) container.innerHTML = '<p>Không thể tải danh sách khuyến mãi. Vui lòng thử lại sau.</p>';
+                });
         });
     </script>
 </body>

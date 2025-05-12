@@ -234,26 +234,24 @@ class PromotionManager {
         try {
             this.showLoader();
             
-            // Lấy khuyến mãi đang áp dụng
-            const activePromotions = await this.fetchActivePromotions();
-            this.renderPromotionTable(activePromotions, 'activePromotionTableBody');
+            // Lấy tất cả khuyến mãi cho tab chính (hiển thị cả enable/disable)
+            const allPromotions = await this.fetchAllPromotions();
+            this.renderPromotionTable(allPromotions, 'activePromotionTableBody');
             
             // Lấy khuyến mãi sắp diễn ra
             const currentDate = new Date();
-            const upcomingPromotions = await this.fetchAllPromotions();
-            const filtered = upcomingPromotions.filter(promo => {
+            const upcomingPromotions = allPromotions.filter(promo => {
                 const startDate = new Date(promo.startDate);
                 return startDate > currentDate;
             });
-            this.renderPromotionTable(filtered, 'upcomingPromotionTableBody');
+            this.renderPromotionTable(upcomingPromotions, 'upcomingPromotionTableBody');
             
             // Lấy khuyến mãi đã kết thúc
-            const expiredPromotions = await this.fetchAllPromotions();
-            const expiredFiltered = expiredPromotions.filter(promo => {
+            const expiredPromotions = allPromotions.filter(promo => {
                 const endDate = new Date(promo.endDate);
                 return endDate < currentDate;
             });
-            this.renderPromotionTable(expiredFiltered, 'expiredPromotionTableBody');
+            this.renderPromotionTable(expiredPromotions, 'expiredPromotionTableBody');
             
             this.hideLoader();
         } catch (error) {
@@ -267,12 +265,7 @@ class PromotionManager {
      * Hiển thị thông báo
      */
     showNotification(message, type = 'success') {
-        // Giả sử bạn có một hàm hiển thị thông báo
-        if (window.showToast) {
-            window.showToast(message, type);
-        } else {
-            alert(message);
-        }
+        showPromoToast(message, type);
     }
 
     /**
@@ -313,6 +306,10 @@ class PromotionManager {
 
         promotions.forEach(promotion => {
             const row = document.createElement('tr');
+            // Nếu khuyến mãi bị vô hiệu hóa, thêm class promo-disabled
+            if (!promotion.isActive) {
+                row.classList.add('promo-disabled');
+            }
             
             // Format dates
             const startDate = new Date(promotion.startDate).toLocaleDateString('vi-VN');
@@ -362,6 +359,14 @@ class PromotionManager {
                 statusBtn.getAttribute('data-active') === 'true' ? false : true
             ));
         });
+
+        // Thêm CSS cho class promo-disabled
+        if (!document.getElementById('promo-disabled-style')) {
+            const style = document.createElement('style');
+            style.id = 'promo-disabled-style';
+            style.textContent = `.promo-disabled { opacity: 0.5; filter: grayscale(0.5); }`;
+            document.head.appendChild(style);
+        }
     }
 
     /**
@@ -569,4 +574,78 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.querySelector('.promotion-management')) {
         window.promotionManager = new PromotionManager();
     }
-}); 
+});
+
+// Thêm hàm showPromoToast vào cuối file
+function showPromoToast(message, type = 'success') {
+    // Xóa toast cũ nếu có
+    const oldToast = document.querySelector('.promo-toast');
+    if (oldToast) oldToast.remove();
+
+    // Tạo toast mới
+    const toast = document.createElement('div');
+    toast.className = `promo-toast show ${type}`;
+    toast.innerHTML = `
+        <span>${message}</span>
+        <button class="toast-close" title="Đóng">&times;</button>
+    `;
+    document.body.appendChild(toast);
+
+    // Đóng khi click nút
+    toast.querySelector('.toast-close').onclick = () => toast.remove();
+
+    // Tự động ẩn sau 3s
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Thêm CSS toast nếu chưa có
+if (!document.getElementById('promo-toast-style')) {
+    const style = document.createElement('style');
+    style.id = 'promo-toast-style';
+    style.textContent = `
+    .promo-toast {
+        position: fixed;
+        top: 30px;
+        right: 30px;
+        min-width: 280px;
+        max-width: 350px;
+        background: #fff;
+        color: #333;
+        border-radius: 8px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        padding: 18px 24px 18px 20px;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 16px;
+        border-left: 5px solid #e67e22;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s, transform 0.3s;
+        transform: translateY(-20px);
+    }
+    .promo-toast.show {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+    }
+    .promo-toast.success { border-left-color: #27ae60; }
+    .promo-toast.error   { border-left-color: #e74c3c; }
+    .promo-toast.info    { border-left-color: #3498db; }
+    .promo-toast .toast-close {
+        background: none;
+        border: none;
+        font-size: 20px;
+        color: #aaa;
+        margin-left: auto;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+    .promo-toast .toast-close:hover { color: #e67e22; }
+    `;
+    document.head.appendChild(style);
+} 

@@ -141,21 +141,107 @@ function loadOrderSummary() {
         return;
     }
 
+    // Create table structure for order summary
+    let tableHtml = `
+        <table class="order-summary-table">
+            <thead>
+                <tr>
+                    <th style="text-align: left; width: 50%;">Sản phẩm</th>
+                    <th style="text-align: center; width: 20%;">Số lượng</th>
+                    <th style="text-align: right; width: 30%;">Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
     cart.forEach((item) => {
-        const itemDiv = document.createElement("div");
-        itemDiv.classList.add("summary-item");
-        itemDiv.innerHTML = `
-            <p><strong>${item.name}</strong> x ${item.quantity}</p>
-            <p>${(item.price * item.quantity).toLocaleString('vi-VN')}đ</p>
+        const itemSubtotal = item.price * item.quantity;
+        total += itemSubtotal;
+
+        // Only prepare variant HTML if variants exist
+        let variantHtml = '';
+        if (item.variants) {
+            const v = item.variants;
+            
+            // Kiểm tra chặt chẽ hơn để chỉ hiển thị các variant có ý nghĩa
+            const hasIce = v.ice && v.ice !== '' && v.ice !== '100' && v.ice !== 100;
+            const hasSugar = v.sugar && v.sugar !== '' && v.sugar !== '100' && v.sugar !== 100;
+            const hasToppings = v.toppings && Array.isArray(v.toppings) && v.toppings.length > 0;
+            
+            // Kiểm tra đá/đường để dùng trong điều kiện hiển thị size
+            const hasIceOrSugar = hasIce || hasSugar;
+            
+            // Size chỉ hiển thị nếu có giá trị hợp lý và không phải là mặc định 'S' 
+            // hoặc nếu là S nhưng đi kèm với các tùy chọn khác
+            const showSize = v.size && v.size !== '' && v.size !== '100' && v.size !== 100 && 
+                            (v.size.toLowerCase() !== 's' || (v.size.toLowerCase() === 's' && (hasIceOrSugar || hasToppings)));
+            
+            // Chỉ hiển thị variant khi có ít nhất một tùy chọn đáng kể
+            const hasVariants = showSize || hasIce || hasSugar || hasToppings;
+            
+            if (hasVariants) {
+                const variantParts = [];
+                if (showSize) variantParts.push(`<span style='color:#7b4f28;'>Size:</span> <b>${v.size}</b>`);
+                if (hasIce) variantParts.push(`<span style='color:#7b4f28;'>Đá:</span> <b>${v.ice}</b>`);
+                if (hasSugar) variantParts.push(`<span style='color:#7b4f28;'>Đường:</span> <b>${v.sugar}</b>`);
+                if (hasToppings) {
+                    variantParts.push(`<span style='color:#7b4f28;'>Topping:</span> <b>${v.toppings.map(t=>t.name).join(', ')}</b>`);
+                }
+                
+                if (variantParts.length > 0) {
+                    variantHtml = `<div style="font-size:13px; color:#666; margin-top:5px;">${variantParts.join(' | ')}</div>`;
+                }
+            }
+        }
+
+        tableHtml += `
+            <tr>
+                <td style="text-align: left; padding: 10px 5px;">
+                    <div><strong>${item.name}</strong></div>
+                    ${variantHtml}
+                </td>
+                <td style="text-align: center; padding: 10px 5px;">${item.quantity}</td>
+                <td style="text-align: right; padding: 10px 5px; font-weight: 500;">${itemSubtotal.toLocaleString('vi-VN')}đ</td>
+            </tr>
         `;
-        total += item.price * item.quantity;
-        summaryDiv.appendChild(itemDiv);
     });
 
+    tableHtml += `
+            </tbody>
+        </table>
+    `;
+
+    // Add the table to the summary div
+    summaryDiv.innerHTML = tableHtml;
+
+    // Add total amount
     const totalDiv = document.createElement("div");
     totalDiv.classList.add("summary-total");
+    totalDiv.style.marginTop = "15px";
+    totalDiv.style.textAlign = "right";
+    totalDiv.style.borderTop = "1px solid #ddd";
+    totalDiv.style.paddingTop = "10px";
     totalDiv.innerHTML = `<h4>Tổng cộng: ${total.toLocaleString('vi-VN')}đ</h4>`;
     summaryDiv.appendChild(totalDiv);
+
+    // Add CSS for the table
+    const style = document.createElement('style');
+    style.textContent = `
+        .order-summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+        .order-summary-table th, .order-summary-table td {
+            border-bottom: 1px solid #eee;
+        }
+        .order-summary-table th {
+            padding: 10px 5px;
+            background-color: #f5f5f5;
+            font-weight: 600;
+        }
+    `;
+    document.head.appendChild(style);
 }
 
 // Setup payment method change
@@ -321,17 +407,22 @@ async function completeTransferPayment(order) {
 function prepareOrderData() {
     // Lấy thông tin khuyến mãi đã áp dụng (nếu có)
     const appliedPromotion = JSON.parse(localStorage.getItem('appliedPromotion') || 'null');
-    
+    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+    // Tính tổng tiền gốc (chưa giảm giá)
+    const originalTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    // Tính tổng tiền sau giảm giá
+    const totalAmount = appliedPromotion && appliedPromotion.finalTotal ? appliedPromotion.finalTotal : originalTotal;
     return {
         tableNumber: document.getElementById("tableNumber").value || "chưa chọn",
         notes: document.getElementById("notes").value,
-        cart: JSON.parse(localStorage.getItem("cart")) || [],
+        cart: cart,
         orderTime: new Date().toISOString(),
-        totalAmount: calculateTotal(),
+        originalTotal: originalTotal,
+        totalAmount: totalAmount,
         paymentMethod: document.querySelector('input[name="payment"]:checked').value,
         promoCode: appliedPromotion ? appliedPromotion.code : null,
         discountAmount: appliedPromotion ? appliedPromotion.discountAmount : 0,
-        finalTotal: appliedPromotion ? appliedPromotion.finalTotal : calculateTotal()
+        finalTotal: appliedPromotion ? appliedPromotion.finalTotal : totalAmount
     };
 }
 
@@ -641,18 +732,85 @@ function displayCurrentOrder(order) {
     const summaryDiv = document.getElementById("orderSummary");
     summaryDiv.innerHTML = "";
     
+    // Create table structure for order summary
+    let tableHtml = `
+        <table class="order-summary-table">
+            <thead>
+                <tr>
+                    <th style="text-align: left; width: 50%;">Sản phẩm</th>
+                    <th style="text-align: center; width: 20%;">Số lượng</th>
+                    <th style="text-align: right; width: 30%;">Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
     order.items.forEach((item) => {
-        const itemDiv = document.createElement("div");
-        itemDiv.classList.add("summary-item");
-        itemDiv.innerHTML = `
-            <p><strong>${item.name}</strong> x ${item.quantity}</p>
-            <p>${(item.price * item.quantity).toLocaleString('vi-VN')}đ</p>
+        const itemSubtotal = item.price * item.quantity;
+        
+        // Only prepare variant HTML if variants exist
+        let variantHtml = '';
+        if (item.variants) {
+            const v = item.variants;
+            
+            // Kiểm tra chặt chẽ hơn để chỉ hiển thị các variant có ý nghĩa
+            const hasIce = v.ice && v.ice !== '' && v.ice !== '100' && v.ice !== 100;
+            const hasSugar = v.sugar && v.sugar !== '' && v.sugar !== '100' && v.sugar !== 100;
+            const hasToppings = v.toppings && Array.isArray(v.toppings) && v.toppings.length > 0;
+            
+            // Kiểm tra đá/đường để dùng trong điều kiện hiển thị size
+            const hasIceOrSugar = hasIce || hasSugar;
+            
+            // Size chỉ hiển thị nếu có giá trị hợp lý và không phải là mặc định 'S' 
+            // hoặc nếu là S nhưng đi kèm với các tùy chọn khác
+            const showSize = v.size && v.size !== '' && v.size !== '100' && v.size !== 100 && 
+                            (v.size.toLowerCase() !== 's' || (v.size.toLowerCase() === 's' && (hasIceOrSugar || hasToppings)));
+            
+            // Chỉ hiển thị variant khi có ít nhất một tùy chọn đáng kể
+            const hasVariants = showSize || hasIce || hasSugar || hasToppings;
+            
+            if (hasVariants) {
+                const variantParts = [];
+                if (showSize) variantParts.push(`<span style='color:#7b4f28;'>Size:</span> <b>${v.size}</b>`);
+                if (hasIce) variantParts.push(`<span style='color:#7b4f28;'>Đá:</span> <b>${v.ice}</b>`);
+                if (hasSugar) variantParts.push(`<span style='color:#7b4f28;'>Đường:</span> <b>${v.sugar}</b>`);
+                if (hasToppings) {
+                    variantParts.push(`<span style='color:#7b4f28;'>Topping:</span> <b>${v.toppings.map(t=>t.name).join(', ')}</b>`);
+                }
+                
+                if (variantParts.length > 0) {
+                    variantHtml = `<div style="font-size:13px; color:#666; margin-top:5px;">${variantParts.join(' | ')}</div>`;
+                }
+            }
+        }
+        
+        tableHtml += `
+            <tr>
+                <td style="text-align: left; padding: 10px 5px;">
+                    <div><strong>${item.name}</strong></div>
+                    ${variantHtml}
+                </td>
+                <td style="text-align: center; padding: 10px 5px;">${item.quantity}</td>
+                <td style="text-align: right; padding: 10px 5px; font-weight: 500;">${itemSubtotal.toLocaleString('vi-VN')}đ</td>
+            </tr>
         `;
-        summaryDiv.appendChild(itemDiv);
     });
     
+    tableHtml += `
+            </tbody>
+        </table>
+    `;
+    
+    // Add the table to the summary div
+    summaryDiv.innerHTML = tableHtml;
+    
+    // Add total amount
     const totalDiv = document.createElement("div");
     totalDiv.classList.add("summary-total");
+    totalDiv.style.marginTop = "15px";
+    totalDiv.style.textAlign = "right";
+    totalDiv.style.borderTop = "1px solid #ddd";
+    totalDiv.style.paddingTop = "10px";
     totalDiv.innerHTML = `<h4>Tổng cộng: ${parseFloat(order.totalAmount).toLocaleString('vi-VN')}đ</h4>`;
     summaryDiv.appendChild(totalDiv);
     

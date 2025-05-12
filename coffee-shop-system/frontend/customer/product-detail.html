@@ -807,59 +807,96 @@
         // Hiển thị các biến thể dựa trên dữ liệu API
         function displayVariants(variantData) {
             // Size
+            const sizeGroup = document.querySelector('.size-options').closest('.variant-group');
             const sizeOptions = document.getElementById('sizeOptions');
             sizeOptions.innerHTML = '';
-            (variantData.sizes || []).forEach((variant, idx) => {
-                const name = variant.variantName || variant.variant_name || 'Size';
-                const value = variant.variantValue || variant.variant_value || '';
-                const price = typeof variant.additionalPrice === 'number' ? variant.additionalPrice : 0;
-                sizeOptions.innerHTML += `
-                    <div class="variant-option${idx === 0 ? ' selected' : ''}" data-value="${value}" data-price="${price}">
-                        ${name}${price > 0 ? ` (+${formatPrice(price)})` : ''}
-                    </div>
-                `;
-            });
+            if (variantData.sizes && variantData.sizes.length > 0) {
+                (variantData.sizes || []).forEach((variant, idx) => {
+                    const name = variant.variantName || variant.variant_name || 'Size';
+                    const value = variant.variantValue || variant.variant_value || '';
+                    const price = typeof variant.additionalPrice === 'number' ? variant.additionalPrice : 0;
+                    sizeOptions.innerHTML += `
+                        <div class="variant-option${idx === 0 ? ' selected' : ''}" data-value="${value}" data-price="${price}">
+                            ${name}${price > 0 ? ` (+${formatPrice(price)})` : ''}
+                        </div>
+                    `;
+                });
+                sizeGroup.style.display = '';
+            } else {
+                sizeGroup.style.display = 'none';
+            }
 
             // Ice
+            const iceGroup = document.querySelector('.ice-options').closest('.variant-group');
             const iceOptions = document.getElementById('iceOptions');
             iceOptions.innerHTML = '';
-            (variantData.ice || []).forEach((variant, idx) => {
-                const name = variant.variantName || variant.variant_name || 'Đá';
-                const value = variant.variantValue || variant.variant_value || '';
-                iceOptions.innerHTML += `
-                    <div class="variant-option${idx === 0 ? ' selected' : ''}" data-value="${value}">
-                        ${name}
-                    </div>
-                `;
-            });
+            if (variantData.ice && variantData.ice.length > 0) {
+                (variantData.ice || []).forEach((variant, idx) => {
+                    const name = variant.variantName || variant.variant_name || 'Đá';
+                    const value = variant.variantValue || variant.variant_value || '';
+                    iceOptions.innerHTML += `
+                        <div class="variant-option${idx === 0 ? ' selected' : ''}" data-value="${value}">
+                            ${name}
+                        </div>
+                    `;
+                });
+                iceGroup.style.display = '';
+            } else {
+                iceGroup.style.display = 'none';
+            }
 
             // Sugar
+            const sugarGroup = document.querySelector('.sugar-options').closest('.variant-group');
             const sugarOptions = document.getElementById('sugarOptions');
             sugarOptions.innerHTML = '';
-            (variantData.sugar || []).forEach((variant, idx) => {
-                const name = variant.variantName || variant.variant_name || 'Đường';
-                const value = variant.variantValue || variant.variant_value || '';
-                sugarOptions.innerHTML += `
-                    <div class="variant-option${idx === 0 ? ' selected' : ''}" data-value="${value}">
-                        ${name}
-                    </div>
-                `;
-            });
+            if (variantData.sugar && variantData.sugar.length > 0) {
+                (variantData.sugar || []).forEach((variant, idx) => {
+                    const name = variant.variantName || variant.variant_name || 'Đường';
+                    const value = variant.variantValue || variant.variant_value || '';
+                    sugarOptions.innerHTML += `
+                        <div class="variant-option${idx === 0 ? ' selected' : ''}" data-value="${value}">
+                            ${name}
+                        </div>
+                    `;
+                });
+                sugarGroup.style.display = '';
+            } else {
+                sugarGroup.style.display = 'none';
+            }
 
             // Topping
+            const toppingGroup = document.querySelector('.topping-options').closest('.variant-group');
             const toppingOptions = document.getElementById('toppingOptions');
             toppingOptions.innerHTML = '';
-            (variantData.toppings || []).forEach((variant) => {
-                const name = variant.variantName || variant.variant_name || 'Topping';
-                const value = variant.variantValue || variant.variant_value || '';
-                const price = typeof variant.additionalPrice === 'number' ? variant.additionalPrice : 0;
-                toppingOptions.innerHTML += `
-                    <div class="variant-option" data-value="${value}" data-price="${price}">
-                        <span>${name}</span>
-                        <span class="variant-price">+${formatPrice(price)}</span>
-                    </div>
-                `;
-            });
+            if (variantData.toppings && variantData.toppings.length > 0) {
+                (variantData.toppings || []).forEach((variant) => {
+                    const name = variant.variantName || variant.variant_name || 'Topping';
+                    const value = variant.variantValue || variant.variant_value || '';
+                    const price = typeof variant.additionalPrice === 'number' ? variant.additionalPrice : 0;
+                    toppingOptions.innerHTML += `
+                        <div class="variant-option" data-value="${value}" data-price="${price}">
+                            <span>${name}</span>
+                            <span class="variant-price">+${formatPrice(price)}</span>
+                        </div>
+                    `;
+                });
+                toppingGroup.style.display = '';
+            } else {
+                toppingGroup.style.display = 'none';
+            }
+
+            // Ẩn luôn cả .product-variants nếu không có nhóm nào hiển thị
+            const productVariants = document.querySelector('.product-variants');
+            if (
+                (!variantData.sizes || variantData.sizes.length === 0) &&
+                (!variantData.ice || variantData.ice.length === 0) &&
+                (!variantData.sugar || variantData.sugar.length === 0) &&
+                (!variantData.toppings || variantData.toppings.length === 0)
+            ) {
+                productVariants.style.display = 'none';
+            } else {
+                productVariants.style.display = '';
+            }
 
             // Thiết lập lại sự kiện cho các tùy chọn biến thể
             setupVariantSelectors();

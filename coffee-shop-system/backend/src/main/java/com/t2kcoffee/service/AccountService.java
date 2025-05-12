@@ -8,8 +8,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class AccountService {
@@ -79,23 +83,17 @@ public class AccountService {
     @Transactional
     public Account updateAccountWithImage(Integer id, String userName, String fullName, 
                                          String password, String phone, String address, 
-                                         String role, MultipartFile imageFile) throws IOException {
-        
+                                         String role, String avatarPath) {
         Optional<Account> accountOpt = accountRepository.findById(id);
         if (accountOpt.isPresent()) {
             Account account = accountOpt.get();
-            
             if (userName != null) account.setUserName(userName);
             if (fullName != null) account.setFullName(fullName);
             if (password != null && !password.isEmpty()) account.setPassWord(password);
             if (phone != null) account.setPhone(phone);
             if (address != null) account.setAddress(address);
             if (role != null) account.setRole(role);
-            
-            if (imageFile != null && !imageFile.isEmpty()) {
-                account.setImage(imageFile.getBytes());
-            }
-            
+            if (avatarPath != null) account.setImage(avatarPath);
             return accountRepository.save(account);
         }
         return null;
@@ -104,5 +102,33 @@ public class AccountService {
     @Transactional
     public void deleteAccount(Integer id) {
         accountRepository.deleteById(id);
+    }
+
+    @Transactional
+    public void updateAvatarPath(Integer id, String avatarPath) {
+        Optional<Account> accountOpt = getAccountById(id);
+        if (accountOpt.isPresent()) {
+            Account account = accountOpt.get();
+            account.setImage(avatarPath);
+            accountRepository.save(account);
+        }
+    }
+
+    @Transactional
+    public String storeAvatarFile(MultipartFile file, Integer accountId) throws IOException {
+        String uploadDir = "backend/uploads/images/avatar";
+        Path uploadPath = Paths.get(uploadDir);
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+        String originalFileName = file.getOriginalFilename();
+        String fileExtension = "";
+        if (originalFileName != null && originalFileName.contains(".")) {
+            fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
+        }
+        String fileName = accountId + "_" + UUID.randomUUID().toString() + fileExtension;
+        Path targetLocation = uploadPath.resolve(fileName);
+        Files.copy(file.getInputStream(), targetLocation);
+        return fileName;
     }
 }

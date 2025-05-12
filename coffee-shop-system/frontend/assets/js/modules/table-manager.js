@@ -295,13 +295,62 @@ function createTableRow(table) {
         <td>${table.name}</td>
         <td>${table.area}</td>
         <td>${table.capacity} người</td>
-        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+        <td><span class="status-badge ${statusClass} status-toggle" style="cursor:pointer;" title="Nhấn để chuyển trạng thái">${statusText}</span></td>
         <td>${table.notes || '—'}</td>
         <td class="actions">
             <button class="btn-icon edit-btn" data-id="${table.id}" title="Chỉnh sửa"><i class="fas fa-edit"></i></button>
             <button class="btn-icon delete-btn" data-id="${table.id}" title="Xóa"><i class="fas fa-trash"></i></button>
         </td>
     `;
+    
+    // Thêm sự kiện cho badge trạng thái
+    const statusBadge = row.querySelector('.status-toggle');
+    if (statusBadge) {
+        statusBadge.addEventListener('click', async () => {
+            // Chỉ cho phép chuyển giữa Available và Occupied
+            let newStatus = table.status === 'Available' ? 'Occupied' : 'Available';
+            try {
+                // Hiển thị loader nếu có
+                if (window.AdminCore && window.AdminCore.showLoader) {
+                    window.AdminCore.showLoader(true);
+                }
+                // Gọi API cập nhật trạng thái
+                const tableData = {
+                    tableNumber: table.number,
+                    capacity: table.capacity,
+                    location: table.area,
+                    status: newStatus,
+                    description: table.notes || '',
+                    idTable: table.id
+                };
+                const response = await fetch(`${TABLE_API_URL}/${table.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(tableData)
+                });
+                if (!response.ok) {
+                    throw new Error(`Lỗi: ${response.status} - ${response.statusText}`);
+                }
+                // Cập nhật lại dữ liệu trên client
+                table.status = newStatus;
+                // Cập nhật lại giao diện
+                await loadTables();
+                if (window.AdminCore && window.AdminCore.showNotification) {
+                    window.AdminCore.showNotification(`Đã chuyển trạng thái bàn ${table.name} sang ${STATUS_TRANSLATIONS[newStatus]}`, 'success');
+                }
+            } catch (error) {
+                if (window.AdminCore && window.AdminCore.showNotification) {
+                    window.AdminCore.showNotification(`Không thể cập nhật trạng thái: ${error.message}`, 'error');
+                }
+            } finally {
+                if (window.AdminCore && window.AdminCore.showLoader) {
+                    window.AdminCore.showLoader(false);
+                }
+            }
+        });
+    }
     
     // Thêm sự kiện cho nút chỉnh sửa
     const editBtn = row.querySelector('.edit-btn');

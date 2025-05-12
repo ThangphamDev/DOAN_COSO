@@ -381,6 +381,37 @@ function displayOrders() {
     
     // Attach event listeners to buttons
     attachOrderButtonEvents();
+
+    // Thêm sự kiện click vào badge trạng thái để cập nhật trạng thái đơn hàng
+    orderTableBody.querySelectorAll('.status-badge').forEach(badge => {
+        badge.style.cursor = 'pointer';
+        badge.title = 'Nhấn để chuyển sang Hoàn thành';
+        badge.addEventListener('click', async function() {
+            // Lấy idOrder từ hàng tương ứng
+            const row = this.closest('tr');
+            if (!row) return;
+            const idCell = row.querySelector('td');
+            if (!idCell) return;
+            const orderId = idCell.textContent.trim();
+            // Kiểm tra trạng thái hiện tại
+            if (this.classList.contains('processing')) {
+                try {
+                    showLoader(true, 'Đang cập nhật trạng thái...');
+                    const res = await fetch(`${ORDERS_ENDPOINT}/${orderId}/status`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: 'completed' })
+                    });
+                    if (!res.ok) throw new Error('Cập nhật trạng thái thất bại');
+                    await loadOrders();
+                } catch (err) {
+                    showNotification('Lỗi: ' + err.message, 'error');
+                } finally {
+                    showLoader(false);
+                }
+            }
+        });
+    });
 }
 
 // Update pagination display
