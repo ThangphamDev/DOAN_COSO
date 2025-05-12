@@ -240,4 +240,33 @@ body {
     padding: 12px;
   }
 }
+
+/* Add styles for the home link */
+.home-link {
+  text-align: center;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border-color);
+}
+
+.home-link a {
+  color: #555;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.home-link a:hover {
+  color: var(--primary-color);
+  transform: translateX(-3px);
+}
+
+.home-link i {
+  font-size: 1.1rem;
+}
+
+/* End of the file - make sure you add this at the end */
   
