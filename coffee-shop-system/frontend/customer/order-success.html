@@ -113,6 +113,36 @@
     .btn-history:hover {
       background: #e0e0e0;
     }
+    
+    .btn-print {
+      background: #3498db;
+      color: #fff;
+    }
+    
+    .btn-print:hover {
+      background: #2980b9;
+    }
+    
+    /* Định dạng CSS cho bản in */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      .order-success-container, .order-success-container * {
+        visibility: visible;
+      }
+      .order-success-container {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        box-shadow: none !important;
+        max-width: 100%;
+      }
+      .order-success-actions {
+        display: none !important;
+      }
+    }
   </style>
 </head>
 
@@ -135,6 +165,7 @@
         </div>
         <div class="order-success-actions">
           <a href="menu.html" class="btn-menu"><i class="fas fa-arrow-left"></i> Về trang menu</a>
+          <button class="btn-print" id="btnPrint"><i class="fas fa-print"></i> In hóa đơn</button>
           <a href="status.html" class="btn-history"><i class="fas fa-list"></i> Xem lịch sử đơn hàng</a>
         </div>
       </div>
@@ -149,6 +180,11 @@
       fetch('../components/header.html').then(r=>r.text()).then(h=>document.getElementById('header-container').innerHTML=h);
       fetch('../components/footer.html').then(r=>r.text()).then(h=>document.getElementById('footer-container').innerHTML=h);
       renderOrderSuccess();
+      
+      // Thêm sự kiện cho nút in hóa đơn
+      document.getElementById('btnPrint').addEventListener('click', function() {
+        window.print();
+      });
     });
     
     function formatPrice(price) {
@@ -185,7 +221,6 @@
         <tr><td class="label">Mã đơn hàng:</td><td class="value">${order.idOrder || order.id || ''}</td></tr>
         <tr><td class="label">Bàn:</td><td class="value">${order.tableNumber ? (order.tableNumber==='takeaway'?'Mang đi':order.tableNumber) : '---'}</td></tr>
         <tr><td class="label">Thời gian đặt:</td><td class="value">${order.orderTime ? (new Date(order.orderTime)).toLocaleString('vi-VN') : ''}</td></tr>
-        <tr><td class="label">Trạng thái:</td><td class="value">${order.status ? (order.status==='completed'?'Hoàn thành':(order.status==='processing'?'Đang xử lý':order.status)) : ''}</td></tr>
         ${priceRows}
         <tr><td class="label">Phương thức thanh toán:</td><td class="value">${order.paymentMethod ? (order.paymentMethod==='transfer'?'Chuyển khoản':'Tiền mặt') : 'Tiền mặt'}</td></tr>
         <tr><td class="label">Ghi chú:</td><td class="value">${order.note || order.notes || ''}</td></tr>

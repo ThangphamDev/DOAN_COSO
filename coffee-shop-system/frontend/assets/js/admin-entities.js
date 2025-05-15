@@ -1,9 +1,3 @@
-/**
- * admin-entities.js
- * Quản lý các thực thể như users, products, staff, categories, etc.
- */
-
-// Đảm bảo API_BASE_URL được định nghĩa
 if (typeof API_BASE_URL === 'undefined') {
     // Sử dụng URL từ api-client.js nếu có
     if (window.ApiClient && window.ApiClient.baseUrl) {
@@ -16,7 +10,7 @@ if (typeof API_BASE_URL === 'undefined') {
     }
 }
 
-// Biến toàn cục để lưu danh mục đã tải
+
 window.cachedCategories = [];
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -29,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    // Thêm CSS cho danh mục chưa phân loại
+    
     const style = document.createElement('style');
     style.innerHTML = `
         .category-uncategorized {
@@ -43,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
     `;
     document.head.appendChild(style);
 
-    // Xác định trang hiện tại để tải các chức năng phù hợp
+   
     const currentPage = window.location.pathname.split('/').pop();
     
     // Khởi tạo các chức năng tùy theo trang
@@ -61,11 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-/**
- * ==========================
- * QUẢN LÝ NGƯỜI DÙNG
- * ==========================
- */
+
 function initializeUserManagement() {
     console.log('Khởi tạo chức năng quản lý người dùng');
     
@@ -82,7 +72,7 @@ function initializeUserManagement() {
     setupSearchFilter('searchUser', filterUsers);
 }
 
-// Tải dữ liệu người dùng
+
 async function loadUserData() {
     showLoadingMessage('Đang tải dữ liệu người dùng...');
     
@@ -123,11 +113,11 @@ function displayUsers(users) {
         tableBody.appendChild(row);
     });
     
-    // Thêm xử lý sự kiện cho các nút
+ 
     setupUserActions();
 }
 
-// Xử lý form người dùng
+
 function setupUserFormSubmission() {
     const form = document.getElementById('userForm');
     if (!form) return;
@@ -135,12 +125,12 @@ function setupUserFormSubmission() {
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        // Kiểm tra form
+        
         if (!validateUserForm()) {
             return;
         }
         
-        // Thu thập dữ liệu form
+        
         const userData = {
             id: document.getElementById('userId').value,
             username: document.getElementById('username').value,
@@ -151,24 +141,24 @@ function setupUserFormSubmission() {
             address: document.getElementById('address').value
         };
         
-        // Kiểm tra nếu là thêm mới hay cập nhật
+        
         const isUpdate = userData.id !== '';
         
         try {
             showLoadingMessage(`Đang ${isUpdate ? 'cập nhật' : 'thêm'} người dùng...`);
             
             if (isUpdate) {
-                // Cập nhật người dùng
+                
                 await ApiClient.User.updateUser(userData.id, userData);
             } else {
-                // Thêm người dùng mới
+                
                 await ApiClient.User.createUser(userData);
             }
             
-            // Đóng modal
+            
             closeModal('userModal');
             
-            // Tải lại dữ liệu
+            
             loadUserData();
             
             showSuccessMessage(`Đã ${isUpdate ? 'cập nhật' : 'thêm'} người dùng thành công`);
@@ -179,15 +169,11 @@ function setupUserFormSubmission() {
     });
 }
 
-/**
- * ==========================
- * QUẢN LÝ SẢN PHẨM
- * ==========================
- */
+
 function initializeProductManagement() {
     console.log('Khởi tạo chức năng quản lý sản phẩm');
     
-    // Thêm CSS cho trạng thái sản phẩm
+   
     const statusStyle = document.createElement('style');
     statusStyle.innerHTML = `
         .product-status-badge {
@@ -248,17 +234,15 @@ function initializeProductManagement() {
     addRefreshButton();
 }
 
-// Kiểm tra trạng thái kết nối API server
+
 async function checkApiServerStatus() {
     try {
-        // Kiểm tra API server bằng một endpoint đơn giản
-        // Thay đổi endpoint thành /products để kiểm tra vì /health-check có thể không được triển khai
+       
         const response = await fetch(`${API_BASE_URL}/products`, { 
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
             },
-            // Timeout ngắn để không chờ quá lâu
             signal: AbortSignal.timeout(3000) 
         });
         
@@ -300,12 +284,9 @@ async function checkApiServerStatus() {
     }
 }
 
-// Đừng tải dữ liệu quá nhanh để tránh giật
 let isLoadingProducts = false;
 let isLoadingCategories = false;
 
-// Ảnh mặc định dạng base64 - đây là một ảnh coffee đơn giản
-const defaultImageBase64 = 'data:image/png;base64,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';
 
 // Tải dữ liệu sản phẩm
 async function loadProductData() {
@@ -706,7 +687,7 @@ function displayProductsNewFormat(products, tableBody) {
         console.log(`Sản phẩm ${productName} (ID: ${productId}): status=${product.status}, isAvailable=${product.isAvailable}, Kết quả=${isProductAvailable ? 'Đang bán' : 'Ngừng bán'}`);
         
         // Ảnh sản phẩm
-        let productImage = defaultImageBase64;
+        let productImage = '/assets/images/default-product.png';
         if (product.image) {
             if (!product.image.startsWith('data:') && !product.image.startsWith('http')) {
                 productImage = `${API_BASE_URL}/products/images/${product.image}`;
@@ -727,7 +708,7 @@ function displayProductsNewFormat(products, tableBody) {
             <td>${index + 1}</td>
             <td>
                 <img src="${productImage}" alt="${productName}" class="product-thumbnail" 
-                     onerror="this.onerror=null; this.src='${defaultImageBase64}'">
+                     onerror="this.onerror=null; this.src='/assets/images/default-product.png'">
             </td>
             <td>${productName}</td>
             <td>${(product.price || 0).toLocaleString()} VNĐ</td>
@@ -929,7 +910,7 @@ function displayProductsOldFormat(products, tableBody) {
         const row = document.createElement('tr');
         
         // Xử lý đường dẫn hình ảnh - sử dụng base64 làm mặc định
-        let imagePath = defaultImageBase64;
+        let imagePath = '/assets/images/default-product.png';
         
         if (product.image) {
             // Kiểm tra xem đường dẫn có phải URL đầy đủ không
@@ -1001,7 +982,7 @@ function displayProductsOldFormat(products, tableBody) {
         
         // Tạo các cột dữ liệu
         row.innerHTML = `
-            <td><img src="${imagePath}" alt="${productName}" onerror="this.src='${defaultImageBase64}'" class="product-thumbnail"></td>
+            <td><img src="${imagePath}" alt="${productName}" onerror="this.src='/assets/images/default-product.png'" class="product-thumbnail"></td>
             <td>${productName}</td>
             <td>${categoryDisplay}</td>
             <td>${productPrice} VNĐ</td>
@@ -1212,7 +1193,7 @@ function updateOldModalWithProductData(product, modal) {
     const imagePreview = document.getElementById('productImagePreview');
     if (imagePreview) {
         if (product.image) {
-            let imagePath = '';
+            let imagePath = '/assets/images/default-product.png';
             // Kiểm tra nếu là đường dẫn tương đối hay URL đầy đủ hoặc dữ liệu base64
             if (product.image.startsWith('data:') || product.image.startsWith('http')) {
                 imagePath = product.image;
@@ -1221,10 +1202,10 @@ function updateOldModalWithProductData(product, modal) {
             }
             
             // Set ảnh xem trước
-            imagePreview.innerHTML = `<img src="${imagePath}" alt="${product.name || product.productName}" onerror="this.src='${defaultImageBase64}'">`;
+            imagePreview.innerHTML = `<img src="${imagePath}" alt="${product.name || product.productName}" onerror="this.src='/assets/images/default-product.png'">`;
             console.log('Đã đặt ảnh xem trước cho sản phẩm:', imagePath);
         } else {
-            imagePreview.innerHTML = `<img src="${defaultImageBase64}" alt="Default Image">`;
+            imagePreview.innerHTML = `<img src="/assets/images/default-product.png" alt="Default Image">`;
             console.log('Không có ảnh, sử dụng ảnh mặc định');
         }
     } else {
@@ -1935,7 +1916,7 @@ function updateNewModalWithProductData(product, modal) {
     // Xử lý ảnh sản phẩm
     const productImagePreview = document.getElementById('edit-product-image-preview');
     if (product.image) {
-        let imagePath = '';
+        let imagePath = '/assets/images/default-product.png';
         // Kiểm tra nếu là đường dẫn tương đối hay URL đầy đủ hoặc dữ liệu base64
         if (product.image.startsWith('data:') || product.image.startsWith('http')) {
             imagePath = product.image;
@@ -1947,7 +1928,7 @@ function updateNewModalWithProductData(product, modal) {
         productImagePreview.setAttribute('data-original-image', product.image);
         console.log('Đã đặt ảnh xem trước cho sản phẩm:', imagePath);
     } else {
-        productImagePreview.src = defaultImageBase64;
+        productImagePreview.src = '/assets/images/default-product.png';
         productImagePreview.setAttribute('data-original-image', '');
         console.log('Không có ảnh, sử dụng ảnh mặc định');
     }
@@ -1955,7 +1936,7 @@ function updateNewModalWithProductData(product, modal) {
     // Đặt onerror để sử dụng ảnh mặc định nếu tải ảnh thất bại
     productImagePreview.onerror = function() {
         this.onerror = null;
-        this.src = defaultImageBase64;
+        this.src = '/assets/images/default-product.png';
     };
     
     // Reset file input

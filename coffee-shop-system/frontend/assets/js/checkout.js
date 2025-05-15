@@ -94,41 +94,6 @@ function loadTables() {
         });
 }
 
-// Hàm tạo dữ liệu mẫu cho bàn
-function useSampleTables() {
-    const tableSelect = document.getElementById("tableNumber");
-    
-    // Đảm bảo vẫn có option chọn bàn
-    if (tableSelect.querySelector('option[value=""]') === null) {
-        const defaultOption = document.createElement("option");
-        defaultOption.value = "";
-        defaultOption.textContent = "Chọn bàn";
-        tableSelect.appendChild(defaultOption);
-    }
-    
-    // Thêm dữ liệu mẫu
-    for (let i = 1; i <= 10; i++) {
-        const option = document.createElement("option");
-        option.value = i;
-        option.textContent = `Bàn ${i}`;
-        tableSelect.appendChild(option);
-    }
-    
-    // Đảm bảo có option mang đi
-    if (tableSelect.querySelector('option[value="takeaway"]') === null) {
-        const takeawayOption = document.createElement("option");
-        takeawayOption.value = "takeaway";
-        takeawayOption.textContent = "Mang đi";
-        tableSelect.appendChild(takeawayOption);
-    }
-    
-    // Chọn bàn đã lưu trong localStorage nếu có
-    const savedTable = localStorage.getItem("selectedTable");
-    if (savedTable) {
-        tableSelect.value = savedTable;
-    }
-}
-
 // Load order summary from cart
 function loadOrderSummary() {
     const cart = JSON.parse(localStorage.getItem("cart")) || [];

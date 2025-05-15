@@ -1031,7 +1031,7 @@ function attachOrderButtonEvents() {
     document.querySelectorAll('.btn-print').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const orderId = e.currentTarget.getAttribute('data-id');
-            showNotification('Tính năng đang được phát triển', 'info');
+            printOrderInvoice(orderId);
         });
     });
     
@@ -1186,7 +1186,15 @@ function viewOrderDetails(orderId) {
     // Set the content and show the modal
     orderDetailsContainer.innerHTML = content;
     orderModal.style.display = 'flex';
-    
+
+
+    const printBtnFooter = orderModal.querySelector('.modal-footer .btn-primary, .modal-footer .btn-print');
+    if (printBtnFooter) {
+        printBtnFooter.onclick = function() {
+            printOrderInvoice(orderId);
+        };
+    }
+
     // Add event listener to close when clicking outside
     orderModal.addEventListener('click', (e) => {
         if (e.target === orderModal) {
@@ -1389,4 +1397,51 @@ function showNotification(message, type = 'info') {
             }, 300);
         }
     }, 5000);
+}
+
+// Thêm hàm này vào cuối file:
+function printOrderInvoice(orderId) {
+    const order = orders.find(o => o.idOrder == orderId);
+    if (!order) {
+        showNotification('Không tìm thấy thông tin đơn hàng để in!', 'error');
+        return;
+    }
+    // Tạo nội dung hóa đơn (có thể tùy chỉnh đẹp hơn)
+    let printContent = `
+        <div style="max-width:500px;margin:0 auto;font-family:sans-serif;">
+            <h2 style="text-align:center;color:#e67e22;">T2K Coffee</h2>
+            <h3 style="text-align:center;">HÓA ĐƠN THANH TOÁN</h3>
+            <hr>
+            <p><b>Mã đơn hàng:</b> ${order.idOrder}</p>
+            <p><b>Bàn:</b> ${order.table && order.table.tableNumber ? order.table.tableNumber : '---'}</p>
+            <p><b>Thời gian:</b> ${order.orderTime ? (new Date(order.orderTime)).toLocaleString('vi-VN') : ''}</p>
+            <table style="width:100%;border-collapse:collapse;margin:15px 0;">
+                <tr>
+                    <th style="text-align:left;">Tên món</th>
+                    <th style="text-align:center;">SL</th>
+                    <th style="text-align:right;">Giá</th>
+                </tr>
+                ${
+                    (order.orderDetails || []).map(item => `
+                        <tr>
+                            <td>${item.product ? item.product.productName : 'Sản phẩm'}</td>
+                            <td style="text-align:center;">${item.quantity}</td>
+                            <td style="text-align:right;">${(item.unitPrice * item.quantity).toLocaleString('vi-VN')} đ</td>
+                        </tr>
+                    `).join('')
+                }
+            </table>
+            <p style="text-align:right;"><b>Tổng cộng:</b> ${order.totalAmount.toLocaleString('vi-VN')} đ</p>
+            <p style="text-align:center;">Cảm ơn quý khách!</p>
+        </div>
+    `;
+    // Mở cửa sổ in
+    const printWindow = window.open('', '', 'width=600,height=800');
+    printWindow.document.write('<html><head><title>In hóa đơn</title></head><body>' + printContent + '</body></html>');
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 500);
 } 

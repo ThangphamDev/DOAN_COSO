@@ -233,8 +233,8 @@ async function loadTables() {
         }
         
         // Sử dụng dữ liệu mẫu nếu không lấy được từ API
-        tables = getSampleTableData();
-        filteredTables = [...tables];
+        tables = [];
+        filteredTables = [];
         
         // Cập nhật giao diện
         updateTableStatistics();
@@ -635,22 +635,6 @@ async function deleteTable(tableId) {
             window.AdminCore.showLoader(false);
         }
     }
-}
-
-// Dữ liệu mẫu - sử dụng khi không kết nối được API
-function getSampleTableData() {
-    return [
-        { id: 1, name: "Bàn 1", number: 1, area: "Ground Floor", capacity: 4, status: "Available", notes: "" },
-        { id: 2, name: "Bàn 2", number: 2, area: "Ground Floor", capacity: 2, status: "Occupied", notes: "Khách đã gọi món" },
-        { id: 3, name: "Bàn 3", number: 3, area: "Ground Floor", capacity: 6, status: "Reserved", notes: "Đặt cho 18:00" },
-        { id: 4, name: "Bàn 4", number: 4, area: "Ground Floor", capacity: 4, status: "Cleaning", notes: "Cần dọn dẹp" },
-        { id: 5, name: "Bàn 5", number: 5, area: "Ground Floor", capacity: 8, status: "Available", notes: "" },
-        { id: 6, name: "Bàn 6", number: 6, area: "First Floor", capacity: 4, status: "Available", notes: "" },
-        { id: 7, name: "Bàn 7", number: 7, area: "First Floor", capacity: 2, status: "Occupied", notes: "VIP" },
-        { id: 8, name: "Bàn 8", number: 8, area: "First Floor", capacity: 10, status: "Available", notes: "Bàn lớn" },
-        { id: 9, name: "Bàn 9", number: 9, area: "Outdoor", capacity: 4, status: "Available", notes: "" },
-        { id: 10, name: "Bàn 10", number: 10, area: "Outdoor", capacity: 6, status: "Reserved", notes: "Đặt cho 19:30" },
-    ];
 }
 
 // Export các hàm cần thiết nếu muốn sử dụng từ file khác

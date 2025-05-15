@@ -1146,114 +1146,6 @@
             
             const menuItemsContainer = document.querySelector('.menu-items');
             
-            // Tạo dữ liệu mẫu cho sản phẩm
-            const sampleProducts = [
-                {
-                    idProduct: 1,
-                    productName: 'Espresso',
-                    price: 25000,
-                    description: 'Cà phê đậm đặc pha bằng cách ép nước qua hạt cà phê xay mịn',
-                    category: { idCategory: 1, categoryName: 'Cà phê' },
-                    image: null
-                },
-                {
-                    idProduct: 2,
-                    productName: 'Cappuccino',
-                    price: 35000,
-                    description: 'Cà phê Espresso trộn với sữa nóng và bọt sữa',
-                    category: { idCategory: 1, categoryName: 'Cà phê' },
-                    image: null
-                },
-                {
-                    idProduct: 3,
-                    productName: 'Latte',
-                    price: 35000,
-                    description: 'Cà phê Espresso với nhiều sữa nóng và một ít bọt sữa',
-                    category: { idCategory: 1, categoryName: 'Cà phê' },
-                    image: null
-                },
-                {
-                    idProduct: 4,
-                    productName: 'Trà Đào',
-                    price: 35000,
-                    description: 'Trà đen pha với đào tươi và siro đào',
-                    category: { idCategory: 2, categoryName: 'Trà' },
-                    image: null
-                },
-                {
-                    idProduct: 5,
-                    productName: 'Trà Chanh',
-                    price: 30000,
-                    description: 'Trà tươi với chanh và đường',
-                    category: { idCategory: 2, categoryName: 'Trà' },
-                    image: null
-                },
-                {
-                    idProduct: 6,
-                    productName: 'Croissant',
-                    price: 25000,
-                    description: 'Bánh croissant bơ truyền thống',
-                    category: { idCategory: 3, categoryName: 'Bánh' },
-                    image: null
-                },
-                {
-                    idProduct: 7,
-                    productName: 'Bánh Mì Gối',
-                    price: 20000,
-                    description: 'Bánh mì gối mềm mịn',
-                    category: { idCategory: 3, categoryName: 'Bánh' },
-                    image: null
-                },
-                {
-                    idProduct: 8,
-                    productName: 'Tiramisu',
-                    price: 45000,
-                    description: 'Bánh tiramisu với cà phê và phô mai mascarpone',
-                    category: { idCategory: 4, categoryName: 'Tráng miệng' },
-                    image: null
-                },
-                {
-                    idProduct: 9,
-                    productName: 'Cheesecake',
-                    price: 40000,
-                    description: 'Bánh phô mai thơm béo',
-                    category: { idCategory: 4, categoryName: 'Tráng miệng' },
-                    image: null
-                },
-                {
-                    idProduct: 10,
-                    productName: 'Sinh tố Xoài',
-                    price: 35000,
-                    description: 'Sinh tố xoài mát lạnh',
-                    category: { idCategory: 5, categoryName: 'Sinh tố' },
-                    image: null
-                },
-                {
-                    idProduct: 11,
-                    productName: 'Sinh tố Dâu',
-                    price: 35000,
-                    description: 'Sinh tố dâu tây tươi',
-                    category: { idCategory: 5, categoryName: 'Sinh tố' },
-                    image: null
-                }
-            ];
-            
-            // Render dữ liệu mẫu ngay lập tức
-            displayProducts(sampleProducts);
-            
-            // Tạo danh mục từ sản phẩm mẫu
-            const uniqueCategories = [...new Set(sampleProducts.map(p => p.category.categoryName))];
-            const categories = uniqueCategories.map((name, index) => {
-                const category = sampleProducts.find(p => p.category.categoryName === name).category;
-                console.log('Category mapping:', name, ' -> ', category.idCategory);
-                return {
-                    idCategory: category.idCategory,
-                    categoryName: name
-                };
-            });
-            
-            // Hiển thị danh mục
-            renderCategories(categories);
             
             // Khởi tạo giỏ hàng
             let cart = [];
@@ -1292,7 +1184,7 @@
             
             function renderCategories(categories) {
                 const categoryTabsContainer = document.querySelector('.category-tabs');
-                categoryTabsContainer.innerHTML = ''; // Xóa tất cả tab hiện tại
+                categoryTabsContainer.innerHTML = ''; 
                 
                 // Tạo tab "All" mặc định
                 const allTab = document.createElement('button');
@@ -1301,8 +1193,7 @@
                 allTab.dataset.category = 'all';
                 categoryTabsContainer.appendChild(allTab);
                 
-                // Debug log cho categories
-                console.log('Danh mục cần hiển thị:', JSON.stringify(categories));
+               
                 
                 // Tạo tab cho từng danh mục
                 categories.forEach(category => {
@@ -1359,17 +1250,17 @@
                     item.style.animation = `fadeIn 0.5s ease forwards ${0.1 * index}s`;
                     item.style.opacity = '0';
                     
-                    // Đảm bảo có ID danh mục cho mọi sản phẩm - để phù hợp với ID là số
+                   
                     let categoryId = product.ID_Category || 
                                     (product.category ? product.category.idCategory : null) || 
                                     (product.category ? product.category.ID_Category : null);
                     
-                    // Nếu không có categoryId, mặc định là 1 (Cà phê)
+                    
                     if (!categoryId) {
                         categoryId = 1;
                     }
                     
-                    // Lưu id dưới dạng chuỗi để thuận tiện khi so sánh
+                    
                     item.setAttribute('data-category', categoryId.toString());
                     
                     // Xử lý hình ảnh sản phẩm
@@ -1406,25 +1297,7 @@
                     
                     // Thêm hình ảnh theo danh mục nếu không có ảnh
                     if (imageClass === 'no-image') {
-                        // Chuyển categoryId thành số để so sánh
-                        const catId = parseInt(categoryId);
-                        
-                        if (catId === 1) { // Cà phê
-                            imageUrl = 'https://product.hstatic.net/1000075078/product/1639377770_ca-phe-den-da_46b8659e67f64ec987fc2bb05e982143.jpg';
-                            imageClass = '';
-                        } else if (catId === 2) { // Trà
-                            imageUrl = 'https://product.hstatic.net/1000075078/product/tra-dao-cam-xa_d261c3a940104684a0f366faa2690000.jpg';
-                            imageClass = '';
-                        } else if (catId === 3) { // Bánh
-                            imageUrl = 'https://product.hstatic.net/1000075078/product/croissant-trung-muoi_880850_a8c4dbf4a88f4401bab207296a9d152c.jpg';
-                            imageClass = '';
-                        } else if (catId === 4) { // Tráng miệng
-                            imageUrl = 'https://product.hstatic.net/1000075078/product/mousse-ao-chocolate_e25675295a7f4c8abbce9c9139a9b56a.jpg';
-                            imageClass = '';
-                        } else if (catId === 5) { // Sinh tố
-                            imageUrl = 'https://product.hstatic.net/1000075078/product/1649229630_xoai-dau-ph_e1ee057a15454bbda37b87dfcf4f9d90.jpg';
-                            imageClass = '';
-                        }
+                        // Giữ nguyên ảnh no-image mặc định, không gán ảnh theo catId nữa
                     }
                     
                     // Tạo badge ngẫu nhiên với xác suất 30%
@@ -1495,7 +1368,6 @@
                                 console.log('Đã nhận dữ liệu bàn từ API:', tables);
                                 if (!tables || tables.length === 0) {
                                     console.warn('Không có bàn nào từ API');
-                                    useSampleTables();
                                     return;
                                 }
                                 
@@ -1509,7 +1381,6 @@
                                 
                                 if (availableTables.length === 0) {
                                     console.warn('Không có bàn trống nào');
-                                    useSampleTables();
                                     return;
                                 }
                                 
@@ -1528,7 +1399,6 @@
                             })
                             .catch(error => {
                                 console.error('Lỗi khi tải bàn:', error);
-                                useSampleTables();
                             });
                     } else {
                         // Fallback: Sử dụng fetch trực tiếp nếu CafeAPI không tồn tại
@@ -1550,12 +1420,10 @@
                         .then(tables => handleTablesData(tables))
                         .catch(error => {
                             console.error('Lỗi khi tải bàn:', error);
-                            useSampleTables();
                         });
                     }
                 } catch (error) {
                     console.error('Lỗi khi tải bàn:', error);
-                    useSampleTables();
                 }
                 
                 // Hàm xử lý dữ liệu bàn
@@ -1563,7 +1431,6 @@
                     console.log('Đã nhận dữ liệu bàn từ API:', tables);
                     if (!tables || tables.length === 0) {
                         console.warn('Không có bàn nào từ API');
-                        useSampleTables();
                         return;
                     }
                     
@@ -1577,7 +1444,6 @@
                     
                     if (availableTables.length === 0) {
                         console.warn('Không có bàn trống nào');
-                        useSampleTables();
                         return;
                     }
                     
@@ -1593,23 +1459,6 @@
                     takeawayOption.value = 'takeaway';
                     takeawayOption.textContent = 'Mang đi';
                     tableSelect.appendChild(takeawayOption);
-                }
-                
-                function useSampleTables() {
-                    console.log('Sử dụng dữ liệu mẫu cho bàn');
-                    const tableSelect = document.getElementById('tableSelect');
-                    if (tableSelect) {
-                        tableSelect.innerHTML = `
-                            <option value="">Chọn bàn</option>
-                            <option value="1">Bàn 1</option>
-                            <option value="2">Bàn 2</option>
-                            <option value="3">Bàn 3</option>
-                            <option value="4">Bàn 4</option>
-                            <option value="5">Bàn 5</option>
-                            <option value="6">Bàn 6</option>
-                            <option value="takeaway">Mang đi</option>
-                        `;
-                    }
                 }
             }
             
