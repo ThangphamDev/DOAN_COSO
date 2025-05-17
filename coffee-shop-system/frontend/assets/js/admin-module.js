@@ -19,10 +19,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Tùy theo trang hiện tại mà tải các module phù hợp
     if (currentPage.includes('user')) {
-        await loadModule('../assets/js/admin-entities.js');
+        await loadModule('../assets/js/modules/entities-main.js');
     }
     else if (currentPage.includes('product') || currentPage.includes('categor') || currentPage.includes('staff')) {
-        await loadModule('../assets/js/admin-entities.js');
+        await loadModule('../assets/js/modules/entities-main.js');
     }
     else if (currentPage.includes('order') || currentPage.includes('table') || 
              currentPage.includes('promotion') || currentPage.includes('activit')) {

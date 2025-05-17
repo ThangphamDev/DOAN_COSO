@@ -10,8 +10,6 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../assets/css/admin.css">
     <link rel="stylesheet" href="../assets/css/admin-modules.css">
-    <!-- Favicon -->
-    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
     <style>
         /* Custom styles for form error messages */
         .form-error-container {
@@ -94,22 +92,29 @@
                 </div>
 
                 <!-- Thanh công cụ -->
-                <div class="content-toolbar">
+                <div class="action-bar">
+                    <button id="addStaffBtn" class="btn-primary">
+                        <i class="fas fa-plus"></i> Thêm nhân viên mới
+                    </button>
                     <div class="search-box">
                         <input type="text" id="staffSearchInput" placeholder="Tìm kiếm nhân viên...">
-                        <button type="button"><i class="fas fa-search"></i></button>
+                        <button class="search-btn"><i class="fas fa-search"></i></button>
                     </div>
-                    <div class="filter-box">
-                        <select id="staffRoleFilter">
-                            <option value="">Tất cả vai trò</option>
-                            <option value="admin">Quản trị viên</option>
-                            <option value="staff">Nhân viên</option>
-                            <option value="customer">Khách hàng</option>
-                        </select>
+                    <div class="filter-dropdown">
+                        <button class="btn-secondary dropdown-toggle">
+                            <i class="fas fa-filter"></i> Lọc <i class="fas fa-caret-down"></i>
+                        </button>
+                        <div class="dropdown-menu">
+                            <label>Vai trò:</label>
+                            <select id="staffRoleFilter">
+                                <option value="all">Tất cả vai trò</option>
+                                <option value="admin">Quản trị viên</option>
+                                <option value="manager">Quản lý</option>
+                                <option value="staff">Nhân viên</option>
+                            </select>                          
+                           
+                        </div>
                     </div>
-                    <button id="addStaffBtn" class="btn-primary">
-                        <i class="fas fa-plus"></i> Thêm nhân viên
-                    </button>
                 </div>
 
                 <!-- Bảng danh sách nhân viên -->

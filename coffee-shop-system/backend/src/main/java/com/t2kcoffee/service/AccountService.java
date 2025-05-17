@@ -3,6 +3,7 @@ package com.t2kcoffee.service;
 import com.t2kcoffee.model.Account;
 import com.t2kcoffee.repository.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,6 +20,9 @@ import java.util.UUID;
 public class AccountService {
 
     private final AccountRepository accountRepository;
+
+    @Value("${app.upload.dir}")
+    private String uploadDir;
 
     @Autowired
     public AccountService(AccountRepository accountRepository) {
@@ -116,8 +120,7 @@ public class AccountService {
 
     @Transactional
     public String storeAvatarFile(MultipartFile file, Integer accountId) throws IOException {
-        String uploadDir = "backend/uploads/images/avatar";
-        Path uploadPath = Paths.get(uploadDir);
+        Path uploadPath = Paths.get(uploadDir, "avatar").toAbsolutePath().normalize();
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
         }

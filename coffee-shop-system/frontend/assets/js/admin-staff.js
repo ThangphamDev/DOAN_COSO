@@ -1,19 +1,13 @@
-/**
- * Staff Management Module - T2K Coffee Admin
- * Quản lý nhân viên, thêm, sửa, xóa nhân viên
- */
 
-// Constants
 const DEFAULT_AVATAR = '../assets/images/default-avatar.png';
 
-// Biến toàn cục
 let staffList = [];        
 let originalList = [];     
 let currentPage = 1;       
 let itemsPerPage = 10;     
 let totalPages = 1;        
 
-// Khởi tạo khi trang tải xong
+
 document.addEventListener('DOMContentLoaded', function() {
     // Tải dữ liệu nhân viên
     loadStaffData();

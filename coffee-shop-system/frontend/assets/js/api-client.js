@@ -1,4 +1,3 @@
-
 const API_BASE_URL = 'http://localhost:8081/api';
 
 // Token JWT cho authentication
@@ -204,15 +203,7 @@ const AccountApi = {
   // Lấy tất cả tài khoản
   getAllAccounts: async (role = null) => {
     const endpoint = role ? `/accounts?role=${role}` : '/accounts';
-    try {
-      return await fetchApi(endpoint);
-    } catch (error) {
-      console.warn('Không thể lấy danh sách tài khoản, sử dụng dữ liệu mẫu:', error);
-      if (role === 'staff') {
-        return getMockStaffData().filter(account => account.role === 'staff');
-      }
-      return getMockStaffData();
-    }
+    return await fetchApi(endpoint);
   },
   
   // Lấy thông tin người dùng hiện tại
@@ -395,157 +386,54 @@ const ProductApi = {
 const StaffApi = {
   // Lấy tất cả nhân viên
   getAllStaff: async () => {
-    try {
-      // Lấy tất cả tài khoản
-      return await fetchApi('/accounts');
-    } catch (error) {
-      console.warn('Không thể kết nối API nhân viên, sử dụng dữ liệu mẫu:', error);
-      // Trả về dữ liệu mẫu nếu API lỗi
-      return getMockStaffData();
-    }
+    return await fetchApi('/accounts');
   },
   
   // Lấy nhân viên theo ID
   getStaffById: async (id) => {
-    try {
-      return await fetchApi(`/accounts/${id}`);
-    } catch (error) {
-      console.warn(`Không thể lấy thông tin nhân viên ID ${id}, sử dụng dữ liệu mẫu:`, error);
-      const mockStaff = getMockStaffData();
-      return mockStaff.find(staff => staff.id == id) || {};
-    }
+    return await fetchApi(`/accounts/${id}`);
   },
   
   // Tạo nhân viên mới
   createStaff: async (staffData) => {
-    try {
-      // Lưu lại ảnh nếu có để hiển thị giả lập
-      let imageData = null;
-      if (staffData.image && staffData.image.startsWith('data:image')) {
-        imageData = staffData.image;
-      }
-      
-      // Loại bỏ ảnh khỏi dữ liệu gửi đi để tránh lỗi
-      const apiStaffData = { ...staffData };
+    // Loại bỏ ảnh khỏi dữ liệu gửi đi nếu có
+    const apiStaffData = { ...staffData };
+    if (apiStaffData.image) {
       delete apiStaffData.image;
-      
-      // Gọi API tạo tài khoản cơ bản (không gồm ảnh)
-      console.log('Tạo tài khoản mới (không gồm ảnh)');
-      const result = await fetchApi('/accounts', {
-        method: 'POST',
-        body: JSON.stringify(apiStaffData)
-      });
-      
-      console.log('Tạo tài khoản thành công:', result);
-      
-      // Nếu có ảnh, lưu vào localStorage để dùng cho việc hiển thị
-      if (imageData && result) {
-        const staffId = result.idAccount || result.id;
-        if (staffId) {
-          try {
-            const staffImages = JSON.parse(localStorage.getItem('staffImages') || '{}');
-            staffImages[staffId] = imageData;
-            localStorage.setItem('staffImages', JSON.stringify(staffImages));
-            console.log('Đã lưu ảnh vào localStorage cho nhân viên mới, ID:', staffId);
-            
-            // Trả về kết quả kèm theo ảnh
-            return {
-              ...result,
-              image: imageData
-            };
-          } catch (e) {
-            console.warn('Không thể lưu ảnh vào localStorage:', e);
-          }
-        }
-      }
-      
-      return result;
-    } catch (error) {
-      console.warn('Không thể tạo nhân viên:', error);
-      // Ném lại lỗi để giao diện xử lý
-      throw error;
     }
+    
+    return await fetchApi('/accounts', {
+      method: 'POST',
+      body: JSON.stringify(apiStaffData)
+    });
   },
   
   // Cập nhật thông tin nhân viên
   updateStaff: async (id, staffData) => {
-    try {
-      // Lưu lại ảnh nếu có để hiển thị giả lập
-      let imageData = null;
-      if (staffData.image && staffData.image.startsWith('data:image')) {
-        imageData = staffData.image;
-        
-        // Lưu ảnh vào localStorage để dùng sau này
-        try {
-          const staffImages = JSON.parse(localStorage.getItem('staffImages') || '{}');
-          staffImages[id] = imageData;
-          localStorage.setItem('staffImages', JSON.stringify(staffImages));
-          console.log('Đã lưu ảnh vào localStorage');
-        } catch (e) {
-          console.warn('Không thể lưu ảnh vào localStorage:', e);
-        }
-      }
-      
-      // Loại bỏ ảnh khỏi dữ liệu gửi đi để tránh lỗi
-      const apiStaffData = { ...staffData };
+    // Loại bỏ ảnh khỏi dữ liệu gửi đi nếu có
+    const apiStaffData = { ...staffData };
+    if (apiStaffData.image) {
       delete apiStaffData.image;
-      
-      // Gọi API cập nhật thông tin cơ bản
-      console.log('Cập nhật thông tin nhân viên (không gồm ảnh)');
-      const result = await fetchApi(`/accounts/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(apiStaffData)
-      });
-      
-      console.log('Cập nhật thông tin thành công:', result);
-      
-      // Trả về kết quả kèm theo ảnh đã lưu (nếu có)
-      if (imageData) {
-        return {
-          ...result,
-          image: imageData
-        };
-      }
-      
-      return result;
-    } catch (error) {
-      console.warn(`Không thể cập nhật nhân viên ID ${id}:`, error);
-      // Ném lại lỗi để giao diện xử lý
-      throw error;
     }
+    
+    return await fetchApi(`/accounts/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(apiStaffData)
+    });
   },
   
   // Xóa nhân viên
   deleteStaff: async (id) => {
-    try {
-      return await fetchApi(`/accounts/${id}`, {
-        method: 'DELETE'
-      });
-    } catch (error) {
-      console.warn(`Không thể xóa nhân viên ID ${id}, sử dụng response giả lập:`, error);
-      // Giả lập response thành công
-      return { 
-        success: true,
-        message: 'Xóa nhân viên thành công (Mock)'
-      };
-    }
+    return await fetchApi(`/accounts/${id}`, {
+      method: 'DELETE'
+    });
   },
   
   // Cập nhật trạng thái nhân viên (đang làm việc/nghỉ việc)
   updateStaffStatus: async (id, isActive) => {
-    try {
-      return await fetchApi(`/accounts/${id}/status?active=${isActive}`, {
-        method: 'PATCH'
-      });
-    } catch (error) {
-      console.warn(`Không thể cập nhật trạng thái nhân viên ID ${id}, sử dụng response giả lập:`, error);
-      // Giả lập response thành công
-      return { 
-        id: id,
-        isActive: isActive,
-        message: 'Cập nhật trạng thái nhân viên thành công (Mock)'
-      };
-    }
+    return await fetchApi(`/accounts/${id}/status?active=${isActive}`, {
+      method: 'PATCH'
+    });
   },
   
   // Tải lên ảnh đại diện nhân viên
@@ -553,34 +441,19 @@ const StaffApi = {
     const formData = new FormData();
     formData.append('avatar', imageFile);
     
-    try {
-      const response = await fetch(`${API_BASE_URL}/accounts/${id}/avatar`, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+    const response = await fetch(`${API_BASE_URL}/accounts/${id}/avatar`, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
-      
-      return await response.json();
-    } catch (error) {
-      console.warn(`Không thể upload ảnh cho nhân viên ID ${id}, sử dụng response giả lập:`, error);
-      // Tạo blob URL cho preview
-      let avatarUrl = '';
-      if (imageFile) {
-        avatarUrl = URL.createObjectURL(imageFile);
-      }
-      // Giả lập response thành công
-      return { 
-        id: id,
-        avatar: avatarUrl || '/assets/images/default-avatar.png',
-        message: 'Upload ảnh đại diện thành công (Mock)'
-      };
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
     }
+    
+    return await response.json();
   }
 };
 
@@ -635,166 +508,63 @@ const ReportApi = {
   }
 };
 
-// Dữ liệu mẫu cho nhân viên
-function getMockStaffData() {
-  return [
-    { 
-      id: 1, 
-      userName: 'admin', 
-      fullName: 'Quản trị viên', 
-      role: 'admin', 
-      phone: '0987654321', 
-      email: 'admin@t2kcoffee.com', 
-      status: 'active',
-      isActive: true,
-      address: 'Hà Nội',
-      image: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAABmJLR0QA/wD/AP+gvaeTAAADSUlEQVR4nO3dz0sUYRzH8ffMbmu5NCb04yjkLegmdAiyIqiL9BcUXTtEt+hmQUQU9BsUXTp0CaIPiEDx0r0OQhFREUixEB06mBubLrnjbM/TwfTH7szzzO6OM34/l2WZ7/Pw7Gd+zjz7DAghhBBCCCGEEEIIIYQQQgghhNhzlO4GMpnMCJD22YbVarc0m927ZTvL+8XcUzR2FGgfMFPtdkuz1W5pOpbKZrO/fRvxVECb8u2HYenELv+AUCqVSrfb7bZvO9JDJJAIkEAiQAKJAGtB0VCpDZRKpU4MDAw8GR0d7Wu1Wl/SNO1qmuYn34a6GchwLpe7MTQ0dKlQKBwG7hUKhaP5fP4VsBQEwcpuNhQEwVwikXidebtfzefzR9I07UM8AHVtSLt9PQzDa8D+jl0HgJ8rKytXkiTZ2K2GgiCYr9Vqb4BvsVisJ0mS/UAJ2Af0xvtdDaQHSHfxvARgvdvN/CuRJMn8xn9rQRBEEyCBRIAEEgGJbgeyC7ptw/OHvB8VmH0VwVqQXA+DuWdsLwCY++3Pu5DFubj0kAiQQCJAAokACcQCa0Gz712/cxWGuXdorjWvHuI6GTKUW42sH5JAIkACiQAJxAJrQbPvgR3fjvHNsOt7CFgPzF1r1npI14N2d7uBu8X6IQkkAiSQCJBALLAWNLueJMd6UOnmr/Nw2lw9pFQqzWB4AZOp+3a21W1BniBJkrk0TaeAP4Zh+HF4ePgMcAI4a3qPKBQKk/V6/TzwI5/P96RpehJ4CizX6/WpbDZ7ot1uXwTuA5+AW7lcbsL0PYZHvnw+/7BWqz0GbgIfgZlsNnvS9D2mjwhHRkbOrqys3AEmgYC/C+reAM+AD8DVMAznMpnMLJDe3N/V8Pz8/CtgDDgM9G3afgfECwmvAl+BaeAh8LxYLB5L03QJuL15cMMg3O2VhuGfBdBdzRWLxVLfmjVlOdMbhMEVjFg+1LrPRe1HdOsh2nXgw2O2vEN8e2YXcyGebWivQyw9Q7xvzrrHJpDAHLPUQ6LJUlAXl8F9b1DqHpvoXWuWzgzd3yHO2S3awbj0AJcxZn3Yl0AiQAKJAAkkAiSQCJBAIsDyc5Q/hxfY2X8/jy2NjY094f+Ur38BI0v0SNVk0IUAAAAASUVORK5CYII='
-    },
-    { 
-      id: 2, 
-      userName: 'nhanvien1', 
-      fullName: 'Nguyễn Văn A', 
-      role: 'staff', 
-      phone: '0123456789', 
-      email: 'nva@t2kcoffee.com', 
-      status: 'active',
-      isActive: true,
-      address: 'Hà Nội',
-      image: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAABmJLR0QA/wD/AP+gvaeTAAADSUlEQVR4nO3dz0sUYRzH8ffMbmu5NCb04yjkLegmdAiyIqiL9BcUXTtEt+hmQUQU9BsUXTp0CaIPiEDx0r0OQhFREUixEB06mBubLrnjbM/TwfTH7szzzO6OM34/l2WZ7/Pw7Gd+zjz7DAghhBBCCCGEEEIIIYQQQgghhNhzlO4GMpnMCJD22YbVarc0m927ZTvL+8XcUzR2FGgfMFPtdkuz1W5pOpbKZrO/fRvxVECb8u2HYenELv+AUCqVSrfb7bZvO9JDJJAIkEAiQAKJAGtB0VCpDZRKpU4MDAw8GR0d7Wu1Wl/SNO1qmuYn34a6GchwLpe7MTQ0dKlQKBwG7hUKhaP5fP4VsBQEwcpuNhQEwVwikXidebtfzefzR9I07UM8AHVtSLt9PQzDa8D+jl0HgJ8rKytXkiTZ2K2GgiCYr9Vqb4BvsVisJ0mS/UAJ2Af0xvtdDaQHSHfxvARgvdvN/CuRJMn8xn9rQRBEEyCBRIAEEgGJbgeyC7ptw/OHvB8VmH0VwVqQXA+DuWdsLwCY++3Pu5DFubj0kAiQQCJAAokACcQCa0Gz712/cxWGuXdorjWvHuI6GTKUW42sH5JAIkACiQAJxAJrQbPvgR3fjvHNsOt7CFgPzF1r1npI14N2d7uBu8X6IQkkAiSQCJBALLAWNLueJMd6UOnmr/Nw2lw9pFQqzWB4AZOp+3a21W1BniBJkrk0TaeAP4Zh+HF4ePgMcAI4a3qPKBQKk/V6/TzwI5/P96RpehJ4CizX6/WpbDZ7ot1uXwTuA5+AW7lcbsL0PYZHvnw+/7BWqz0GbgIfgZlsNnvS9D2mjwhHRkbOrqys3AEmgYC/C+reAM+AD8DVMAznMpnMLJDe3N/V8Pz8/CtgDDgM9G3afgfECwmvAl+BaeAh8LxYLB5L03QJuL15cMMg3O2VhuGfBdBdzRWLxVLfmjVlOdMbhMEVjFg+1LrPRe1HdOsh2nXgw2O2vEN8e2YXcyGebWivQyw9Q7xvzrrHJpDAHLPUQ6LJUlAXl8F9b1DqHpvoXWuWzgzd3yHO2S3awbj0AJcxZn3Yl0AiQAKJAAkkAiSQCJBAIsDyc5Q/hxfY2X8/jy2NjY094f+Ur38BI0v0SNVk0IUAAAAASUVORK5CYII='
-    },
-    { 
-      id: 3, 
-      userName: 'nhanvien2', 
-      fullName: 'Trần Thị B', 
-      role: 'staff', 
-      phone: '0369852147', 
-      email: 'ttb@t2kcoffee.com', 
-      status: 'inactive',
-      isActive: false,
-      address: 'Hồ Chí Minh',
-      image: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAABmJLR0QA/wD/AP+gvaeTAAADSUlEQVR4nO3dz0sUYRzH8ffMbmu5NCb04yjkLegmdAiyIqiL9BcUXTtEt+hmQUQU9BsUXTp0CaIPiEDx0r0OQhFREUixEB06mBubLrnjbM/TwfTH7szzzO6OM34/l2WZ7/Pw7Gd+zjz7DAghhBBCCCGEEEIIIYQQQgghhNhzlO4GMpnMCJD22YbVarc0m927ZTvL+8XcUzR2FGgfMFPtdkuz1W5pOpbKZrO/fRvxVECb8u2HYenELv+AUCqVSrfb7bZvO9JDJJAIkEAiQAKJAGtB0VCpDZRKpU4MDAw8GR0d7Wu1Wl/SNO1qmuYn34a6GchwLpe7MTQ0dKlQKBwG7hUKhaP5fP4VsBQEwcpuNhQEwVwikXidebtfzefzR9I07UM8AHVtSLt9PQzDa8D+jl0HgJ8rKytXkiTZ2K2GgiCYr9Vqb4BvsVisJ0mS/UAJ2Af0xvtdDaQHSHfxvARgvdvN/CuRJMn8xn9rQRBEEyCBRIAEEgGJbgeyC7ptw/OHvB8VmH0VwVqQXA+DuWdsLwCY++3Pu5DFubj0kAiQQCJAAokACcQCa0Gz712/cxWGuXdorjWvHuI6GTKUW42sH5JAIkACiQAJxAJrQbPvgR3fjvHNsOt7CFgPzF1r1npI14N2d7uBu8X6IQkkAiSQCJBALLAWNLueJMd6UOnmr/Nw2lw9pFQqzWB4AZOp+3a21W1BniBJkrk0TaeAP4Zh+HF4ePgMcAI4a3qPKBQKk/V6/TzwI5/P96RpehJ4CizX6/WpbDZ7ot1uXwTuA5+AW7lcbsL0PYZHvnw+/7BWqz0GbgIfgZlsNnvS9D2mjwhHRkbOrqys3AEmgYC/C+reAM+AD8DVMAznMpnMLJDe3N/V8Pz8/CtgDDgM9G3afgfECwmvAl+BaeAh8LxYLB5L03QJuL15cMMg3O2VhuGfBdBdzRWLxVLfmjVlOdMbhMEVjFg+1LrPRe1HdOsh2nXgw2O2vEN8e2YXcyGebWivQyw9Q7xvzrrHJpDAHLPUQ6LJUlAXl8F9b1DqHpvoXWuWzgzd3yHO2S3awbj0AJcxZn3Yl0AiQAKJAAkkAiSQCJBAIsDyc5Q/hxfY2X8/jy2NjY094f+Ur38BI0v0SNVk0IUAAAAASUVORK5CYII='
-    }
-  ];
-}
-
 // API cho quản lý bàn
 const TableApi = {
   // Lấy tất cả bàn
   getAllTables: async () => {
-    try {
-      return await fetchApi('/tables');
-    } catch (error) {
-      console.warn('Không thể lấy danh sách bàn, sử dụng dữ liệu mẫu:', error);
-      return getMockTableData();
-    }
+    return await fetchApi('/tables');
   },
   
   // Lấy thông tin bàn theo ID
   getTableById: async (id) => {
-    try {
-      return await fetchApi(`/tables/${id}`);
-    } catch (error) {
-      console.warn(`Không thể lấy thông tin bàn ID ${id}, sử dụng dữ liệu mẫu:`, error);
-      const mockTables = getMockTableData();
-      return mockTables.find(table => table.id == id) || {};
-    }
+    return await fetchApi(`/tables/${id}`);
   },
   
   // Tạo bàn mới
   createTable: async (tableData) => {
-    try {
-      return await fetchApi('/tables', {
-        method: 'POST',
-        body: JSON.stringify(tableData)
-      });
-    } catch (error) {
-      console.warn('Không thể tạo bàn mới:', error);
-      // Giả lập tạo thành công với ID mới
-      return {
-        id: new Date().getTime(),
-        ...tableData,
-        message: 'Tạo bàn mới thành công (Mock)'
-      };
-    }
+    return await fetchApi('/tables', {
+      method: 'POST',
+      body: JSON.stringify(tableData)
+    });
   },
   
   // Cập nhật thông tin bàn
   updateTable: async (id, tableData) => {
-    try {
-      return await fetchApi(`/tables/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(tableData)
-      });
-    } catch (error) {
-      console.warn(`Không thể cập nhật bàn ID ${id}:`, error);
-      return {
-        id: id,
-        ...tableData,
-        message: 'Cập nhật bàn thành công (Mock)'
-      };
-    }
+    return await fetchApi(`/tables/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(tableData)
+    });
   },
   
   // Cập nhật trạng thái bàn
   updateTableStatus: async (id, status) => {
-    try {
-      return await fetchApi(`/tables/${id}/status`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status })
-      });
-    } catch (error) {
-      console.warn(`Không thể cập nhật trạng thái bàn ID ${id}:`, error);
-      return {
-        id: id,
-        status: status,
-        message: 'Cập nhật trạng thái bàn thành công (Mock)'
-      };
-    }
+    return await fetchApi(`/tables/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status })
+    });
   },
   
   // Xóa bàn
   deleteTable: async (id) => {
-    try {
-      return await fetchApi(`/tables/${id}`, {
-        method: 'DELETE'
-      });
-    } catch (error) {
-      console.warn(`Không thể xóa bàn ID ${id}:`, error);
-      return {
-        success: true,
-        message: 'Xóa bàn thành công (Mock)'
-      };
-    }
+    return await fetchApi(`/tables/${id}`, {
+      method: 'DELETE'
+    });
   },
   
   // Lấy danh sách bàn theo trạng thái
   getTablesByStatus: async (status) => {
-    try {
-      return await fetchApi(`/tables/status/${status}`);
-    } catch (error) {
-      console.warn(`Không thể lấy danh sách bàn theo trạng thái ${status}:`, error);
-      const mockTables = getMockTableData();
-      return mockTables.filter(table => table.status === status);
-    }
+    return await fetchApi(`/tables/status/${status}`);
   },
   
   // Hợp nhất các bàn
   mergeTables: async (sourceTableId, targetTableId) => {
-    try {
-      return await fetchApi('/tables/merge', {
-        method: 'POST',
-        body: JSON.stringify({
-          sourceTableId,
-          targetTableId
-        })
-      });
-    } catch (error) {
-      console.warn(`Không thể hợp nhất bàn ${sourceTableId} vào bàn ${targetTableId}:`, error);
-      return {
-        success: true,
-        message: 'Hợp nhất bàn thành công (Mock)'
-      };
-    }
+    return await fetchApi('/tables/merge', {
+      method: 'POST',
+      body: JSON.stringify({
+        sourceTableId,
+        targetTableId
+      })
+    });
   }
 };
 
@@ -802,377 +572,103 @@ const TableApi = {
 const OrderApi = {
   // Lấy tất cả đơn hàng
   getAllOrders: async (page = 1, limit = 10) => {
-    try {
-      return await fetchApi(`/orders?page=${page}&limit=${limit}`);
-    } catch (error) {
-      console.warn('Không thể lấy danh sách đơn hàng, sử dụng dữ liệu mẫu:', error);
-      return {
-        orders: getMockOrderData(),
-        page,
-        limit,
-        totalOrders: getMockOrderData().length,
-        totalPages: Math.ceil(getMockOrderData().length / limit)
-      };
-    }
+    return await fetchApi(`/orders?page=${page}&limit=${limit}`);
   },
   
   // Lấy thông tin đơn hàng theo ID
   getOrderById: async (id) => {
-    try {
-      return await fetchApi(`/orders/${id}`);
-    } catch (error) {
-      console.warn(`Không thể lấy thông tin đơn hàng ID ${id}, sử dụng dữ liệu mẫu:`, error);
-      const mockOrders = getMockOrderData();
-      return mockOrders.find(order => order.id == id) || {};
-    }
+    return await fetchApi(`/orders/${id}`);
   },
   
   // Tạo đơn hàng mới
   createOrder: async (orderData) => {
-    try {
-      return await fetchApi('/orders', {
-        method: 'POST',
-        body: JSON.stringify(orderData)
-      });
-    } catch (error) {
-      console.warn('Không thể tạo đơn hàng mới:', error);
-      // Giả lập ID đơn hàng mới
-      const newOrderId = new Date().getTime();
-      return {
-        id: newOrderId,
-        ...orderData,
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-        message: 'Tạo đơn hàng mới thành công (Mock)'
-      };
-    }
+    return await fetchApi('/orders', {
+      method: 'POST',
+      body: JSON.stringify(orderData)
+    });
   },
   
   // Cập nhật thông tin đơn hàng
   updateOrder: async (id, orderData) => {
-    try {
-      return await fetchApi(`/orders/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(orderData)
-      });
-    } catch (error) {
-      console.warn(`Không thể cập nhật đơn hàng ID ${id}:`, error);
-      return {
-        id: id,
-        ...orderData,
-        message: 'Cập nhật đơn hàng thành công (Mock)'
-      };
-    }
+    return await fetchApi(`/orders/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(orderData)
+    });
   },
   
   // Cập nhật trạng thái đơn hàng
   updateOrderStatus: async (id, status) => {
-    try {
-      return await fetchApi(`/orders/${id}/status`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status })
-      });
-    } catch (error) {
-      console.warn(`Không thể cập nhật trạng thái đơn hàng ID ${id}:`, error);
-      return {
-        id: id,
-        status: status,
-        message: 'Cập nhật trạng thái đơn hàng thành công (Mock)'
-      };
-    }
+    return await fetchApi(`/orders/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status })
+    });
   },
   
   // Xóa đơn hàng
   deleteOrder: async (id) => {
-    try {
-      return await fetchApi(`/orders/${id}`, {
-        method: 'DELETE'
-      });
-    } catch (error) {
-      console.warn(`Không thể xóa đơn hàng ID ${id}:`, error);
-      return {
-        success: true,
-        message: 'Xóa đơn hàng thành công (Mock)'
-      };
-    }
+    return await fetchApi(`/orders/${id}`, {
+      method: 'DELETE'
+    });
   },
   
   // Thêm sản phẩm vào đơn hàng
   addProductToOrder: async (orderId, productData) => {
-    try {
-      return await fetchApi(`/orders/${orderId}/items`, {
-        method: 'POST',
-        body: JSON.stringify(productData)
-      });
-    } catch (error) {
-      console.warn(`Không thể thêm sản phẩm vào đơn hàng ID ${orderId}:`, error);
-      return {
-        orderId,
-        item: {
-          id: new Date().getTime(),
-          ...productData
-        },
-        message: 'Thêm sản phẩm vào đơn hàng thành công (Mock)'
-      };
-    }
+    return await fetchApi(`/orders/${orderId}/items`, {
+      method: 'POST',
+      body: JSON.stringify(productData)
+    });
   },
   
   // Cập nhật sản phẩm trong đơn hàng
   updateOrderItem: async (orderId, itemId, itemData) => {
-    try {
-      return await fetchApi(`/orders/${orderId}/items/${itemId}`, {
-        method: 'PUT',
-        body: JSON.stringify(itemData)
-      });
-    } catch (error) {
-      console.warn(`Không thể cập nhật sản phẩm ${itemId} trong đơn hàng ID ${orderId}:`, error);
-      return {
-        orderId,
-        itemId,
-        ...itemData,
-        message: 'Cập nhật sản phẩm trong đơn hàng thành công (Mock)'
-      };
-    }
+    return await fetchApi(`/orders/${orderId}/items/${itemId}`, {
+      method: 'PUT',
+      body: JSON.stringify(itemData)
+    });
   },
   
   // Xóa sản phẩm khỏi đơn hàng
   removeOrderItem: async (orderId, itemId) => {
-    try {
-      return await fetchApi(`/orders/${orderId}/items/${itemId}`, {
-        method: 'DELETE'
-      });
-    } catch (error) {
-      console.warn(`Không thể xóa sản phẩm ${itemId} khỏi đơn hàng ID ${orderId}:`, error);
-      return {
-        success: true,
-        message: 'Xóa sản phẩm khỏi đơn hàng thành công (Mock)'
-      };
-    }
+    return await fetchApi(`/orders/${orderId}/items/${itemId}`, {
+      method: 'DELETE'
+    });
   },
   
   // Lấy đơn hàng theo bàn
   getOrdersByTable: async (tableId) => {
-    try {
-      return await fetchApi(`/orders/table/${tableId}`);
-    } catch (error) {
-      console.warn(`Không thể lấy đơn hàng cho bàn ID ${tableId}:`, error);
-      const mockOrders = getMockOrderData();
-      return mockOrders.filter(order => order.tableId == tableId);
-    }
+    return await fetchApi(`/orders/table/${tableId}`);
   },
   
   // Thanh toán đơn hàng
   checkoutOrder: async (orderId, paymentData) => {
-    try {
-      return await fetchApi(`/orders/${orderId}/checkout`, {
-        method: 'POST',
-        body: JSON.stringify(paymentData)
-      });
-    } catch (error) {
-      console.warn(`Không thể thanh toán đơn hàng ID ${orderId}:`, error);
-      return {
-        orderId,
-        status: 'completed',
-        paidAmount: paymentData.amount,
-        paymentMethod: paymentData.method,
-        completedAt: new Date().toISOString(),
-        message: 'Thanh toán đơn hàng thành công (Mock)'
-      };
-    }
+    return await fetchApi(`/orders/${orderId}/checkout`, {
+      method: 'POST',
+      body: JSON.stringify(paymentData)
+    });
   },
   
   // Lấy hóa đơn
   getInvoice: async (orderId) => {
-    try {
-      return await fetchApi(`/orders/${orderId}/invoice`);
-    } catch (error) {
-      console.warn(`Không thể lấy hóa đơn cho đơn hàng ID ${orderId}:`, error);
-      // Giả lập dữ liệu hóa đơn
-      const mockOrder = getMockOrderData().find(order => order.id == orderId);
-      if (!mockOrder) return {};
-      
-      return {
-        invoiceId: `INV-${orderId}`,
-        orderId: orderId,
-        items: mockOrder.items || [],
-        subtotal: mockOrder.subtotal || 0,
-        discount: mockOrder.discount || 0,
-        tax: mockOrder.tax || 0,
-        total: mockOrder.total || 0,
-        paymentMethod: mockOrder.paymentMethod || 'cash',
-        createdAt: mockOrder.createdAt || new Date().toISOString()
-      };
-    }
+    return await fetchApi(`/orders/${orderId}/invoice`);
   },
   
   // In hóa đơn
   printInvoice: async (orderId) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/orders/${orderId}/print`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+    const response = await fetch(`${API_BASE_URL}/orders/${orderId}/print`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
-      
-      return await response.json();
-    } catch (error) {
-      console.warn(`Không thể in hóa đơn cho đơn hàng ID ${orderId}:`, error);
-      return {
-        success: true,
-        message: 'Đã gửi lệnh in hóa đơn tới máy in (Mock)'
-      };
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
     }
+    
+    return await response.json();
   }
 };
 
-// Dữ liệu mẫu cho bàn
-function getMockTableData() {
-  return [
-    {
-      id: 1,
-      name: 'Bàn 1',
-      capacity: 4,
-      area: 'Tầng 1',
-      status: 'available', // available, occupied, reserved, cleaning
-      note: ''
-    },
-    {
-      id: 2,
-      name: 'Bàn 2',
-      capacity: 2,
-      area: 'Tầng 1',
-      status: 'occupied',
-      note: ''
-    },
-    {
-      id: 3,
-      name: 'Bàn 3',
-      capacity: 6,
-      area: 'Tầng 1',
-      status: 'reserved',
-      note: 'Đặt trước lúc 18:00'
-    },
-    {
-      id: 4,
-      name: 'Bàn 4',
-      capacity: 4,
-      area: 'Tầng 1',
-      status: 'available',
-      note: ''
-    },
-    {
-      id: 5,
-      name: 'Bàn VIP 1',
-      capacity: 8,
-      area: 'Tầng 2',
-      status: 'available',
-      note: 'Bàn VIP'
-    }
-  ];
-}
-
-// Dữ liệu mẫu cho đơn hàng
-function getMockOrderData() {
-  return [
-    {
-      id: 1,
-      tableId: 2,
-      staffId: 2,
-      customerName: 'Khách lẻ',
-      status: 'in-progress', // pending, in-progress, completed, cancelled
-      items: [
-        {
-          id: 1,
-          productId: 1,
-          name: 'Cà phê đen',
-          price: 25000,
-          quantity: 2,
-          note: 'Ít đá'
-        },
-        {
-          id: 2,
-          productId: 5,
-          name: 'Bánh ngọt',
-          price: 35000,
-          quantity: 1,
-          note: ''
-        }
-      ],
-      subtotal: 85000,
-      discount: 0,
-      tax: 0,
-      total: 85000,
-      createdAt: '2023-06-15T08:30:00Z',
-      updatedAt: '2023-06-15T08:45:00Z'
-    },
-    {
-      id: 2,
-      tableId: 3,
-      staffId: 2,
-      customerName: 'Nguyễn Văn A',
-      customerPhone: '0987654321',
-      status: 'completed',
-      items: [
-        {
-          id: 1,
-          productId: 2,
-          name: 'Cà phê sữa',
-          price: 30000,
-          quantity: 3,
-          note: ''
-        },
-        {
-          id: 2,
-          productId: 6,
-          name: 'Sinh tố dâu',
-          price: 45000,
-          quantity: 2,
-          note: 'Ít đường'
-        }
-      ],
-      subtotal: 180000,
-      discount: 10000,
-      tax: 0,
-      total: 170000,
-      paymentMethod: 'cash',
-      createdAt: '2023-06-14T14:20:00Z',
-      updatedAt: '2023-06-14T15:30:00Z',
-      completedAt: '2023-06-14T15:30:00Z'
-    },
-    {
-      id: 3,
-      tableId: null, // Đơn hàng mang đi
-      staffId: 3,
-      customerName: 'Trần Thị B',
-      customerPhone: '0123456789',
-      status: 'pending',
-      orderType: 'takeaway',
-      items: [
-        {
-          id: 1,
-          productId: 3,
-          name: 'Trà chanh',
-          price: 25000,
-          quantity: 5,
-          note: 'Nhiều đá'
-        }
-      ],
-      subtotal: 125000,
-      discount: 0,
-      tax: 0,
-      total: 125000,
-      createdAt: '2023-06-15T09:15:00Z',
-      updatedAt: '2023-06-15T09:15:00Z'
-    }
-  ];
-}
-
-// Xuất các API để sử dụng trong các file khác
 window.ApiClient = {
   Activity: ActivityApi,
   Promotion: PromotionApi,

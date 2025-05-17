@@ -68,8 +68,14 @@ function loadTables() {
                     tableSelect.appendChild(option);
                 });
             } else {
-                // Nếu không có bàn nào từ API, sử dụng dữ liệu mẫu
-                useSampleTables();
+                // Hiển thị thông báo nếu không có bàn nào từ API
+                tableSelect.innerHTML = '<option value="">Không có bàn nào khả dụng</option>';
+                
+                // Hiển thị thông báo lỗi
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-warning';
+                alertDiv.textContent = 'Không thể tải danh sách bàn từ server. Vui lòng thử lại sau.';
+                document.querySelector('.checkout-container').prepend(alertDiv);
             }
             
             // Thêm option mang đi
@@ -89,8 +95,19 @@ function loadTables() {
         })
         .catch(error => {
             console.error("Lỗi khi lấy dữ liệu bàn từ API:", error);
-            // Fallback: sử dụng dữ liệu mẫu khi có lỗi
-            useSampleTables();
+            
+            // Hiển thị thông báo lỗi
+            tableSelect.innerHTML = '<option value="">Không thể tải danh sách bàn</option>';
+            const takeawayOption = document.createElement("option");
+            takeawayOption.value = "takeaway";
+            takeawayOption.textContent = "Mang đi";
+            tableSelect.appendChild(takeawayOption);
+            
+            // Hiển thị thông báo lỗi
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger';
+            alertDiv.textContent = 'Không thể kết nối đến server để tải danh sách bàn. Vui lòng thử lại sau hoặc chọn mang đi.';
+            document.querySelector('.checkout-container').prepend(alertDiv);
         });
 }
 
@@ -344,13 +361,13 @@ async function completeTransferPayment(order) {
                 console.log("DEBUG - Đơn hàng chuyển khoản được tạo với ID:", orderId);
             } catch (error) {
                 console.error("Lỗi khi gọi API tạo đơn hàng chuyển khoản:", error);
-                orderId = order.orderId || generateOrderCode();
-                fallbackToLocalStorage(order);
+                alert("Không thể kết nối đến máy chủ. Vui lòng thử lại sau.");
+                return;
             }
         } else {
-            console.warn("API không khả dụng, lưu đơn hàng vào localStorage");
-            orderId = order.orderId || generateOrderCode();
-            fallbackToLocalStorage(order);
+            console.warn("API không khả dụng");
+            alert("Không thể kết nối đến máy chủ. Vui lòng thử lại sau.");
+            return;
         }
         order.idOrder = orderId;
         localStorage.setItem("currentOrder", JSON.stringify(order));
@@ -500,14 +517,13 @@ function setupPlaceOrder() {
                         console.log("DEBUG - Đơn hàng được tạo thành công với ID:", orderId);
                     } catch (error) {
                         console.error("Lỗi khi gọi API tạo đơn hàng:", error);
-                        // Fallback sang lưu local
-                        orderId = generateOrderCode();
-                        fallbackToLocalStorage(order);
+                        alert("Không thể kết nối đến máy chủ. Vui lòng thử lại sau.");
+                        return;
                     }
                 } else {
-                    console.warn("API không khả dụng, lưu đơn hàng vào localStorage");
-                    orderId = generateOrderCode();
-                    fallbackToLocalStorage(order);
+                    console.warn("API không khả dụng");
+                    alert("Không thể kết nối đến máy chủ. Vui lòng thử lại sau.");
+                    return;
                 }
                 
                 console.log("Đơn hàng đã được tạo với ID:", orderId);
@@ -654,28 +670,6 @@ function showVietQR(order) {
             });
         }
     }, 100);
-}
-
-// Fallback lưu đơn hàng vào localStorage khi API không hoạt động
-function fallbackToLocalStorage(order) {
-    console.warn("Sử dụng lưu trữ cục bộ cho đơn hàng");
-    
-    // Chuyển đổi lại định dạng để lưu vào localStorage
-    const localOrder = {
-        id: order.orderId,
-        tableNumber: order.tableNumber,
-        items: order.cart || order.items, // Hỗ trợ cả hai trường hợp
-        totalAmount: order.totalAmount,
-        status: "processing", // Các trạng thái có thể là: processing, ready, completed
-        orderTime: order.orderTime || new Date().toISOString(),
-        paymentMethod: order.paymentMethod,
-        notes: order.notes
-    };
-    
-    // Lưu vào danh sách đơn hàng
-    const orders = JSON.parse(localStorage.getItem("orders")) || [];
-    orders.push(localOrder);
-    localStorage.setItem("orders", JSON.stringify(orders));
 }
 
 // Hiển thị thông tin đơn hàng hiện tại

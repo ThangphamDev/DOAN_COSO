@@ -10,8 +10,7 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../assets/css/admin.css">
     <link rel="stylesheet" href="../assets/css/admin-modules.css">
-    <!-- Favicon -->
-    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
+ 
 </head>
 
 <body>
@@ -165,7 +164,81 @@
 
     <script src="../assets/js/admin-core.js"></script>
     <script src="../assets/js/api-client.js"></script>
-    <script src="../assets/js/admin-entities.js"></script>
+    <!-- <script src="../assets/js/admin-entities.js"></script> -->
+    <script type="module">
+        import { Product, initializeEntitySystem } from '../assets/js/modules/entities-main.js';
+        import { 
+            initializeProductManagement, 
+            loadCategoriesForDropdown, 
+            loadProductData, 
+            loadProductsByCategory,
+            filterProducts
+        } from '../assets/js/modules/entities-product.js';
+        
+        // Đảm bảo tương thích ngược với code cũ
+        window.AdminEntities = window.AdminEntities || {};
+        window.AdminEntities.filterProducts = filterProducts;
+        window.AdminEntities.initializeProductManagement = initializeProductManagement;
+        window.AdminEntities.loadCategoriesForDropdown = loadCategoriesForDropdown;
+        window.AdminEntities.loadProductData = loadProductData;
+        window.AdminEntities.loadProductsByCategory = loadProductsByCategory;
+        
+        // Định nghĩa biến API_BASE_URL nếu chưa có
+        window.API_BASE_URL = window.API_BASE_URL || 'http://localhost:8081/api';
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing product management...');
+            if (typeof initializeProductManagement === 'function') {
+                initializeProductManagement();
+            } else {
+                console.error('initializeProductManagement is not a function!');
+            }
+            setupProductImagePreview();
+            
+            // Đảm bảo bộ lọc danh mục được kích hoạt
+            const categoryFilter = document.getElementById('categoryFilter');
+            if (categoryFilter && window.AdminEntities && typeof window.AdminEntities.loadCategoriesForDropdown === 'function') {
+                // Tải danh mục cho bộ lọc
+                window.AdminEntities.loadCategoriesForDropdown();
+                
+                // Cài đặt sự kiện khi chọn danh mục
+                categoryFilter.addEventListener('change', function() {
+                    const selectedCategoryId = this.value;
+                    if (!selectedCategoryId) return;
+                    
+                    if (selectedCategoryId === 'all') {
+                        // Tải lại tất cả sản phẩm
+                        if (typeof window.AdminEntities.loadProductData === 'function') {
+                            window.AdminEntities.loadProductData();
+                        } else {
+                            // Thử import và gọi từ module
+                            import('../assets/js/modules/entities-product.js')
+                                .then(module => {
+                                    if (typeof module.loadProductData === 'function') {
+                                        module.loadProductData();
+                                    }
+                                })
+                                .catch(err => console.error('Không thể import module:', err));
+                        }
+                    } else {
+                        // Tải sản phẩm theo danh mục
+                        if (typeof window.AdminEntities.loadProductsByCategory === 'function') {
+                            window.AdminEntities.loadProductsByCategory(selectedCategoryId);
+                        } else {
+                            // Thử import và gọi từ module
+                            import('../assets/js/modules/entities-product.js')
+                                .then(module => {
+                                    if (typeof module.loadProductsByCategory === 'function') {
+                                        module.loadProductsByCategory(selectedCategoryId);
+                                    }
+                                })
+                                .catch(err => console.error('Không thể import module:', err));
+                        }
+                    }
+                });
+            }
+        });
+    </script>
     <script>
         // Định nghĩa các hàm toàn cục cho modal
         function openModal(modalId) {
@@ -173,6 +246,14 @@
             if (modal) {
                 modal.style.display = 'flex';
                 document.body.style.overflow = 'hidden'; // Khóa cuộn trang
+                
+                // Nếu là modal sản phẩm, tải danh mục
+                if (modalId === 'productModal') {
+                    // Tải danh mục cho dropdown
+                    if (window.AdminEntities && typeof window.AdminEntities.loadCategoriesForDropdown === 'function') {
+                        window.AdminEntities.loadCategoriesForDropdown();
+                    }
+                }
             }
         }
         
@@ -183,6 +264,9 @@
                 document.body.style.overflow = ''; // Mở khóa cuộn trang
             }
         }
+        
+        window.openModal = openModal;
+        window.closeModal = closeModal;
         
         function resetProductForm() {
             const form = document.getElementById('productForm');
@@ -196,6 +280,59 @@
                 if (title) {
                     title.innerHTML = '<i class="fas fa-coffee"></i> Thêm sản phẩm mới';
                 }
+                
+                // Tải danh mục cho dropdown khi thêm sản phẩm mới
+                if (window.AdminEntities && typeof window.AdminEntities.loadCategoriesForDropdown === 'function') {
+                    window.AdminEntities.loadCategoriesForDropdown();
+                } else if (typeof loadCategoriesForDropdown === 'function') {
+                    loadCategoriesForDropdown();
+                } else {
+                    console.error('Không tìm thấy hàm loadCategoriesForDropdown');
+                    // Thử import từ module
+                    import('../assets/js/modules/entities-product.js')
+                        .then(module => {
+                            if (typeof module.loadCategoriesForDropdown === 'function') {
+                                module.loadCategoriesForDropdown();
+                            }
+                        })
+                        .catch(err => console.error('Không thể import module:', err));
+                }
+            }
+        }
+
+        // Hàm xem trước ảnh khi chọn file (cho cả thêm và sửa)
+        function setupProductImagePreview() {
+            // Cho modal cũ
+            const productImage = document.getElementById('productImage');
+            const productImagePreview = document.getElementById('productImagePreview');
+            if (productImage && productImagePreview) {
+                productImage.addEventListener('change', function() {
+                    if (this.files && this.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            productImagePreview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                        }
+                        reader.readAsDataURL(this.files[0]);
+                    } else {
+                        productImagePreview.innerHTML = '';
+                    }
+                });
+            }
+            // Cho modal mới (nếu có)
+            const editProductImage = document.getElementById('edit-product-image');
+            const editProductImagePreview = document.getElementById('edit-product-image-preview');
+            if (editProductImage && editProductImagePreview) {
+                editProductImage.addEventListener('change', function() {
+                    if (this.files && this.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            editProductImagePreview.src = e.target.result;
+                        }
+                        reader.readAsDataURL(this.files[0]);
+                    } else {
+                        editProductImagePreview.src = '/assets/images/default-product.png';
+                    }
+                });
             }
         }
 
@@ -223,8 +360,16 @@
             
             if (addProductBtn) {
                 addProductBtn.addEventListener('click', function() {
+                    // Tải danh mục trước khi mở modal
+                    if (window.AdminEntities && typeof window.AdminEntities.loadCategoriesForDropdown === 'function') {
+                        window.AdminEntities.loadCategoriesForDropdown();
+                    }
+                    
                     openModal('productModal');
                     resetProductForm();
+                    
+                    // Đảm bảo setup image preview
+                    setupProductImagePreview();
                 });
             }
             
@@ -256,37 +401,44 @@
                 return;
             }
             
-            // Xử lý bộ lọc trạng thái nếu có
-            const statusFilter = document.getElementById('statusFilter');
-            if (statusFilter) {
-                statusFilter.addEventListener('change', function() {
-                    const searchTerm = document.getElementById('searchProduct').value;
-                    const status = this.value;
+            // Thiết lập bộ lọc tìm kiếm
+            const searchInput = document.getElementById('searchProduct');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    const searchTerm = this.value.trim().toLowerCase();
+                    const statusFilter = document.getElementById('statusFilter');
+                    const status = statusFilter ? statusFilter.value : 'all';
                     
-                    if (status === 'all') {
-                        // Áp dụng chỉ bộ lọc tìm kiếm
-                        window.AdminEntities.filterProducts(searchTerm);
-                    } else {
-                        // Lọc theo cả từ khóa và trạng thái
+                    // Nếu có cả từ khóa tìm kiếm và lọc trạng thái
+                    if (searchTerm && status !== 'all') {
                         const tableRows = document.querySelectorAll('#productTableBody tr');
-                        
                         tableRows.forEach(row => {
+                            const nameCell = row.querySelector('td:nth-child(2)');
+                            const categoryCell = row.querySelector('td:nth-child(3)');
                             const statusCell = row.querySelector('td:nth-child(5)');
-                            const productName = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                            
+                            if (!nameCell || !categoryCell || !statusCell) return;
+                            
+                            const name = nameCell.textContent.toLowerCase();
+                            const category = categoryCell.textContent.toLowerCase();
                             
                             const statusMatch = status === 'all' || 
                                 (status === 'active' && statusCell.textContent.includes('Đang bán')) ||
                                 (status === 'inactive' && statusCell.textContent.includes('Ngừng bán'));
                             
-                            const searchMatch = !searchTerm || productName.includes(searchTerm.toLowerCase());
+                            const searchMatch = name.includes(searchTerm) || category.includes(searchTerm);
                             
                             row.style.display = (statusMatch && searchMatch) ? '' : 'none';
                         });
+                    } else {
+                        // Nếu chỉ có từ khóa tìm kiếm
+                        if (window.AdminEntities && window.AdminEntities.filterProducts) {
+                            window.AdminEntities.filterProducts(searchTerm);
+                        }
                     }
                 });
             }
             
-            // Mở/đóng dropdown lọc
             const filterDropdown = document.querySelector('.filter-dropdown');
             if (filterDropdown) {
                 const toggleBtn = filterDropdown.querySelector('.dropdown-toggle');

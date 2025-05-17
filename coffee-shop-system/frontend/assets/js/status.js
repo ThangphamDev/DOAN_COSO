@@ -9,10 +9,6 @@ let apiAvailable = false;
 let currentOrderId = null;
 
 document.addEventListener("DOMContentLoaded", async function() {
-    console.log("=====================");
-    console.log("KHỞI TẠO TRANG THEO DÕI ĐƠN HÀNG");
-    console.log("=====================");
-    
     // Đọc orderId từ URL hoặc localStorage trước khi kiểm tra API
     const urlParams = new URLSearchParams(window.location.search);
     let rawOrderId = urlParams.get('orderId') || localStorage.getItem("lastOrderId");
@@ -25,13 +21,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
     const paymentCompleted = localStorage.getItem("paymentCompleted");
     const paymentMethod = localStorage.getItem("paymentMethod");
-    
-    console.log("Thông tin đơn hàng hiện tại:");
-    console.log("- Order ID:", currentOrderId);
-    console.log("- Payment completed:", paymentCompleted);
-    console.log("- Payment method:", paymentMethod);
-    
-    // Kiểm tra API và load dữ liệu thật
+
     try {
         setTimeout(async () => {
             try {
@@ -88,7 +78,7 @@ document.addEventListener("DOMContentLoaded", async function() {
             }
         }
 
-// Lấy đơn hàng từ API dựa trên ID
+
 async function fetchAndDisplayOrder(orderId) {
     if (!apiAvailable || !window.CafeAPI || !window.CafeAPI.getOrderById) {
         showErrorMessage("API không khả dụng");
@@ -97,11 +87,11 @@ async function fetchAndDisplayOrder(orderId) {
     }
     try {
         const numericOrderId = typeof orderId === "string" && orderId.startsWith("HD") ? parseInt(orderId.replace("HD", ""), 10) : parseInt(orderId, 10);
-        // Lấy đơn hàng hiện tại
+    
         const order = await window.CafeAPI.getOrderById(numericOrderId);
-        // Lấy danh sách payment
+        
         const payments = await fetch("http://localhost:8081/api/payments").then(res => res.json());
-        // Tìm payment cho đơn hàng này
+      
         const payment = payments.find(p => p.order && p.order.idOrder === order.idOrder);
         if (payment) {
             order.payment = {
@@ -381,11 +371,6 @@ function displayCurrentOrder(order) {
         order = convertOrderFromServer(order);
     }
     
-    // DEBUG thông tin bàn
-    console.log("Status.js - Thông tin bàn từ backend:");
-    console.log("order.table =", order.table);
-    console.log("order.tableNumber =", order.tableNumber);
-    console.log("----------------");
     
     // Kiểm tra phần tử trước khi thao tác
     const elOrderId = document.getElementById("orderId");
@@ -447,13 +432,6 @@ function displayCurrentOrder(order) {
     // Xử lý phương thức thanh toán - Logic cải tiến
     let paymentMethodText = "Tiền mặt"; // Mặc định là tiền mặt
     
-    // DEBUG thông tin thanh toán
-    console.log("Status.js - Thông tin thanh toán:");
-    console.log("order.payment =", order.payment);
-    console.log("order.paymentMethod =", order.paymentMethod);
-    console.log("order.paymentStatus =", order.paymentStatus);
-    console.log("localStorage.paymentMethod =", localStorage.getItem("paymentMethod"));
-    console.log("----------------");
     
     // Kiểm tra nhiều nguồn dữ liệu cho phương thức thanh toán
     if (order.payment && order.payment.paymentMethod) {
@@ -996,9 +974,10 @@ function convertOrderToServer(clientOrder) {
 // Tạo đơn hàng mới trên server
 async function createOrderOnServer(order) {
     if (!apiAvailable) {
-        // Nếu API không khả dụng, fallback về local
-        console.log("API không khả dụng, lưu đơn hàng vào local storage");
-        return createLocalOrder(order);
+        // Nếu API không khả dụng, thông báo lỗi
+        console.error("API không khả dụng, không thể tạo đơn hàng");
+        showErrorMessage("Không thể kết nối đến máy chủ. Vui lòng thử lại sau.");
+        throw new Error("API không khả dụng");
     }
     
     try {
@@ -1014,38 +993,9 @@ async function createOrderOnServer(order) {
         return createdOrder;
     } catch (error) {
         console.error("Lỗi khi tạo đơn hàng trên server:", error);
-        // Fallback về local nếu API fails
-        showErrorMessage("Không thể tạo đơn hàng trên máy chủ. Đang sử dụng lưu trữ cục bộ.");
-        return createLocalOrder(order);
+        showErrorMessage("Không thể tạo đơn hàng trên máy chủ: " + error.message);
+        throw error;
     }
-}
-
-// Tạo đơn hàng local (fallback khi không có API)
-function createLocalOrder(order) {
-    console.log("Tạo đơn hàng local:", order);
-    
-    // Tạo mã đơn hàng nếu chưa có
-    if (!order.id) {
-        order.id = "HD" + (Math.floor(100000 + Math.random() * 900000)).toString();
-    }
-    
-    // Đặt thời gian đặt hàng nếu chưa có
-    if (!order.orderTime) {
-        order.orderTime = new Date().toISOString();
-    }
-    
-    // Đặt trạng thái ban đầu
-    order.status = "processing";
-    
-    // Lưu thông tin đơn hàng vào localStorage
-    const orders = JSON.parse(localStorage.getItem("orders")) || [];
-    orders.push(order);
-    localStorage.setItem("orders", JSON.stringify(orders));
-    
-    // Lưu ID đơn hàng hiện tại
-    localStorage.setItem("lastOrderId", order.id);
-    
-    return order;
 }
 
 // Hàm cập nhật trạng thái đơn hàng và phương thức thanh toán

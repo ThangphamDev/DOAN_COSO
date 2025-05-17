@@ -19,6 +19,6 @@ public class CorsConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:backend/uploads/");
+                .addResourceLocations("file:uploads/");
     }
 } 

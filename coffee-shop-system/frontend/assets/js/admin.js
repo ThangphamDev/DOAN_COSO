@@ -1,56 +1,50 @@
-// Admin Dashboard JavaScript
+
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Kiểm tra xác thực người dùng
+    
     checkAdminAuthentication();
     
-    // Kiểm tra kết nối API
     checkApiConnection();
     
-    // Thiết lập menu và điều hướng trang
     setupSidebar();
     
-    // Nạp dữ liệu dashboard
     loadDashboardData();
-    
-    // Thiết lập các modal
+
+
     setupModals();
     
-    // Khởi tạo biểu đồ
     initializeCharts();
     
-    // Xử lý các form thêm mới
     setupForms();
 });
 
-// Kiểm tra xác thực người dùng admin
+
 function checkAdminAuthentication() {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
     
     if (!token || !role || !role.toLowerCase().includes('admin')) {
-        // Hiển thị cảnh báo nhưng không chuyển hướng người dùng
+        
         console.warn('Người dùng chưa đăng nhập hoặc không phải admin');
         showMessage('Bạn đang xem dữ liệu admin nhưng chưa đăng nhập. Một số chức năng có thể bị hạn chế.', 'warning');
         
-        // Đặt tên mặc định cho admin
+        
         document.getElementById('adminName').textContent = 'Khách';
         return;
     }
     
-    // Hiển thị thông tin người dùng đã đăng nhập
+   
     const fullName = localStorage.getItem('fullName') || 'Admin';
     document.getElementById('adminName').textContent = fullName;
 }
 
-// Kiểm tra kết nối tới API
+
 async function checkApiConnection() {
     try {
         const API_BASE_URL = 'http://localhost:8081';
         
         console.log('Đang kiểm tra kết nối đến API...');
         
-        // Gọi API để kiểm tra kết nối
         const response = await fetch(`${API_BASE_URL}/api/system/health`, {
             method: 'GET',
             headers: {

@@ -1,9 +1,4 @@
-/**
- * Table Manager Module - T2K Coffee Admin
- * Module quản lý bàn, xử lý kết nối API và hiển thị dữ liệu bàn
- */
 
-// Constants
 const TABLE_API_URL = 'http://localhost:8081/api/tables';
 const STATUS_CLASSES = {
     'Available': 'status-available',
@@ -232,7 +227,7 @@ async function loadTables() {
             window.AdminCore.showNotification('Không thể tải dữ liệu bàn: ' + error.message, 'error');
         }
         
-        // Sử dụng dữ liệu mẫu nếu không lấy được từ API
+        // Reset tables to empty arrays
         tables = [];
         filteredTables = [];
         
