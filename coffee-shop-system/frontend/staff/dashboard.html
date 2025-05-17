@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Nhân viên - T2K Coffee</title>
+    <link rel="stylesheet" href="../assets/css/staff.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="../assets/images/logo.png" alt="T2K Coffee Logo">
+                <h2>T2K Coffee</h2>
+            </div>
+            <ul class="menu">
+                <li class="active"><i class="fa fa-home"></i> Tổng quan</li>
+                <li><a href="order.html"><i class="fa fa-receipt"></i> Đơn hàng</a></li>
+                <li><a href="payment.html"><i class="fa fa-money-bill"></i> Kiểm tra thanh toán</a></li>
+                <li><a href="table.html"><i class="fa fa-chair"></i> Tình trạng bàn</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div>Trang chủ / Tổng quan</div>
+                <div class="user-info">
+                    <i class="fa fa-bell"></i><span class="badge">2</span>
+                    <img src="../includes/staff-avatar.png" alt="avatar">
+                    <span>Staff</span>
+                </div>
+            </header>
+
+            <section class="dashboard">
+                <h2>Tổng quan công việc</h2>
+                <div class="stats">
+                    <div class="stat-card">
+                        <i class="fa fa-receipt"></i>
+                        <div>
+                            <h3 id="todayOrders">0</h3>
+                            <p>Đơn hàng hôm nay</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa fa-money-bill"></i>
+                        <div>
+                            <h3 id="revenueCash">0đ</h3>
+                            <p>Doanh thu tiền mặt</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa fa-credit-card"></i>
+                        <div>
+                            <h3 id="revenueOnline">0đ</h3>
+                            <p>Doanh thu online</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Tình trạng bàn</h3>
+                    <table id="tablesStatus">
+                        <thead>
+                            <tr>
+                                <th>Số bàn</th>
+                                <th>Trạng thái</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <div class="section">
+                    <h3>Kiểm tra thanh toán</h3>
+                    <table id="paymentsTable">
+                        <thead>
+                            <tr>
+                                <th>ID Thanh toán</th>
+                                <th>Khách hàng</th>
+                                <th>Số tiền</th>
+                                <th>Phương thức</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="dashboard.js"></script>
+</body>
+</html>
