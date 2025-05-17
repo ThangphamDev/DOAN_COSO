@@ -1,77 +1,675 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>T2K Coffee Shop</title>
+    <title>T2K Coffee - Quán Cà Phê Thơm Ngon</title>
     <link rel="stylesheet" href="assets/css/style.css">
-    <base href="/"> 
+    <link rel="stylesheet" href="assets/css/components.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f9f5f0;
+        }
+        
+        #app {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        main {
+            flex: 1;
+        }
+        
+        .hero {
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1509042239860-f550ce710b93?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: white;
+            text-align: center;
+            padding: 180px 20px;
+            margin-bottom: 0;
+            position: relative;
+        }
+        
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+            z-index: 2;
+            position: relative;
+        }
+        
+        .hero h1 {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            animation: fadeInDown 1s ease;
+        }
+        
+        .hero p {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            animation: fadeInUp 1s ease 0.3s forwards;
+            opacity: 0;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            animation: fadeInUp 1s ease 0.6s forwards;
+            opacity: 0;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: #e67e22;
+            color: white;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .btn:hover {
+            background-color: #d35400;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid #fff;
+        }
+        
+        .btn-outline:hover {
+            background-color: #fff;
+            color: #e67e22;
+        }
+        
+        /* Features Section */
+        .section {
+            padding: 100px 20px;
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        
+        .section-title h2 {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            position: relative;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+        
+        .section-title h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background-color: #e67e22;
+        }
+        
+        .section-title p {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .features {
+            background-color: #fff;
+        }
+        
+        .features-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .feature-card {
+            text-align: center;
+            padding: 40px 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            background-color: #fff;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            color: #e67e22;
+            margin-bottom: 20px;
+        }
+        
+        .feature-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        
+        .feature-desc {
+            color: #7f8c8d;
+            line-height: 1.7;
+        }
+        
+        /* Products Section */
+        .products {
+            background-color: #f9f5f0;
+        }
+        
+        .products-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+        
+        .product-card {
+            background-color: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .product-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .product-info {
+            padding: 20px;
+        }
+        
+        .product-category {
+            font-size: 0.8rem;
+            color: #e67e22;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .product-title {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .product-price {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #e67e22;
+            margin-bottom: 15px;
+        }
+        
+        .product-desc {
+            color: #7f8c8d;
+            margin-bottom: 20px;
+            line-height: 1.7;
+        }
+        
+        .product-btn {
+            display: inline-block;
+            background-color: #e67e22;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        
+        .product-btn:hover {
+            background-color: #d35400;
+            transform: translateY(-2px);
+        }
+        
+        /* Testimonials */
+        .testimonials {
+            background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1517701604599-bb29b565090c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: white;
+        }
+        
+        .testimonials .section-title h2 {
+            color: #fff;
+        }
+        
+        .testimonials .section-title p {
+            color: #ecf0f1;
+        }
+        
+        .testimonials-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        
+        .testimonial-card {
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 10px;
+            position: relative;
+        }
+        
+        .testimonial-content {
+            font-style: italic;
+            margin-bottom: 20px;
+            line-height: 1.7;
+            color: #ecf0f1;
+            position: relative;
+        }
+        
+        .testimonial-content::before {
+            content: '"';
+            font-size: 4rem;
+            color: rgba(230, 126, 34, 0.3);
+            position: absolute;
+            top: -20px;
+            left: -10px;
+            font-family: Georgia, serif;
+        }
+        
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+        }
+        
+        .author-img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 15px;
+            border: 2px solid #e67e22;
+        }
+        
+        .author-info h4 {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+        
+        .author-info p {
+            font-size: 0.9rem;
+            color: #e67e22;
+        }
+        
+        /* CTA Section */
+        .cta-section {
+            background-color: #e67e22;
+            color: white;
+            text-align: center;
+            padding: 80px 20px;
+        }
+        
+        .cta-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .cta-content h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+        
+        .cta-content p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .cta-btn {
+            background-color: #fff;
+            color: #e67e22;
+            border: 2px solid #fff;
+        }
+        
+        .cta-btn:hover {
+            background-color: transparent;
+            color: #fff;
+        }
+        
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero p {
+                font-size: 1.2rem;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 200px;
+                margin-bottom: 10px;
+                text-align: center;
+            }
+            
+            .section {
+                padding: 60px 20px;
+            }
+            
+            .section-title h2 {
+                font-size: 2rem;
+            }
+        }
+    </style>
 </head>
 
 <body>
     <div id="app">
-
-        <header class="main-header">
-            <div class="container">
-                <div class="logo">
-                    <a href="../index.html">T2K Coffee</a>
-                </div>
-                <nav class="main-nav">
-                    <ul>
-                        <li><a href="../frontend/customer/menu.html">Menu</a></li>
-                        <li><a href="../frontend/customer/cart.html">Cart</a></li>
-                        <li><a href="../frontend/customer/status.html">Order Status</a></li>
-                    </ul>
-                </nav>
-                <div class="user-actions">
-                    <a href="../frontend/auth/login.html" class="btn-login">Login</a>
-                </div>
-            </div>
-        </header>
+        <!-- Header will be loaded dynamically -->
+        <div id="header-container"></div>
         
-        <!-- HEADER sẽ được chèn động -->
-        <div class="main-header"></div>
-
-        <!-- Nội dung chính -->
+        <!-- Main content -->
         <main>
+            <!-- Hero Section -->
             <section class="hero">
-                <h1>Welcome to T2K Coffee</h1>
-                <p>Experience the finest coffee in town</p>
+                <div class="hero-content">
+                <h1>Chào Mừng Đến Với T2K Coffee</h1>
+                    <p>Trải nghiệm hương vị cà phê tuyệt hảo với những hạt cà phê cao cấp và đội ngũ pha chế chuyên nghiệp</p>
                 <div class="cta-buttons">
-                    <a href="customer/menu.html" class="btn">Order Now</a>
-                    <a href="staff/table.html" class="btn">Staff Login</a>
+                    <a href="customer/menu.html" class="btn">Đặt Hàng Ngay</a>
+                        <a href="#features" class="btn btn-outline">Khám Phá Thêm</a>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Features Section -->
+            <section id="features" class="section features">
+                <div class="section-title">
+                    <h2>Tại Sao Chọn Chúng Tôi</h2>
+                    <p>Chúng tôi tự hào về chất lượng, dịch vụ và trải nghiệm cà phê hoàn hảo</p>
+                </div>
+                <div class="features-container">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-coffee"></i>
+                        </div>
+                        <h3 class="feature-title">Chất Lượng Cao Cấp</h3>
+                        <p class="feature-desc">Chúng tôi chỉ nhập hạt cà phê chất lượng cao từ các trang trại bền vững trên khắp thế giới, đảm bảo mỗi tách cà phê đều hoàn hảo.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <h3 class="feature-title">Phục Vụ Nhanh Chóng</h3>
+                        <p class="feature-desc">Hệ thống hiệu quả của chúng tôi đảm bảo đơn hàng của bạn được chuẩn bị nhanh chóng mà không ảnh hưởng đến chất lượng hay hương vị.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-leaf"></i>
+                        </div>
+                        <h3 class="feature-title">Thân Thiện Môi Trường</h3>
+                        <p class="feature-desc">Chúng tôi cam kết thực hành bền vững, từ bao bì phân hủy sinh học đến cửa hàng tiết kiệm năng lượng.</p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Products Section -->
+            <section class="section products">
+                <div class="section-title">
+                    <h2>Thức Uống Phổ Biến</h2>
+                    <p>Khám phá những món được khách hàng yêu thích và các món đặc trưng của chúng tôi</p>
+                </div>
+                <div class="products-container">
+                    <div class="product-card">
+                        <img src="https://images.unsplash.com/photo-1572442388796-11668a67e53d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1160&q=80" alt="Cà phê Espresso" class="product-img">
+                        <div class="product-info">
+                            <p class="product-category">Đặc trưng</p>
+                            <h3 class="product-title">Cà Phê Espresso</h3>
+                            <p class="product-price">75.000 VNĐ</p>
+                            <p class="product-desc">Espresso đặc trưng của chúng tôi đậm đà, phong phú và đầy hương vị. Được làm từ 100% hạt Arabica.</p>
+                            <a href="customer/menu.html" class="product-btn">Đặt Ngay</a>
+                        </div>
+                    </div>
+                    <div class="product-card">
+                        <img src="https://images.unsplash.com/photo-1534778101976-62847782c213?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1160&q=80" alt="Cappuccino" class="product-img">
+                        <div class="product-info">
+                            <p class="product-category">Yêu Thích</p>
+                            <h3 class="product-title">Cappuccino</h3>
+                            <p class="product-price">85.000 VNĐ</p>
+                            <p class="product-desc">Sự kết hợp hoàn hảo giữa espresso, sữa hấp và sữa bọt, phủ lên trên một chút bột cacao.</p>
+                            <a href="customer/menu.html" class="product-btn">Đặt Ngay</a>
+                        </div>
+                    </div>
+                    <div class="product-card">
+                        <img src="https://images.unsplash.com/photo-1579888944880-d98341245702?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1160&q=80" alt="Mocha Đá Xay" class="product-img">
+                        <div class="product-info">
+                            <p class="product-category">Theo Mùa</p>
+                            <h3 class="product-title">Mocha Đá Xay</h3>
+                            <p class="product-price">95.000 VNĐ</p>
+                            <p class="product-desc">Hỗn hợp sảng khoái của cà phê, sô-cô-la, đá và kem, được phủ lên trên là kem tươi và sô-cô-la.</p>
+                            <a href="customer/menu.html" class="product-btn">Đặt Ngay</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Testimonials Section -->
+            <section class="section testimonials">
+                <div class="section-title">
+                    <h2>Khách Hàng Nói Gì</h2>
+                    <p>Đừng chỉ tin vào lời chúng tôi - hãy nghe từ những khách hàng hài lòng</p>
+                </div>
+                <div class="testimonials-container">
+                    <div class="testimonial-card">
+                        <div class="testimonial-content">
+                            Cà phê ngon nhất thành phố! Tôi ghé thăm mỗi sáng trước khi đi làm và nhân viên luôn nhớ đơn hàng của tôi. Không gian hoàn hảo cho cả công việc và thư giãn.
+                        </div>
+                        <div class="testimonial-author">
+                            <img src="https://randomuser.me/api/portraits/women/43.jpg" alt="Minh Anh" class="author-img">
+                            <div class="author-info">
+                                <h4>Minh Anh</h4>
+                                <p>Khách Hàng Thường Xuyên</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial-card">
+                        <div class="testimonial-content">
+                            Espresso của họ thật tuyệt vời! Là một người đam mê cà phê, tôi đã thử nhiều quán, nhưng T2K Coffee có sự cân bằng hoàn hảo giữa hương vị và độ đậm đà. Rất đáng để thử!
+                        </div>
+                        <div class="testimonial-author">
+                            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Quang Minh" class="author-img">
+                            <div class="author-info">
+                                <h4>Quang Minh</h4>
+                                <p>Người Yêu Cà Phê</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial-card">
+                        <div class="testimonial-content">
+                            Hệ thống đặt hàng trực tuyến rất tiện lợi! Tôi có thể đặt trước, bỏ qua hàng đợi, và cà phê của tôi luôn sẵn sàng khi tôi đến. Tôi cũng rất thích chương trình khách hàng thân thiết!
+                        </div>
+                        <div class="testimonial-author">
+                            <img src="https://randomuser.me/api/portraits/women/65.jpg" alt="Thu Hà" class="author-img">
+                            <div class="author-info">
+                                <h4>Thu Hà</h4>
+                                <p>Người Bận Rộn</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Call-to-Action Section -->
+            <section class="cta-section">
+                <div class="cta-content">
+                    <h2>Sẵn Sàng Trải Nghiệm Cà Phê Tuyệt Nhất?</h2>
+                    <p>Hãy đến với chúng tôi ngay hôm nay và khám phá lý do tại sao T2K Coffee là lựa chọn ưa thích của những người yêu cà phê</p>
+                    <a href="customer/menu.html" class="btn cta-btn">Đặt Hàng Ngay</a>
                 </div>
             </section>
         </main>
 
-        <!-- FOOTER sẽ được chèn động -->
-        <div class="main-footer"></div>
-
+        <!-- Footer will be loaded dynamically -->
+        <div id="footer-container"></div>
     </div>
-    <footer class="main-footer">
-        <div class="container">
-            <div class="footer-section">
-                <h3>About Us</h3>
-                <p>T2K Coffee Shop - Serving quality since 2023</p>
-            </div>
-            <div class="footer-section">
-                <h3>Contact</h3>
-                <p>123 Coffee Street</p>
-                <p>Phone: (123) 456-7890</p>
-            </div>
-            <div class="footer-section">
-                <h3>Hours</h3>
-                <p>Mon-Fri: 7am - 9pm</p>
-                <p>Sat-Sun: 8am - 10pm</p>
-            </div>
-        </div>
-        <div class="copyright">
-            <p>&copy; 2023 T2K Coffee. All rights reserved.</p>
-        </div>
-    </footer>
-    
 
+    <script>
+        // Function to load components
+        async function loadComponent(url, containerId) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch ${url}: ${response.status}`);
+                }
+                const html = await response.text();
+                document.getElementById(containerId).innerHTML = html;
+                
+                // Execute scripts in the loaded HTML
+                const scripts = document.getElementById(containerId).querySelectorAll('script');
+                scripts.forEach(script => {
+                    const newScript = document.createElement('script');
+                    if (script.src) {
+                        newScript.src = script.src;
+                    } else {
+                        newScript.textContent = script.textContent;
+                    }
+                    document.body.appendChild(newScript);
+                });
+            } catch (error) {
+                console.error('Error loading component:', error);
+                document.getElementById(containerId).innerHTML = `<div style="color: red; padding: 20px;">Không thể tải thành phần: ${error.message}</div>`;
+            }
+        }
+        
+        // Load header and footer components
+        document.addEventListener('DOMContentLoaded', () => {
+            loadComponent('./components/header.html', 'header-container');
+            loadComponent('./components/footer.html', 'footer-container');
+            
+            // Smooth scrolling for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const targetId = this.getAttribute('href');
+                    if (targetId === '#') return;
+                    
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 80, // Offset for fixed header
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+            
+            // Improved scroll animation with throttling
+            let scrollTimeout;
+            const throttledAnimateOnScroll = () => {
+                if (!scrollTimeout) {
+                    scrollTimeout = setTimeout(() => {
+                        animateOnScroll();
+                        scrollTimeout = null;
+                    }, 100); // Throttle to run at most every 100ms
+                }
+            };
+            
+            // Animate on scroll (optimized version)
+            const animateOnScroll = () => {
+                const elements = document.querySelectorAll('.feature-card, .product-card, .testimonial-card');
+                elements.forEach(element => {
+                    const elementTop = element.getBoundingClientRect().top;
+                    const windowHeight = window.innerHeight;
+                    
+                    if (elementTop < windowHeight - 100) {
+                        element.style.opacity = '1';
+                        element.style.transform = 'translateY(0)';
+                    }
+                });
+            };
+            
+            // Initial styles for animation
+            const elementsToAnimate = document.querySelectorAll('.feature-card, .product-card, .testimonial-card');
+            elementsToAnimate.forEach(element => {
+                element.style.opacity = '0';
+                element.style.transform = 'translateY(30px)';
+                element.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            });
+            
+            // Use optimized scroll event with passive flag
+            window.addEventListener('scroll', throttledAnimateOnScroll, { passive: true });
+            
+            // Run once on load with requestAnimationFrame
+            requestAnimationFrame(() => {
+                animateOnScroll();
+            });
+        });
+    </script>
 </body>
 
 </html>

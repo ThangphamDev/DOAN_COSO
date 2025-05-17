@@ -1,0 +1,457 @@
+/* Status Page Styles */
+.status-page {
+    padding: 100px 0 60px;
+    background-color: #f8f9fa;
+    min-height: 80vh;
+    position: relative;
+    z-index: 1;
+}
+
+.status-page h1 {
+    text-align: center;
+    margin-bottom: 40px;
+    color: #2c3e50;
+    font-size: 2.2rem;
+    font-weight: 700;
+    position: relative;
+    padding-bottom: 15px;
+}
+
+.status-page h1:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background-color: #e67e22;
+    border-radius: 3px;
+}
+
+.status-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+}
+
+/* Current Order Styles */
+.order-card {
+    background-color: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.07);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border-top: 5px solid #e67e22;
+}
+
+.order-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.order-card h3 {
+    color: #2c3e50;
+    font-size: 1.6rem;
+    margin-bottom: 25px;
+    font-weight: 700;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 15px;
+    position: relative;
+}
+
+.order-details {
+    margin-bottom: 25px;
+}
+
+.order-details p {
+    margin: 12px 0;
+    font-size: 1.05rem;
+    color: #333;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px dashed #eaeaea;
+}
+
+.order-details p:last-child {
+    border-bottom: none;
+}
+
+.order-details strong {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: white;
+    letter-spacing: 0.5px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+.status-processing {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+}
+
+.status-ready {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+}
+
+.status-completed {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+}
+
+.status-cancelled {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+.order-items {
+    margin-top: 30px;
+}
+
+.order-items h4 {
+    font-size: 1.2rem;
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-weight: 600;
+    border-left: 4px solid #e67e22;
+    padding-left: 12px;
+}
+
+.order-items ul {
+    list-style: none;
+    padding: 0;
+}
+
+.order-items li {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+    transition: all 0.2s ease;
+}
+
+.order-items li:hover {
+    background-color: #f1f3f5;
+    transform: translateX(5px);
+}
+
+.order-items .item-name {
+    font-weight: 500;
+    color: #333;
+}
+
+.order-items .item-price {
+    color: #e67e22;
+    font-weight: 600;
+}
+
+.order-items .item-quantity {
+    background-color: #e67e22;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    margin-right: 10px;
+}
+
+/* Order History Styles */
+.order-history {
+    background-color: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.07);
+    height: fit-content;
+}
+
+.order-history h3 {
+    color: #2c3e50;
+    font-size: 1.6rem;
+    margin-bottom: 25px;
+    font-weight: 700;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 15px;
+}
+
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.history-item {
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.03);
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+    cursor: pointer;
+    position: relative;
+}
+
+.history-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.06);
+    background-color: #fff;
+}
+
+.history-item.completed {
+    border-left-color: #2ecc71;
+}
+
+.history-item.cancelled {
+    border-left-color: #e74c3c;
+}
+
+.history-item.processing {
+    border-left-color: #f39c12;
+    background-color: #fff8f0;
+    box-shadow: 0 4px 12px rgba(230, 126, 34, 0.1);
+}
+
+.history-item.processing:hover {
+    background-color: #fff5e6;
+    box-shadow: 0 6px 18px rgba(230, 126, 34, 0.15);
+}
+
+.history-item.ready {
+    border-left-color: #3498db;
+    background-color: #f0f9ff;
+}
+
+.history-item.ready:hover {
+    background-color: #e6f5ff;
+}
+
+.history-item.processing::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #f39c12;
+    top: 12px;
+    right: 12px;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.7; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.history-id {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 1.05rem;
+}
+
+.history-date {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+}
+
+.history-details {
+    display: flex;
+    justify-content: space-between;
+    color: #555;
+}
+
+.history-table {
+    font-weight: 500;
+}
+
+.history-amount {
+    color: #e67e22;
+    font-weight: 600;
+}
+
+.history-status {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: white;
+    margin-top: 10px;
+}
+
+/* Nút xem chi tiết trong lịch sử */
+.history-view-btn {
+    display: none;
+    margin-top: 12px;
+    padding: 5px 10px;
+    background-color: transparent;
+    border: 1px solid #e67e22;
+    color: #e67e22;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.history-item:hover .history-view-btn {
+    display: inline-block;
+}
+
+.history-view-btn:hover {
+    background-color: #e67e22;
+    color: white;
+}
+
+/* Timer Animation */
+.timer-wrapper {
+    display: flex;
+    justify-content: center;
+    margin: 30px 0;
+}
+
+.timer-circle {
+    position: relative;
+    width: 120px;
+    height: 120px;
+}
+
+.timer-progress {
+    transform: rotate(-90deg);
+    transform-origin: center;
+    fill: none;
+    stroke: #e67e22;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s linear;
+}
+
+.timer-bg {
+    fill: none;
+    stroke: #f0f0f0;
+    stroke-width: 8;
+}
+
+.timer-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #e67e22;
+}
+
+.timer-label {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: #7f8c8d;
+}
+
+/* Empty States */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #7f8c8d;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: #ecf0f1;
+    margin-bottom: 15px;
+}
+
+.empty-state p {
+    font-size: 1.1rem;
+    margin-top: 10px;
+}
+
+/* Hiệu ứng active cho đơn hàng được chọn */
+.history-item.active {
+    border-width: 0 0 0 6px;
+    background-color: #f8f9fa;
+    transform: translateX(3px);
+}
+
+/* Total Amount */
+.total-amount {
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: 2px solid #f0f0f0;
+}
+
+.total-amount p {
+    display: flex;
+    justify-content: space-between;
+    margin: 10px 0;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.total-amount p:first-child {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #e67e22;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .status-container {
+        grid-template-columns: 1fr;
+        gap: 25px;
+        padding: 0 15px;
+    }
+    
+    .order-card, .order-history {
+        margin-bottom: 0;
+    }
+}
+
+@media (max-width: 576px) {
+    .status-page {
+        padding: 80px 0 40px;
+    }
+    
+    .status-page h1 {
+        font-size: 1.8rem;
+        margin-bottom: 30px;
+    }
+    
+    .order-card, .order-history {
+        padding: 20px;
+    }
+    
+    .order-card h3, .order-history h3 {
+        font-size: 1.4rem;
+        margin-bottom: 20px;
+    }
+    
+    .timer-circle {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .timer-text {
+        font-size: 1.5rem;
+    }
+} 

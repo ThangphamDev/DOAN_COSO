@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý đơn hàng - T2K Coffee Admin</title>
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../assets/css/admin.css">
+    <link rel="stylesheet" href="../assets/css/admin-modules.css">
+    <!-- Order Manager CSS -->
+    <link rel="stylesheet" href="../assets/css/modules/order-manager.css">
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
+</head>
+
+<body>
+    <div id="app">
+        <div id="loader" class="loader-overlay">
+            <div class="loader"></div>
+            <div class="loader-message">Đang tải...</div>
+        </div>
+
+        <header class="admin-header">
+            <div class="logo">
+                <img src="../assets/images/logo.png" alt="T2K Coffee Logo">
+                <h1>T2K Coffee</h1>
+            </div>
+            <div class="header-actions">
+                <button class="btn-notification" title="Thông báo">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge">3</span>
+                </button>
+                <div class="admin-profile">
+                    <img src="../assets/images/default-avatar.png" alt="Admin" class="avatar">
+                    <span id="adminName">Admin</span>
+                    <div class="dropdown-menu">
+                        <a href="profile.html"><i class="fas fa-user"></i> Hồ sơ</a>
+                        <a href="settings.html"><i class="fas fa-cog"></i> Cài đặt</a>
+                        <hr>
+                        <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="admin-container">
+            <div class="sidebar-container">
+                <!-- Sidebar sẽ được load bằng JavaScript -->
+            </div>
+
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-receipt"></i> Quản lý đơn hàng</h1>
+                    <div class="breadcrumb">
+                        <a href="dashboard.html">Trang chủ</a> / <span>Đơn hàng</span>
+                    </div>
+                </div>
+
+                <div class="order-management">
+                    <!-- Order statistics -->
+                    <div class="order-stats">
+                        <!-- Stats will be populated by JavaScript -->
+                    </div>
+
+                    <!-- Action Bar with Search and Filters -->
+                    <div class="action-bar">
+                        <div class="search-filter-group">
+                            <div class="search-box">
+                                <input type="text" id="searchOrder" placeholder="Tìm kiếm đơn hàng...">
+                                <button class="search-btn">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            <div class="filter-controls">
+                                <select id="statusFilter" class="filter-select">
+                                    <option value="all">Tất cả trạng thái</option>
+                                    <option value="processing">Đang xử lý</option>
+                                    <option value="completed">Hoàn thành</option>
+                                    <option value="cancelled">Đã hủy</option>
+                                    <option value="pending">Chờ xử lý</option>
+                                </select>
+                                <div class="date-range">
+                                    <input type="date" id="dateFrom" placeholder="Từ ngày">
+                                    <input type="date" id="dateTo" placeholder="Đến ngày">
+                                </div>
+                            </div>
+                        </div>
+                        <button class="add-order-btn">
+                            <i class="fas fa-plus"></i> Tạo đơn hàng mới
+                        </button>
+                    </div>
+
+                    <!-- Orders Table -->
+                    <table id="ordersTable" class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>Mã đơn</th>
+                                <th>Ngày đặt</th>
+                                <th>Bàn</th>
+                                <th>Sản phẩm</th>
+                                <th>Trạng thái</th>
+                                <th>Tổng tiền</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orderTableBody">
+                            <!-- Orders will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+
+                    <!-- Empty state when no orders -->
+                    <div class="empty-state" style="display: none;">
+                        <!-- Empty state content will be populated by JavaScript -->
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="pagination-container">
+                        <div class="pagination">
+                            <!-- Pagination will be populated by JavaScript -->
+                        </div>
+                        <div class="page-info">
+                            <!-- Page info will be populated by JavaScript -->
+                        </div>
+                        <div class="items-per-page">
+                            <label for="itemsPerPage">Hiển thị:</label>
+                            <select id="itemsPerPage">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Order Detail Modal -->
+        <div id="orderModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Chi tiết đơn hàng</h2>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <div id="orderDetails" class="order-details">
+                    <!-- Order details will be populated by JavaScript -->
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-primary">
+                        <i class="fas fa-print"></i> In hóa đơn
+                    </button>
+                    <button class="btn-secondary cancel-btn">Đóng</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal chỉnh sửa đơn hàng -->
+        <div class="modal" id="editOrderModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Chỉnh sửa đơn hàng</h2>
+                        <button type="button" class="close-btn" data-bs-dismiss="modal" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editOrderForm">
+                            <input type="hidden" id="editOrderId">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="editOrderStatus">Trạng thái</label>
+                                    <select id="editOrderStatus" class="form-control">
+                                        <option value="processing">Đang xử lý</option>
+                                        <option value="completed">Hoàn thành</option>
+                                        <option value="cancelled">Đã hủy</option>
+                                        <option value="pending">Chờ xử lý</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="editOrderNotes">Ghi chú</label>
+                                    <textarea id="editOrderNotes" class="form-control" rows="2"></textarea>
+                                </div>
+                            </div>
+                            
+                            <h4>Danh sách món</h4>
+                            <div class="table-responsive">
+                                <table id="editOrderItemsTable" class="order-items-edit-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Sản phẩm</th>
+                                            <th>Đơn giá</th>
+                                            <th>Số lượng</th>
+                                            <th>Thành tiền</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Items will be added dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="add-item-section">
+                                <button type="button" id="addItemBtn" class="btn-primary">
+                                    <i class="fas fa-plus"></i> Thêm sản phẩm
+                                </button>
+                            </div>
+                            
+                            <div class="edit-summary">
+                                <div class="d-flex justify-content-between">
+                                    <strong>Tổng cộng:</strong>
+                                    <strong id="editOrderTotal">0 ₫</strong>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-cancel" data-bs-dismiss="modal">Hủy</button>
+                        <button type="button" id="saveOrderBtn" class="btn-primary">Lưu</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal thêm sản phẩm -->
+        <div class="modal" id="addProductModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Thêm sản phẩm</h2>
+                        <button type="button" class="close-btn" data-bs-dismiss="modal" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addProductForm">
+                            <div class="form-group">
+                                <label for="productSelect">Sản phẩm</label>
+                                <select id="productSelect" class="form-control" required>
+                                    <option value="">-- Chọn sản phẩm --</option>
+                                    <!-- Products will be added dynamically -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="productQuantity">Số lượng</label>
+                                <input type="number" id="productQuantity" class="form-control" min="1" value="1" required>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-cancel" data-bs-dismiss="modal">Hủy</button>
+                        <button type="button" id="confirmAddProductBtn" class="btn-primary">Thêm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="../assets/js/admin-core.js"></script>
+    <script src="../assets/js/modules/order-manager.js"></script>
+</body>
+
+</html> 

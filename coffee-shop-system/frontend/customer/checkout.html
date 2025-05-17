@@ -1,78 +1,312 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Checkout - T2K Coffee</title>
+  <title>Thanh Toán - T2K Coffee</title>
+  <link rel="icon" href="../assets/images/logo.png" type="image/png">
   <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/components.css">
   <link rel="stylesheet" href="../assets/css/checkout.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
   <div id="app">
-    <!-- Header will be injected here -->
+    <div id="header-container"></div>
+    
     <main class="checkout-page">
       <div class="container">
-        <h1>Checkout</h1>
+        <h1>Thanh Toán</h1>
 
         <div class="checkout-container">
-          <div class="customer-info">
-            <h3>Customer Information</h3>
-            <form id="customerForm">
+          <div class="order-info">
+            <h3>Thông Tin Đơn Hàng</h3>
+            <form id="orderForm">
               <div class="form-group">
-                <label for="fullName">Full Name</label>
-                <input type="text" id="fullName" required>
-              </div>
-              <div class="form-group">
-                <label for="phone">Phone Number</label>
-                <input type="tel" id="phone" required>
-              </div>
-              <div class="form-group">
-                <label for="tableNumber">Table Number</label>
+                <label for="tableNumber">Số Bàn</label>
                 <select id="tableNumber" required>
-                  <option value="">Select a table</option>
+                  <option value="">Chọn bàn</option>
                   <!-- Tables will be loaded via JS -->
                 </select>
               </div>
               <div class="form-group">
-                <label for="notes">Special Instructions</label>
-                <textarea id="notes" rows="3"></textarea>
+                <label for="notes">Ghi Chú</label>
+                <textarea id="notes" rows="3" placeholder="Ghi chú đặc biệt cho đơn hàng của bạn"></textarea>
               </div>
             </form>
           </div>
 
           <div class="order-summary">
-            <h3>Order Summary</h3>
+            <h3>Tóm Tắt Đơn Hàng</h3>
             <div id="orderSummary">
               <!-- Order summary will be loaded here -->
             </div>
+            
+            <!-- Thêm phần mã khuyến mãi ở đây -->
+            <div class="promotion-code-container">
+              <h3>Mã khuyến mãi</h3>
+              <div class="promotion-input">
+                <input type="text" id="promotionCode" placeholder="Nhập mã khuyến mãi của bạn">
+                <button id="applyPromotion" class="btn-apply-promo">Áp dụng</button>
+              </div>
+              <div id="promotionMessage" class="promotion-message"></div>
+              <div id="discountInfo" class="discount-info" style="display: none;">
+                <div class="discount-row">
+                  <span>Giảm giá:</span>
+                  <span id="discountAmount" class="discount-amount">0đ</span>
+                </div>
+              </div>
+            </div>
+            
             <div class="payment-methods">
-              <h3>Payment Method</h3>
+              <h3>Phương Thức Thanh Toán</h3>
               <div class="payment-options">
                 <label>
-                  <input type="radio" name="payment" value="cash" checked>
-                  <span>Cash</span>
+                  <input type="radio" name="payment" value="cash" checked id="cashPayment">
+                  <span>Tiền Mặt</span>
                 </label>
                 <label>
-                  <input type="radio" name="payment" value="card">
-                  <span>Credit Card</span>
-                </label>
-                <label>
-                  <input type="radio" name="payment" value="mobile">
-                  <span>Mobile Payment</span>
+                  <input type="radio" name="payment" value="transfer" id="transferPayment">
+                  <span>Chuyển Khoản</span>
                 </label>
               </div>
-              <button class="btn-place-order" id="placeOrderBtn">Place Order</button>
+              <button class="btn-place-order" id="placeOrderBtn">Đặt Hàng</button>
             </div>
+          </div>
+          
+          <!-- QR Code container sẽ xuất hiện khi chọn thanh toán chuyển khoản -->
+          <div id="qrCodeContainer" class="qr-code-container" style="display: none;">
           </div>
         </div>
       </div>
     </main>
-    <!-- Footer will be injected here -->
+    
+    <div id="footer-container"></div>
   </div>
-  <script src="../assets/js/main.js"></script>
+  
+  <script>
+    // Function to load components
+    async function loadComponent(url, containerId) {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch ${url}: ${response.status}`);
+            }
+            const html = await response.text();
+            document.getElementById(containerId).innerHTML = html;
+            
+            // Execute scripts in the loaded HTML
+            const scripts = document.getElementById(containerId).querySelectorAll('script');
+            scripts.forEach(script => {
+                const newScript = document.createElement('script');
+                if (script.src) {
+                    newScript.src = script.src;
+                } else {
+                    newScript.textContent = script.textContent;
+                }
+                document.body.appendChild(newScript);
+            });
+        } catch (error) {
+            console.error('Error loading component:', error);
+            document.getElementById(containerId).innerHTML = `<div style="color: red; padding: 20px;">Failed to load component: ${error.message}</div>`;
+        }
+    }
+    
+    // Đảm bảo tải components khi trang đã tải xong
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load header và footer
+        loadComponent('../components/header.html', 'header-container');
+        loadComponent('../components/footer.html', 'footer-container');
+    });
+  </script>
+  <script src="../assets/js/api.js"></script>
   <script src="../assets/js/checkout.js"></script>
+  
+  <!-- CSS cho phần mã khuyến mãi -->
+  <style>
+    .promotion-code-container {
+      margin: 20px 0;
+      padding: 15px;
+      border: 1px dashed #e69c53;
+      border-radius: 8px;
+      background-color: #fff9f2;
+    }
+    
+    .promotion-code-container h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      color: #e67e22;
+      font-size: 18px;
+    }
+    
+    .promotion-input {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .promotion-input input {
+      flex: 1;
+      padding: 10px 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    
+    .btn-apply-promo {
+      background-color: #e67e22;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 10px 15px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    
+    .btn-apply-promo:hover {
+      background-color: #d35400;
+    }
+    
+    .promotion-message {
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    
+    .promotion-success {
+      color: #27ae60;
+    }
+    
+    .promotion-error {
+      color: #e74c3c;
+    }
+    
+    .discount-info {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed #e69c53;
+    }
+    
+    .discount-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+      font-size: 14px;
+    }
+    
+    .discount-amount {
+      font-weight: bold;
+      color: #e67e22;
+    }
+  </style>
+  
+  <!-- JavaScript cho xử lý mã khuyến mãi -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(() => {
+        const promotionCodeInput = document.getElementById('promotionCode');
+        const applyPromoButton = document.getElementById('applyPromotion');
+        const promotionMessage = document.getElementById('promotionMessage');
+        const discountInfo = document.getElementById('discountInfo');
+        const discountAmount = document.getElementById('discountAmount');
+        const totalElement = document.querySelector('.summary-total h4');
+        const currentOrder = JSON.parse(localStorage.getItem("currentOrder") || 'null');
+        const cart = JSON.parse(localStorage.getItem("cart") || 'null');
+
+        // Nếu đã xác nhận đơn hàng VÀ KHÔNG còn giỏ hàng thì mới khóa mã khuyến mãi
+        if (currentOrder && (!cart || cart.length === 0)) {
+          if (promotionCodeInput) promotionCodeInput.disabled = true;
+          if (applyPromoButton) applyPromoButton.disabled = true;
+          // Hiển thị tổng tiền từ đơn hàng đã xác nhận
+          if (totalElement) {
+            totalElement.textContent = `Tổng cộng: ${parseFloat(currentOrder.totalAmount).toLocaleString('vi-VN')}đ`;
+          }
+          // Nếu có giảm giá đã áp dụng, hiển thị
+          const appliedPromotion = JSON.parse(localStorage.getItem('appliedPromotion') || 'null');
+          if (appliedPromotion && appliedPromotion.discountAmount > 0) {
+            discountInfo.style.display = 'block';
+            discountAmount.textContent = appliedPromotion.discountAmount.toLocaleString('vi-VN') + 'đ';
+            promotionMessage.textContent = `Đã áp dụng mã "${appliedPromotion.code}" thành công!`;
+            promotionMessage.className = 'promotion-message promotion-success';
+          }
+          return; // Không cho áp mã nữa
+        }
+
+        // Nếu chưa xác nhận đơn hàng, cho phép áp mã như bình thường
+        if (!promotionCodeInput || !applyPromoButton || !promotionMessage || !discountInfo || !discountAmount) {
+          console.error('Không tìm thấy các phần tử cần thiết cho chức năng mã khuyến mãi');
+          return;
+        }
+
+        applyPromoButton.addEventListener('click', function() {
+          const code = promotionCodeInput.value.trim();
+          if (!code) {
+            showPromoMessage('Vui lòng nhập mã khuyến mãi', 'error');
+            return;
+          }
+          const cart = JSON.parse(localStorage.getItem("cart")) || [];
+          const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+          fetch(`http://localhost:8081/api/promotions/validate/${code}`)
+            .then(response => response.json())
+            .then(data => {
+              if (data.valid) {
+                calculateDiscount(code, total);
+              } else {
+                showPromoMessage('Mã khuyến mãi không hợp lệ hoặc đã hết hạn', 'error');
+                hideDiscountInfo();
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              showPromoMessage('Có lỗi xảy ra, vui lòng thử lại sau', 'error');
+            });
+        });
+
+        function showPromoMessage(message, type) {
+          promotionMessage.textContent = message;
+          promotionMessage.className = 'promotion-message promotion-' + type;
+        }
+
+        function showDiscountInfo(amount) {
+          discountInfo.style.display = 'block';
+          discountAmount.textContent = amount.toLocaleString('vi-VN') + 'đ';
+        }
+
+        function hideDiscountInfo() {
+          discountInfo.style.display = 'none';
+        }
+
+        function calculateDiscount(code, totalAmount) {
+          fetch(`http://localhost:8081/api/promotions/calculate-discount?code=${code}&orderTotal=${totalAmount}`)
+            .then(response => response.json())
+            .then(data => {
+              if (data.valid) {
+                localStorage.setItem('appliedPromotion', JSON.stringify({
+                  code: code,
+                  discountAmount: data.discountAmount,
+                  finalTotal: data.finalTotal
+                }));
+                showPromoMessage(`Đã áp dụng mã "${code}" thành công!`, 'success');
+                showDiscountInfo(data.discountAmount);
+                // Cập nhật tổng tiền hiển thị
+                if (totalElement) {
+                  totalElement.textContent = `Tổng cộng: ${data.finalTotal.toLocaleString('vi-VN')}đ`;
+                }
+              } else {
+                showPromoMessage('Mã khuyến mãi không áp dụng được cho đơn hàng này', 'error');
+                hideDiscountInfo();
+                localStorage.removeItem('appliedPromotion');
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              showPromoMessage('Có lỗi xảy ra khi tính giảm giá', 'error');
+            });
+        }
+      }, 500);
+    });
+  </script>
 </body>
 
 </html>
