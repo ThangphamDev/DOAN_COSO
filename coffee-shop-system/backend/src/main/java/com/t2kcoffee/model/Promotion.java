@@ -34,7 +34,7 @@ public class Promotion {
     private Boolean isActive = true;
     
     @Column(name = "Discount_Type")
-    private String discountType; // "PERCENT" hoặc "FIXED"
+    private String discountType; 
     
     @Column(name = "Discount_Value")
     private BigDecimal discountValue;
