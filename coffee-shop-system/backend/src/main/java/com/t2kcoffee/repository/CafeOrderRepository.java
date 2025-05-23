@@ -22,5 +22,5 @@ public interface CafeOrderRepository extends JpaRepository<CafeOrder, Integer> {
     
     List<CafeOrder> findTop10ByOrderByOrderTimeDesc();
 
-    
+    List<CafeOrder> findByOrderTimeBetween(Date startDate, Date endDate);
 } 

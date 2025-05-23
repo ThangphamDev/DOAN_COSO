@@ -19,15 +19,15 @@
             </div>
             <ul class="menu">
                 <li><a href="dashboard.html"><i class="fa fa-home"></i> Tổng quan</a></li>
-                <li><a href="order.html"><i class="fa fa-receipt"></i> Đơn hàng</a></li>
-                <li><a href="payment.html"><i class="fa fa-money-bill"></i> Kiểm tra thanh toán</a></li>
-                <li class="active"><i class="fa fa-chair"></i> Tình trạng bàn</li>
+                <li><a href="order.html"><i class="fa fa-receipt"></i> Gọi món</a></li>
+                <li class="active"><i class="fa fa-chair"></i> Quản lý bàn</li>
+                <li><a href="order-history.html"><i class="fa fa-money-bill"></i> Lịch sử đơn hàng</a></li>
             </ul>
         </aside>
 
         <main class="main-content">
             <header class="header">
-                <div>Trang chủ / Kiểm tra thanh toán</div>
+                <div>Trang chủ / Quản lý bàn</div>
                 <div class="user-info">
                     <i class="fa fa-bell"></i><span class="badge">2</span>
                     <img src="../assets/images/default-avatar.png" alt="avatar">
@@ -37,19 +37,11 @@
 
             <section class="table-management">
                 <div class="action-bar">
-                    <button id="add-table-btn" class="action-btn"><i class="fa fa-plus"></i> Thêm bàn mới</button>
                     <div class="search-box">
                         <input type="text" id="table-search" placeholder="Tìm kiếm bàn...">
                         <button class="action-btn search-btn"><i class="fa fa-search"></i></button>
                     </div>
                     <div class="filter">
-                        <select id="statusFilter" onchange="filterTables()">
-                            <option value="all">Tất cả trạng thái</option>
-                            <option value="Available">Trống</option>
-                            <option value="Occupied">Đang phục vụ</option>
-                            <option value="Reserved">Đặt trước</option>
-                            <option value="Cleaning">Đang dọn dẹp</option>
-                        </select>
                         <select id="areaFilter" onchange="filterTables()">
                             <option value="all">Tất cả khu vực</option>
                             <option value="Ground Floor">Tầng trệt</option>
@@ -83,136 +75,11 @@
                     </div>
                 </div>
 
-                <table id="tablesTable">
-                    <thead>
-                        <tr>
-                            <th>Mã bàn</th>
-                            <th>Tên bàn</th>
-                            <th>Khu vực</th>
-                            <th>Sức chứa</th>
-                            <th>Trạng thái</th>
-                            <th>Ghi chú</th>
-                            <th>Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-
-                <div class="table-footer">
-                    <div class="pagination">
-                        <button class="page-btn" id="prevPage" disabled><i class="fa fa-chevron-left"></i></button>
-                        <span id="currentPage">Trang 1 / 1</span>
-                        <button class="page-btn" id="nextPage"><i class="fa fa-chevron-right"></i></button>
-                    </div>
-                    <div class="items-per-page">
-                        <label for="itemsPerPage">Hiển thị:</label>
-                        <select id="itemsPerPage" onchange="changeItemsPerPage()">
-                            <option value="10">10</option>
-                            <option value="20">20</option>
-                            <option value="50">50</option>
-                            <option value="100">100</option>
-                        </select>
-                    </div>
+                <div class="tables-grid" id="tablesGrid">
+                    <!-- Bàn sẽ được render vào đây -->
                 </div>
             </section>
         </main>
-    </div>
-
-    <!-- Modal thêm/sửa bàn -->
-    <div id="tableModal" class="modal">
-        <div class="modal-content">
-            <span class="close">×</span>
-            <h2 id="modalTableTitle"><i class="fa fa-chair"></i> Thêm bàn mới</h2>
-            <form id="tableForm">
-                <input type="hidden" id="tableId">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="tableName">Tên bàn <span class="required">*</span></label>
-                        <input type="text" id="tableName" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="tableNumber">Số bàn <span class="required">*</span></label>
-                        <input type="number" id="tableNumber" min="1" required>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="tableArea">Khu vực <span class="required">*</span></label>
-                        <select id="tableArea" required>
-                            <option value="Ground Floor">Tầng trệt</option>
-                            <option value="First Floor">Tầng 1</option>
-                            <option value="Outdoor">Sân vườn</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="tableCapacity">Sức chứa (người) <span class="required">*</span></label>
-                        <input type="number" id="tableCapacity" min="1" max="20" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="tableStatus">Trạng thái <span class="required">*</span></label>
-                    <select id="tableStatus" required>
-                        <option value="Available">Trống</option>
-                        <option value="Occupied">Đang phục vụ</option>
-                        <option value="Reserved">Đặt trước</option>
-                        <option value="Cleaning">Đang dọn dẹp</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="tableNotes">Ghi chú</label>
-                    <textarea id="tableNotes" rows="3"></textarea>
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="action-btn btn-cancel" data-close="modal">Hủy</button>
-                    <button type="submit" class="action-btn btn-submit">Lưu</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal xác nhận xóa -->
-    <div id="deleteTableModal" class="modal">
-        <div class="modal-content delete-confirm">
-            <span class="close">×</span>
-            <div class="confirm-icon">
-                <i class="fa fa-exclamation-triangle"></i>
-            </div>
-            <h2>Xác nhận xóa</h2>
-            <p>Bạn có chắc chắn muốn xóa bàn <strong id="deleteTableName"></strong>?</p>
-            <p class="warning-text">Lưu ý: Hành động này không thể hoàn tác!</p>
-            <div class="form-actions">
-                <button type="button" class="action-btn btn-cancel" data-close="modal">Hủy</button>
-                <button type="button" id="confirmDeleteBtn" class="action-btn btn-danger">Xóa</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal thay đổi trạng thái -->
-    <div id="statusModal" class="modal">
-        <div class="modal-content">
-            <span class="close">×</span>
-            <h2>Thay đổi trạng thái</h2>
-            <form id="statusForm">
-                <input type="hidden" id="statusTableId">
-                <div class="form-group">
-                    <label for="newStatus">Trạng thái mới <span class="required">*</span></label>
-                    <select id="newStatus" required>
-                        <option value="Available">Trống</option>
-                        <option value="Occupied">Đang phục vụ</option>
-                        <option value="Reserved">Đặt trước</option>
-                        <option value="Cleaning">Đang dọn dẹp</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="statusNote">Ghi chú</label>
-                    <textarea id="statusNote" rows="2"></textarea>
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="action-btn btn-cancel" data-close="modal">Hủy</button>
-                    <button type="submit" class="action-btn btn-submit">Lưu</button>
-                </div>
-            </form>
-        </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

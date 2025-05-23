@@ -33,8 +33,10 @@ public class CafeOrderController {
         this.cafeOrderService = cafeOrderService;
         this.productService = productService;
     }
+
+    @GetMapping("/today")
     public ResponseEntity<Map<String, Object>> getTodayOrders() {
-        return ResponseEntity.ok(orderService.getTodayOrders());
+        return ResponseEntity.ok(cafeOrderService.getTodayOrders());
     }
 
     @GetMapping
