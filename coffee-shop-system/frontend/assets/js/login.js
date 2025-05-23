@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } 
         else if (roleLower.includes('staff')) {
-            window.location.href = '../staff/table.html';
+            window.location.href = '../staff/dashboard.html';
         }
         else if (roleLower.includes('customer')) {
             window.location.href = '../index.html';

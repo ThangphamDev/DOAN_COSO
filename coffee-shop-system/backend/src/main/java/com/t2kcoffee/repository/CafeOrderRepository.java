@@ -21,4 +21,6 @@ public interface CafeOrderRepository extends JpaRepository<CafeOrder, Integer> {
     List<CafeOrder> findByStatus(String status);
     
     List<CafeOrder> findTop10ByOrderByOrderTimeDesc();
+
+    
 } 

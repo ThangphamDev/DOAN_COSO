@@ -1,31 +1,222 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Table Management - T2K Coffee</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
-    <link rel="stylesheet" href="../assets/css/staff-tables.css">
+    <title>Quản lý Bàn - T2K Coffee</title>
+    <link rel="stylesheet" href="../assets/css/table.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
 </head>
-<body>
-    <div id="app">
-        <!-- Header will be injected here -->
-        <main class="staff-page">
-            <div class="container">
-                <h1>Table Management</h1>
-                
-                <div class="table-grid" id="tablesGrid">
-                    <!-- Tables will be loaded here via JavaScript -->
-                </div>
-                
-                <div class="table-details" id="tableDetails">
-                    <!-- Table details will be shown here when a table is selected -->
-                </div>
-            </div>
-        </main>
 
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="../assets/images/logo.png" alt="T2K Logo" />
+                <h2>T2K Coffee</h2>
+            </div>
+            <ul class="menu">
+                <li><a href="dashboard.html"><i class="fa fa-home"></i> Tổng quan</a></li>
+                <li><a href="order.html"><i class="fa fa-receipt"></i> Đơn hàng</a></li>
+                <li><a href="payment.html"><i class="fa fa-money-bill"></i> Kiểm tra thanh toán</a></li>
+                <li class="active"><i class="fa fa-chair"></i> Tình trạng bàn</li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div>Trang chủ / Kiểm tra thanh toán</div>
+                <div class="user-info">
+                    <i class="fa fa-bell"></i><span class="badge">2</span>
+                    <img src="../assets/images/default-avatar.png" alt="avatar">
+                    <span>Staff</span>
+                </div>
+            </header>
+
+            <section class="table-management">
+                <div class="action-bar">
+                    <button id="add-table-btn" class="action-btn"><i class="fa fa-plus"></i> Thêm bàn mới</button>
+                    <div class="search-box">
+                        <input type="text" id="table-search" placeholder="Tìm kiếm bàn...">
+                        <button class="action-btn search-btn"><i class="fa fa-search"></i></button>
+                    </div>
+                    <div class="filter">
+                        <select id="statusFilter" onchange="filterTables()">
+                            <option value="all">Tất cả trạng thái</option>
+                            <option value="Available">Trống</option>
+                            <option value="Occupied">Đang phục vụ</option>
+                            <option value="Reserved">Đặt trước</option>
+                            <option value="Cleaning">Đang dọn dẹp</option>
+                        </select>
+                        <select id="areaFilter" onchange="filterTables()">
+                            <option value="all">Tất cả khu vực</option>
+                            <option value="Ground Floor">Tầng trệt</option>
+                            <option value="First Floor">Tầng 1</option>
+                            <option value="Outdoor">Sân vườn</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-stats">
+                    <div class="stat-card">
+                        <i class="fa fa-table"></i>
+                        <div>
+                            <h3 id="total-tables">0</h3>
+                            <p>Tổng số bàn</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa fa-check-circle"></i>
+                        <div>
+                            <h3 id="available-tables">0</h3>
+                            <p>Bàn trống</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa fa-users"></i>
+                        <div>
+                            <h3 id="occupied-tables">0</h3>
+                            <p>Bàn đang phục vụ</p>
+                        </div>
+                    </div>
+                </div>
+
+                <table id="tablesTable">
+                    <thead>
+                        <tr>
+                            <th>Mã bàn</th>
+                            <th>Tên bàn</th>
+                            <th>Khu vực</th>
+                            <th>Sức chứa</th>
+                            <th>Trạng thái</th>
+                            <th>Ghi chú</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+
+                <div class="table-footer">
+                    <div class="pagination">
+                        <button class="page-btn" id="prevPage" disabled><i class="fa fa-chevron-left"></i></button>
+                        <span id="currentPage">Trang 1 / 1</span>
+                        <button class="page-btn" id="nextPage"><i class="fa fa-chevron-right"></i></button>
+                    </div>
+                    <div class="items-per-page">
+                        <label for="itemsPerPage">Hiển thị:</label>
+                        <select id="itemsPerPage" onchange="changeItemsPerPage()">
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+        </main>
     </div>
-    <script src="../assets/js/main.js"></script>
-    <script src="../assets/js/staff-tables.js"></script>
+
+    <!-- Modal thêm/sửa bàn -->
+    <div id="tableModal" class="modal">
+        <div class="modal-content">
+            <span class="close">×</span>
+            <h2 id="modalTableTitle"><i class="fa fa-chair"></i> Thêm bàn mới</h2>
+            <form id="tableForm">
+                <input type="hidden" id="tableId">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tableName">Tên bàn <span class="required">*</span></label>
+                        <input type="text" id="tableName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tableNumber">Số bàn <span class="required">*</span></label>
+                        <input type="number" id="tableNumber" min="1" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tableArea">Khu vực <span class="required">*</span></label>
+                        <select id="tableArea" required>
+                            <option value="Ground Floor">Tầng trệt</option>
+                            <option value="First Floor">Tầng 1</option>
+                            <option value="Outdoor">Sân vườn</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="tableCapacity">Sức chứa (người) <span class="required">*</span></label>
+                        <input type="number" id="tableCapacity" min="1" max="20" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="tableStatus">Trạng thái <span class="required">*</span></label>
+                    <select id="tableStatus" required>
+                        <option value="Available">Trống</option>
+                        <option value="Occupied">Đang phục vụ</option>
+                        <option value="Reserved">Đặt trước</option>
+                        <option value="Cleaning">Đang dọn dẹp</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="tableNotes">Ghi chú</label>
+                    <textarea id="tableNotes" rows="3"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="action-btn btn-cancel" data-close="modal">Hủy</button>
+                    <button type="submit" class="action-btn btn-submit">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal xác nhận xóa -->
+    <div id="deleteTableModal" class="modal">
+        <div class="modal-content delete-confirm">
+            <span class="close">×</span>
+            <div class="confirm-icon">
+                <i class="fa fa-exclamation-triangle"></i>
+            </div>
+            <h2>Xác nhận xóa</h2>
+            <p>Bạn có chắc chắn muốn xóa bàn <strong id="deleteTableName"></strong>?</p>
+            <p class="warning-text">Lưu ý: Hành động này không thể hoàn tác!</p>
+            <div class="form-actions">
+                <button type="button" class="action-btn btn-cancel" data-close="modal">Hủy</button>
+                <button type="button" id="confirmDeleteBtn" class="action-btn btn-danger">Xóa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal thay đổi trạng thái -->
+    <div id="statusModal" class="modal">
+        <div class="modal-content">
+            <span class="close">×</span>
+            <h2>Thay đổi trạng thái</h2>
+            <form id="statusForm">
+                <input type="hidden" id="statusTableId">
+                <div class="form-group">
+                    <label for="newStatus">Trạng thái mới <span class="required">*</span></label>
+                    <select id="newStatus" required>
+                        <option value="Available">Trống</option>
+                        <option value="Occupied">Đang phục vụ</option>
+                        <option value="Reserved">Đặt trước</option>
+                        <option value="Cleaning">Đang dọn dẹp</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="statusNote">Ghi chú</label>
+                    <textarea id="statusNote" rows="2"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="action-btn btn-cancel" data-close="modal">Hủy</button>
+                    <button type="submit" class="action-btn btn-submit">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="../assets/js/table.js"></script>
 </body>
+
 </html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Nhân viên - T2K Coffee</title>
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="../assets/images/logo.png" alt="T2K Coffee Logo">
+                <h2>T2K Coffee</h2>
+            </div>
+            <ul class="menu">
+                <li class="active"><a href="/dashboard"><i class="fa fa-home"></i> Tổng quan</a></li>
+                <li><a href="../staff/order.html"><i class="fa fa-receipt"></i> Đơn hàng</a></li>
+                <li><a href="../staff/payment.html"><i class="fa fa-money-bill"></i> Kiểm tra thanh toán</a></li>
+                <li><a href="../staff/table.html"><i class="fa fa-chair"></i> Tình trạng bàn</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div>Trang chủ / Tổng quan</div>
+                <div class="user-info">
+                    <i class="fa fa-bell"></i><span class="badge">2</span>
+                    <div class="user-dropdown" onclick="toggleDropdown()">
+                        <img src="../assets/images/default-avatar.png" alt="avatar">
+                        <span th:text="${#authentication.principal.username} || 'Staff'">Staff</span>
+                        <i class="fa fa-chevron-down"></i>
+                        <div class="dropdown-menu" id="dropdownMenu">
+                            <a href="/profile"><i class="fa fa-user"></i> Hồ sơ</a>
+                            <a href="/settings"><i class="fa fa-cog"></i> Cài đặt</a>
+                            <a href="../auth/login.html" id="logoutBtn"
+                                onclick="return confirm('Bạn có chắc chắn muốn đăng xuất?')"><i
+                                    class="fa fa-sign-out-alt"></i> Đăng xuất</a>
+                        </div>
+                    </div>
+                    <button id="refreshBtn" class="action-btn">Làm mới</button>
+                </div>
+            </header>
+
+            <section class="dashboard">
+                <h2>Tổng quan công việc</h2>
+                <div class="stats">
+                    <div class="stat-card">
+                        <i class="fa fa-receipt"></i>
+                        <div>
+                            <h3 th:text="${stats.todayOrders != null ? stats.todayOrders : 0}" id="todayOrders">0</h3>
+                            <p>Đơn hàng hôm nay</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa fa-money-bill"></i>
+                        <div>
+                            <h3 th:text="${stats.revenueCash != null ? stats.revenueCash + 'đ' : '0đ'}"
+                                id="revenueCash">0đ</h3>
+                            <p>Doanh thu tiền mặt</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa fa-credit-card"></i>
+                        <div>
+                            <h3 th:text="${stats.revenueOnline != null ? stats.revenueOnline + 'đ' : '0đ'}"
+                                id="revenueOnline">0đ</h3>
+                            <p>Doanh thu online</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Tình trạng bàn</h3>
+                    <table id="tablesStatus">
+                        <thead>
+                            <tr>
+                                <th>Số bàn</th>
+                                <th>Trạng thái</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="table : ${tables}">
+                                <td th:text="'Bàn ' + ${table.idTable}"></td>
+                                <td th:text="${table.status == 'Occupied' ? 'Đang dùng' : 'Trống'}"></td>
+                                <td>
+                                    <button class="action-btn"
+                                        th:class="${table.status == 'Occupied' ? 'free-btn' : 'occupy-btn'}"
+                                        th:onclick="'updateTableStatus(' + ${table.idTable} + ', ' + (${table.status == 'Occupied' ? ''free'' : ''occupied''}) + ')'">
+                                        <span th:text="${table.status == 'Occupied' ? 'Giải phóng' : 'Đặt bàn'}"></span>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="section">
+                    <h3>Kiểm tra thanh toán</h3>
+                    <table id="paymentsTable">
+                        <thead>
+                            <tr>
+                                <th>ID Thanh toán</th>
+                                <th>Khách hàng</th>
+                                <th>Số tiền</th>
+                                <th>Phương thức</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="payment : ${payments}">
+                                <td th:text="${payment.idPayment}"></td>
+                                <td th:text="${payment.customerName}"></td>
+                                <td th:text="${payment.amount} + 'đ'"></td>
+                                <td th:text="${payment.method}"></td>
+                                <td th:class="${payment.status == 'success' ? 'success' : 'failed'}"
+                                    th:text="${payment.status == 'success' ? 'Thành công' : 'Thất bại'}"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="../assets/js/dashboard.js"></script>
+    <script th:inline="javascript">
+        function updateTableStatus(tableId, newStatus) {
+            $.post('/api/tables/' + tableId + '/update', { status: newStatus }, function () {
+                location.reload();
+            }).fail(function (xhr) {
+                alert('Lỗi cập nhật trạng thái: ' + xhr.statusText);
+            });
+        }
+
+        function toggleDropdown() {
+            document.getElementById("dropdownMenu").classList.toggle("show");
+        }
+
+        window.onclick = function (event) {
+            if (!event.target.matches('.user-dropdown') && !event.target.matches('.user-dropdown *')) {
+                var dropdowns = document.getElementsByClassName("dropdown-menu");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

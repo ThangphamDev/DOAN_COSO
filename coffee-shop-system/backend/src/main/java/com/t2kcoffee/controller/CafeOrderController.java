@@ -33,6 +33,9 @@ public class CafeOrderController {
         this.cafeOrderService = cafeOrderService;
         this.productService = productService;
     }
+    public ResponseEntity<Map<String, Object>> getTodayOrders() {
+        return ResponseEntity.ok(orderService.getTodayOrders());
+    }
 
     @GetMapping
     public ResponseEntity<List<CafeOrder>> getAllOrders() {
