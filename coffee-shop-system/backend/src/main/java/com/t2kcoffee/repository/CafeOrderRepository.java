@@ -1,6 +1,6 @@
 package com.t2kcoffee.repository;
 
-import com.t2kcoffee.model.CafeOrder;
+import com.t2kcoffee.entity.CafeOrder;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

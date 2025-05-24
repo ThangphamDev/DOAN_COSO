@@ -1,6 +1,6 @@
 package com.t2kcoffee.service;
 
-import com.t2kcoffee.model.Account;
+import com.t2kcoffee.entity.Account;
 import com.t2kcoffee.repository.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

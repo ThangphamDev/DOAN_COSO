@@ -1,11 +1,11 @@
 package com.t2kcoffee.service;
 
-import com.t2kcoffee.model.CafeOrder;
-import com.t2kcoffee.model.CafeTable;
-import com.t2kcoffee.model.OrderDetail;
-import com.t2kcoffee.model.OrderDetailId;
-import com.t2kcoffee.model.Product;
-import com.t2kcoffee.model.Payment;
+import com.t2kcoffee.entity.CafeOrder;
+import com.t2kcoffee.entity.CafeTable;
+import com.t2kcoffee.entity.OrderDetail;
+import com.t2kcoffee.entity.OrderDetailId;
+import com.t2kcoffee.entity.Product;
+import com.t2kcoffee.entity.Payment;
 import com.t2kcoffee.repository.CafeOrderRepository;
 import com.t2kcoffee.repository.CafeTableRepository;
 import com.t2kcoffee.repository.OrderDetailRepository;

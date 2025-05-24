@@ -1,6 +1,6 @@
 package com.t2kcoffee.service;
 
-import com.t2kcoffee.model.Category;
+import com.t2kcoffee.entity.Category;
 import com.t2kcoffee.repository.CategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

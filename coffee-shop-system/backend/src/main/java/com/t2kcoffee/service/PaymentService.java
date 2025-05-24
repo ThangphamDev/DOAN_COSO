@@ -1,6 +1,6 @@
 package com.t2kcoffee.service;
 
-import com.t2kcoffee.model.Payment;
+import com.t2kcoffee.entity.Payment;
 import com.t2kcoffee.repository.PaymentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

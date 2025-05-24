@@ -1,7 +1,7 @@
 package com.t2kcoffee.controller;
 
-import com.t2kcoffee.model.ProductVariant;
-import com.t2kcoffee.model.Category;
+import com.t2kcoffee.entity.ProductVariant;
+import com.t2kcoffee.entity.Category;
 import com.t2kcoffee.service.ProductVariantService;
 import com.t2kcoffee.service.CategoryService;
 import com.t2kcoffee.dto.VariantResponse;

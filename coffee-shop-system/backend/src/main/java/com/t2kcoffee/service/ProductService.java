@@ -1,6 +1,6 @@
 package com.t2kcoffee.service;
 
-import com.t2kcoffee.model.Product;
+import com.t2kcoffee.entity.Product;
 import com.t2kcoffee.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

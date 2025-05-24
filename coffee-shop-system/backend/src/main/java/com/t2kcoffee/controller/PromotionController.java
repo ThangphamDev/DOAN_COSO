@@ -1,6 +1,6 @@
 package com.t2kcoffee.controller;
 
-import com.t2kcoffee.model.Promotion;
+import com.t2kcoffee.entity.Promotion;
 import com.t2kcoffee.service.PromotionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;

@@ -1,6 +1,6 @@
 package com.t2kcoffee.repository;
 
-import com.t2kcoffee.model.CafeTable;
+import com.t2kcoffee.entity.CafeTable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

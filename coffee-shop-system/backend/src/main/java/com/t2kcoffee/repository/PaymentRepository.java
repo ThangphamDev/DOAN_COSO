@@ -1,6 +1,6 @@
 package com.t2kcoffee.repository;
 
-import com.t2kcoffee.model.Payment;
+import com.t2kcoffee.entity.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
