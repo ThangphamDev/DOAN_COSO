@@ -557,3 +557,16 @@ function getStatusText(status) {
     };
     return statusMap[status?.toLowerCase()] || status;
 }
+
+// Logout function
+function logout() {
+    if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+        // Clear any stored data
+        localStorage.removeItem('T2K_CURRENT_ORDER');
+        localStorage.removeItem('T2K_ORDER_HISTORY');
+        localStorage.removeItem('appliedPromotion');
+        
+        // Redirect to login page
+        window.location.href = '../index.html';
+    }
+}
