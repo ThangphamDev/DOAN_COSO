@@ -166,8 +166,21 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        console.log(`Displaying ${products.length} products.`);
-        products.forEach((product, index) => {
+        // Lọc chỉ lấy sản phẩm đang bán
+        const availableProducts = products.filter(product => {
+            return product.isAvailable === true || 
+                   product.status === 'active' || 
+                   product.status === true || 
+                   product.status === 1;
+        });
+        
+        if (availableProducts.length === 0) {
+            menuContainer.innerHTML = '<div class="no-products-message"><i class="fas fa-exclamation-circle"></i><br>Hiện không có sản phẩm nào đang bán.</div>';
+            return;
+        }
+        
+        console.log(`Displaying ${availableProducts.length} available products.`);
+        availableProducts.forEach((product, index) => {
             console.log('Processing product:', product);
             const item = document.createElement('div');
             item.className = 'menu-item';
@@ -367,14 +380,26 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function filterItems(category) {
         if (!window._allProducts) return;
-        if (category === 'all') {
-            displayProducts(window._allProducts);
-            return;
-        }
-        const selectedCategoryId = parseInt(category);
-        if (isNaN(selectedCategoryId)) return;
-        const filtered = window._allProducts.filter(p => parseInt(p.idCategory) === selectedCategoryId);
-        displayProducts(filtered);
+        
+        // Lọc sản phẩm theo trạng thái đang bán
+        const availableProducts = window._allProducts.filter(product => {
+            return product.isAvailable === true || 
+                   product.status === 'active' || 
+                   product.status === true || 
+                   product.status === 1;
+        });
+        
+        // Lọc theo danh mục từ danh sách sản phẩm đang bán
+        const filteredProducts = category === 'all' 
+            ? availableProducts 
+            : availableProducts.filter(product => {
+                const productCategoryId = product.idCategory || 
+                                        (product.category ? product.category.idCategory : null) || 
+                                        (product.category ? product.category.ID_Category : null);
+                return productCategoryId && productCategoryId.toString() === category;
+            });
+        
+        displayProducts(filteredProducts);
     }
     
     function getCart() {

@@ -93,11 +93,22 @@ async function loadCategories() {
         categories.forEach(category => {
             if (category.products && Array.isArray(category.products)) {
                 category.products.forEach(product => {
-                    product.idCategory = category.idCategory;
-                    allProducts.push(product);
+                    // Chỉ thêm sản phẩm đang bán
+                    if (product.isAvailable === true || 
+                        product.status === 'active' || 
+                        product.status === true || 
+                        product.status === 1) {
+                        product.idCategory = category.idCategory;
+                        allProducts.push(product);
+                    }
                 });
             }
         });
+        
+        if (allProducts.length === 0) {
+            showNotification('Không có sản phẩm nào đang bán', 'info');
+        }
+        
         menuItems = allProducts;
         renderMenuItems();
     } catch (error) {
@@ -207,11 +218,24 @@ function renderMenuItems(filteredItems = null) {
     menuGrid.innerHTML = '';
     
     if (itemsToRender.length === 0) {
-        menuGrid.innerHTML = '<div class="no-data">Không tìm thấy sản phẩm nào</div>';
+        menuGrid.innerHTML = '<div class="no-data"><i class="fas fa-exclamation-circle"></i><br>Không có sản phẩm nào đang bán trong danh mục này</div>';
         return;
     }
 
-    itemsToRender.forEach((item, index) => {
+    // Lọc chỉ lấy sản phẩm đang bán
+    const availableItems = itemsToRender.filter(item => 
+        item.isAvailable === true || 
+        item.status === 'active' || 
+        item.status === true || 
+        item.status === 1
+    );
+
+    if (availableItems.length === 0) {
+        menuGrid.innerHTML = '<div class="no-data"><i class="fas fa-exclamation-circle"></i><br>Không có sản phẩm nào đang bán trong danh mục này</div>';
+        return;
+    }
+
+    availableItems.forEach((item, index) => {
         const menuItem = document.createElement('div');
         menuItem.className = 'menu-item';
         menuItem.style.animation = `fadeIn 0.5s ease forwards ${0.1 * index}s`;
@@ -275,7 +299,16 @@ function filterMenuItems() {
     const searchText = menuSearch.value.toLowerCase();
     const activeCategory = document.querySelector('.category-btn.active').getAttribute('data-category');
     
-    let filteredItems = menuItems.filter(item => {
+    // Lọc sản phẩm theo trạng thái đang bán trước
+    let availableItems = menuItems.filter(item => 
+        item.isAvailable === true || 
+        item.status === 'active' || 
+        item.status === true || 
+        item.status === 1
+    );
+    
+    // Sau đó lọc theo tìm kiếm và danh mục
+    let filteredItems = availableItems.filter(item => {
         const matchesSearch = item.productName.toLowerCase().includes(searchText);
         const matchesCategory = activeCategory === 'all' || item.idCategory.toString() === activeCategory;
         return matchesSearch && matchesCategory;
