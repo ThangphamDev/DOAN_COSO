@@ -54,7 +54,6 @@ function startAutoRefresh() {
 
 async function loadDashboardData() {
     try {
-        showNotification('Đang cập nhật dữ liệu tổng quan...', 'info');
         await loadStatistics(); 
         await Promise.all([
             loadTables(),
@@ -457,9 +456,14 @@ async function showOrderDetails(orderId) {
                         <span class="label">Trạng thái:</span>
                         <span class="status ${order.status?.toLowerCase()}">${getStatusText(order.status)}</span>
                     </div>
+                    
                     <div class="order-info-row">
                         <span class="label">Thanh toán:</span>
                         <span class="payment-method ${order.payment?.paymentMethod?.toLowerCase()}">${getPaymentMethodText(order.payment?.paymentMethod)}</span>
+                    </div>
+                    <div class="order-info-row">
+                        <span class="label">Ghi chú:</span>
+                        <span class="order-notes">${order.note || 'Không có ghi chú'}</span>
                     </div>
                     <div class="order-items">
                         <h3>Danh sách món</h3>

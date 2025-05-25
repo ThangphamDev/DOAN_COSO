@@ -882,3 +882,13 @@ body {
 .modal-content::-webkit-scrollbar-thumb:hover {
     background: #999;
 }
+
+.order-notes {
+    color: #666;
+    font-style: italic;
+}
+
+.order-notes:empty::before {
+    content: 'Không có ghi chú';
+    color: #999;
+}

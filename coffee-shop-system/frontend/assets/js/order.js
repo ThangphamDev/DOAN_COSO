@@ -19,7 +19,9 @@ let tables = [];
 let currentOrder = {
     items: [],
     tableId: null,
-    total: 0
+    total: 0,
+    note: '',
+    notes: ''
 };
 
 // Constants
@@ -214,6 +216,7 @@ function renderMenuItems(filteredItems = null) {
         menuItem.className = 'menu-item';
         menuItem.style.animation = `fadeIn 0.5s ease forwards ${0.1 * index}s`;
         menuItem.style.opacity = '0';
+        menuItem.style.cursor = 'pointer';
 
         // Xử lý hình ảnh sản phẩm
         let imageUrl = '../assets/images/no-image.png';
@@ -223,20 +226,16 @@ function renderMenuItems(filteredItems = null) {
         if (item.image) {
             if (typeof item.image === 'string') {
                 if (item.image.startsWith('data:image')) {
-                    // Nếu là dữ liệu Base64
                     imageUrl = item.image;
                     imageClass = '';
                 } else if (item.image.startsWith('http')) {
-                    // Nếu là URL đầy đủ
                     imageUrl = item.image;
                     imageClass = '';
                 } else {
-                    // Nếu là tên file (định dạng mới)
                     imageUrl = `${API_BASE_URL}/products/images/${item.image}`;
                     imageClass = '';
                 }
             } else if (item.image.data) {
-                // Nếu là dữ liệu nhị phân (Binary) từ server (định dạng cũ)
                 const byteArray = new Uint8Array(item.image.data);
                 let binary = '';
                 byteArray.forEach(byte => binary += String.fromCharCode(byte));
@@ -257,10 +256,15 @@ function renderMenuItems(filteredItems = null) {
                 <h3 class="item-name">${item.productName}</h3>
                 <div class="item-price">${formatCurrency(item.price)}</div>
             </div>
-            <button class="add-item-btn" onclick="addToOrder(${JSON.stringify(item).replace(/"/g, '&quot;')})">
+            <button class="add-item-btn" onclick="event.stopPropagation(); addToOrder(${JSON.stringify(item).replace(/"/g, '&quot;')})">
                 <i class="fas fa-plus"></i>
             </button>
         `;
+
+        // Thêm sự kiện click để chuyển đến trang chi tiết sản phẩm
+        menuItem.addEventListener('click', () => {
+            window.location.href = `product-detail.html?id=${item.idProduct}`;
+        });
 
         menuGrid.appendChild(menuItem);
     });
@@ -301,7 +305,9 @@ function clearOrder() {
     currentOrder = {
         items: [],
         tableId: null,
-        total: 0
+        total: 0,
+        note: '',
+        notes: ''
     };
     
     if (tableSelect) tableSelect.value = '';
@@ -328,6 +334,14 @@ async function submitOrder() {
                 location: selectedTable.location
             };
         }
+    }
+
+    // Get note from textarea and update both note and notes fields
+    const noteTextarea = document.getElementById('orderNote');
+    if (noteTextarea) {
+        const noteValue = noteTextarea.value.trim();
+        currentOrder.note = noteValue;
+        currentOrder.notes = noteValue;
     }
     
     // Save updated order to localStorage

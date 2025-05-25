@@ -351,6 +351,10 @@ async function viewOrderDetails(orderId) {
                         ${getPaymentMethodText(order.payment?.paymentMethod || 'cash')}
                     </span>
                 </div>
+                <div class="detail-row">
+                    <span>Ghi chú:</span>
+                    <span class="order-notes">${order.note || 'Không có ghi chú'}</span>
+                </div>
                 <div class="items-list">
                     <h3>Danh sách món</h3>
                     ${itemsHtml}
