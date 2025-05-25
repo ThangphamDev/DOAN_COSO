@@ -3,25 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<<<<<<< HEAD
-    <title>Quản lý Đơn hàng - T2K Coffee</title>
-    <link rel="stylesheet" href="../assets/css/order.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-=======
     <title>Gọi món - T2K Coffee</title>
     <link rel="stylesheet" href="../assets/css/order.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
->>>>>>> test7
 </head>
 <body>
     <div class="container">
         <aside class="sidebar">
             <div class="logo">
-<<<<<<< HEAD
-                <img src="../assets/images/logo.png" alt="T2K Coffee Logo">
-                <h2>T2K Coffee</h2>
-=======
                 <img src="../assets/images/logo.png" alt="T2K Logo" />
                 <h2>T2K Coffee</h2>
             </div>
@@ -105,72 +95,10 @@
                         </button>
                     </div>
                 </section>
->>>>>>> test7
             </div>
-            <ul class="menu">
-                <li><a href="dashboard.html"><i class="fa fa-home"></i> Tổng quan</a></li>
-                <li class="active"><i class="fa fa-receipt"></i> Đơn hàng</li>
-                <li><a href="payment.html"><i class="fa fa-money-bill"></i> Kiểm tra thanh toán</a></li>
-                <li><a href="table.html"><i class="fa fa-chair"></i> Tình trạng bàn</a></li>
-            </ul>
-        </aside>
-
-        <main class="main-content">
-            <header class="header">
-                <div>Trang chủ / Đơn hàng</div>
-                <div class="user-info">
-                    <i class="fa fa-bell"></i><span class="badge">2</span>
-                    <img src="../includes/staff-avatar.png" alt="avatar">
-                    <span>Staff</span>
-                </div>
-            </header>
-
-            <section class="order-section">
-                <div class="search-bar">
-                    <input type="text" id="searchInput" placeholder="Tìm kiếm theo ID hoặc khách hàng...">
-                    <button class="action-btn search-btn" onclick="searchOrders()">Tìm kiếm</button>
-                </div>
-                <div class="filter">
-                    <select id="statusFilter" onchange="filterOrders()">
-                        <option value="all">Tất cả</option>
-                        <option value="pending">Đang chờ</option>
-                        <option value="processing">Đang xử lý</option>
-                        <option value="completed">Hoàn thành</option>
-                        <option value="canceled">Đã hủy</option>
-                    </select>
-                </div>
-                <table id="ordersTable">
-                    <thead>
-                        <tr>
-                            <th>ID Đơn</th>
-                            <th>Khách hàng</th>
-                            <th>Số điện thoại</th>
-                            <th>Bàn</th>
-                            <th>Thành tiền</th>
-                            <th>Trạng thái</th>
-                            <th>Hành động</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </section>
         </main>
     </div>
 
-<<<<<<< HEAD
-    <!-- Modal để xem chi tiết hoặc xuất hóa đơn -->
-    <div id="orderModal" class="modal">
-        <div class="modal-content">
-            <span class="close">×</span>
-            <h2 id="modalTitle"></h2>
-            <div id="modalBody"></div>
-            <button id="exportBillBtn" class="action-btn confirm-btn" style="display:none;" onclick="exportBill()">Xuất hóa đơn</button>
-        </div>
-    </div>
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="order.js"></script>
-=======
     <!-- Template for menu item -->
     <template id="menuItemTemplate">
         <div class="menu-item">
@@ -205,8 +133,6 @@
         </div>
     </template>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="../assets/js/order.js"></script>
->>>>>>> test7
 </body>
 </html>

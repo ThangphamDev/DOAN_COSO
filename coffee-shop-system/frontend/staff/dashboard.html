@@ -1,46 +1,26 @@
 <!DOCTYPE html>
 <html lang="vi">
-<<<<<<< HEAD
-=======
-
->>>>>>> test7
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Nhân viên - T2K Coffee</title>
-<<<<<<< HEAD
-    <link rel="stylesheet" href="../assets/css/staff.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-</head>
-=======
     <link rel="stylesheet" href="../assets/css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
 </head>
 
->>>>>>> test7
 <body>
     <div class="container">
         <aside class="sidebar">
             <div class="logo">
-<<<<<<< HEAD
-                <img src="../assets/images/logo.png" alt="T2K Coffee Logo">
-=======
                 <img src="../assets/images/logo.png" alt="T2K Logo">
->>>>>>> test7
                 <h2>T2K Coffee</h2>
             </div>
             <ul class="menu">
                 <li class="active"><i class="fa fa-home"></i> Tổng quan</li>
-<<<<<<< HEAD
-                <li><a href="order.html"><i class="fa fa-receipt"></i> Đơn hàng</a></li>
-                <li><a href="payment.html"><i class="fa fa-money-bill"></i> Kiểm tra thanh toán</a></li>
-                <li><a href="table.html"><i class="fa fa-chair"></i> Tình trạng bàn</a></li>
-=======
                 <li><a href="order.html"><i class="fa fa-receipt"></i> Gọi món</a></li>
                 <li><a href="table.html"><i class="fa fa-chair"></i> Quản lý bàn</a></li>
                 <li><a href="order-history.html"><i class="fa fa-history"></i> Lịch sử đơn hàng</a></li>
->>>>>>> test7
             </ul>
         </aside>
 
@@ -48,11 +28,6 @@
             <header class="header">
                 <div>Trang chủ / Tổng quan</div>
                 <div class="user-info">
-<<<<<<< HEAD
-                    <i class="fa fa-bell"></i><span class="badge">2</span>
-                    <img src="../includes/staff-avatar.png" alt="avatar">
-                    <span>Staff</span>
-=======
                     <div class="notifications">
                         <i class="fa fa-bell"></i>
                         <span class="badge" id="notificationCount">0</span>
@@ -85,34 +60,10 @@
                     <button id="refreshBtn" class="action-btn">
                         <i class="fas fa-sync-alt"></i>
                     </button>
->>>>>>> test7
                 </div>
             </header>
 
             <section class="dashboard">
-<<<<<<< HEAD
-                <h2>Tổng quan công việc</h2>
-                <div class="stats">
-                    <div class="stat-card">
-                        <i class="fa fa-receipt"></i>
-                        <div>
-                            <h3 id="todayOrders">0</h3>
-                            <p>Đơn hàng hôm nay</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fa fa-money-bill"></i>
-                        <div>
-                            <h3 id="revenueCash">0đ</h3>
-                            <p>Doanh thu tiền mặt</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fa fa-credit-card"></i>
-                        <div>
-                            <h3 id="revenueOnline">0đ</h3>
-                            <p>Doanh thu online</p>
-=======
                 <div class="quick-actions">
                     <button class="action-card" onclick="window.location.href='order.html'">
                         <i class="fas fa-plus-circle"></i>
@@ -170,41 +121,10 @@
                                     <span id="occupiedTables">0 đang phục vụ</span>
                                 </div>
                             </div>
->>>>>>> test7
                         </div>
                     </div>
                 </div>
 
-<<<<<<< HEAD
-                <div class="section">
-                    <h3>Tình trạng bàn</h3>
-                    <table id="tablesStatus">
-                        <thead>
-                            <tr>
-                                <th>Số bàn</th>
-                                <th>Trạng thái</th>
-                                <th>Hành động</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-
-                <div class="section">
-                    <h3>Kiểm tra thanh toán</h3>
-                    <table id="paymentsTable">
-                        <thead>
-                            <tr>
-                                <th>ID Thanh toán</th>
-                                <th>Khách hàng</th>
-                                <th>Số tiền</th>
-                                <th>Phương thức</th>
-                                <th>Trạng thái</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-=======
                 <div class="dashboard-grid">
                     <div class="grid-item tables-status">
                         <div class="section-header">
@@ -241,19 +161,12 @@
                             <!-- Notifications will be loaded here -->
                         </div>
                     </div>
->>>>>>> test7
                 </div>
             </section>
         </main>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<<<<<<< HEAD
-    <script src="dashboard.js"></script>
-</body>
-=======
     <script src="../assets/js/dashboard.js"></script>
 </body>
-
->>>>>>> test7
 </html>

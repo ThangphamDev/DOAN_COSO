@@ -1,7 +1,3 @@
-/**
- * Order Manager Module - T2K Coffee Admin
- * Manages the order management functionality for the admin interface
- */
 
 const API_BASE_URL = 'http://localhost:8081/api';
 const ORDERS_ENDPOINT = `${API_BASE_URL}/orders`;
