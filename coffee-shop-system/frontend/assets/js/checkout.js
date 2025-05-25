@@ -413,18 +413,6 @@ function setupPlaceOrder() {
     const placeOrderBtn = document.getElementById("placeOrderBtn");
     
     placeOrderBtn.addEventListener("click", async function() {
-        // Lấy thông tin bàn
-        const tableNumber = document.getElementById("tableNumber").value;
-        
-        // Kiểm tra đã chọn bàn chưa
-        if (!tableNumber) {
-            alert("Vui lòng chọn bàn hoặc chọn mang đi");
-            return;
-        }
-        
-        // Lưu bàn đã chọn vào localStorage để tiện sử dụng sau này
-        localStorage.setItem("selectedTable", tableNumber);
-        
         // Lấy giỏ hàng
         const cart = JSON.parse(localStorage.getItem("cart")) || [];
         
@@ -432,6 +420,14 @@ function setupPlaceOrder() {
         if (cart.length === 0) {
             alert("Giỏ hàng của bạn đang trống. Vui lòng thêm sản phẩm trước khi đặt hàng.");
             return;
+        }
+        
+        // Lấy thông tin bàn - không bắt buộc
+        const tableNumber = document.getElementById("tableNumber").value;
+        
+        // Lưu bàn đã chọn vào localStorage để tiện sử dụng sau này (nếu có)
+        if (tableNumber) {
+            localStorage.setItem("selectedTable", tableNumber);
         }
         
         // Lấy phương thức thanh toán

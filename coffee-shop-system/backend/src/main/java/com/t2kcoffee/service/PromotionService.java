@@ -1,6 +1,6 @@
 package com.t2kcoffee.service;
 
-import com.t2kcoffee.model.Promotion;
+import com.t2kcoffee.entity.Promotion;
 import com.t2kcoffee.repository.PromotionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

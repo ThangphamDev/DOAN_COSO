@@ -1,4 +1,4 @@
-package com.t2kcoffee.model;
+package com.t2kcoffee.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;

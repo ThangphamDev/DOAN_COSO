@@ -1,6 +1,6 @@
 package com.t2kcoffee.repository;
 
-import com.t2kcoffee.model.Account;
+import com.t2kcoffee.entity.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

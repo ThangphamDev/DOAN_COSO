@@ -1,9 +1,9 @@
 package com.t2kcoffee.controller;
 
-import com.t2kcoffee.model.CafeOrder;
-import com.t2kcoffee.model.OrderDetail;
-import com.t2kcoffee.model.Product;
-import com.t2kcoffee.model.Payment;
+import com.t2kcoffee.entity.CafeOrder;
+import com.t2kcoffee.entity.OrderDetail;
+import com.t2kcoffee.entity.Product;
+import com.t2kcoffee.entity.Payment;
 import com.t2kcoffee.service.CafeOrderService;
 import com.t2kcoffee.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +32,11 @@ public class CafeOrderController {
     public CafeOrderController(CafeOrderService cafeOrderService, ProductService productService) {
         this.cafeOrderService = cafeOrderService;
         this.productService = productService;
+    }
+
+    @GetMapping("/today")
+    public ResponseEntity<Map<String, Object>> getTodayOrders() {
+        return ResponseEntity.ok(cafeOrderService.getTodayOrders());
     }
 
     @GetMapping

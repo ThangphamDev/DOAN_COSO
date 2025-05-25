@@ -1,11 +1,11 @@
 package com.t2kcoffee.service;
 
-import com.t2kcoffee.model.CafeOrder;
-import com.t2kcoffee.model.CafeTable;
-import com.t2kcoffee.model.OrderDetail;
-import com.t2kcoffee.model.OrderDetailId;
-import com.t2kcoffee.model.Product;
-import com.t2kcoffee.model.Payment;
+import com.t2kcoffee.entity.CafeOrder;
+import com.t2kcoffee.entity.CafeTable;
+import com.t2kcoffee.entity.OrderDetail;
+import com.t2kcoffee.entity.OrderDetailId;
+import com.t2kcoffee.entity.Product;
+import com.t2kcoffee.entity.Payment;
 import com.t2kcoffee.repository.CafeOrderRepository;
 import com.t2kcoffee.repository.CafeTableRepository;
 import com.t2kcoffee.repository.OrderDetailRepository;
@@ -20,6 +20,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.ArrayList;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Map;
+import java.util.HashMap;
 
 @Service
 public class CafeOrderService {
@@ -263,5 +267,48 @@ public class CafeOrderService {
         
         
         return cafeOrderRepository.save(order);
+    }
+
+    // Add method to get today's orders
+    public Map<String, Object> getTodayOrders() {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            // Get today's date
+            LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
+            LocalDateTime endOfDay = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59);
+
+            // Get orders for today
+            List<CafeOrder> todayOrders = cafeOrderRepository.findByOrderTimeBetween(
+                Date.from(startOfDay.atZone(ZoneId.systemDefault()).toInstant()),
+                Date.from(endOfDay.atZone(ZoneId.systemDefault()).toInstant())
+            );
+
+            // Calculate statistics
+            BigDecimal cashRevenue = BigDecimal.ZERO;
+            BigDecimal transferRevenue = BigDecimal.ZERO;
+
+            for (CafeOrder order : todayOrders) {
+                if (order.getPayment() != null) {
+                    BigDecimal amount = order.getTotalAmount();
+                    if ("cash".equalsIgnoreCase(order.getPayment().getPaymentMethod())) {
+                        cashRevenue = cashRevenue.add(amount);
+                    } else if ("transfer".equalsIgnoreCase(order.getPayment().getPaymentMethod())) {
+                        transferRevenue = transferRevenue.add(amount);
+                    }
+                }
+            }
+
+            // Populate result
+            result.put("totalOrders", todayOrders.size());
+            result.put("cashRevenue", cashRevenue);
+            result.put("transferRevenue", transferRevenue);
+            result.put("orders", todayOrders);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("error", "Error fetching today's orders: " + e.getMessage());
+        }
+
+        return result;
     }
 } 

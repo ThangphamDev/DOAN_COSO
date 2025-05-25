@@ -1,203 +1,237 @@
-$(document).ready(function() {
-    let currentPage = 1;
-    let itemsPerPage = 10;
-    let totalItems = 0;
+/**
+ * Table Management Module - T2K Coffee Staff
+ * Module quản lý bàn cho nhân viên
+ */
 
-    // Load tất cả dữ liệu
-    function loadTables() {
-        $.getJSON('/api/tables?page=' + currentPage + '&limit=' + itemsPerPage, function(data) {
-            displayTables(data.tables);
-            updatePagination(data.total);
-            updateStats(data.stats);
-        });
-    }
+// Constants
+const API_BASE_URL = 'http://localhost:8081/api';
+const ENDPOINTS = {
+    TABLES: `${API_BASE_URL}/tables`,
+    TABLE_STATUS: `${API_BASE_URL}/tables/status`
+};
 
-    // Hiển thị danh sách bàn
-    function displayTables(tables) {
-        const tbody = $('#tablesTable tbody');
-        tbody.empty();
-        tables.forEach(table => {
-            tbody.append(`
-                <tr>
-                    <td>${table.number}</td>
-                    <td>${table.name}</td>
-                    <td>${table.area}</td>
-                    <td>${table.capacity}</td>
-                    <td>${table.status}</td>
-                    <td>${table.notes || '-'}</td>
-                    <td>
-                        <button class="action-btn" onclick="editTable('${table.id}')">Sửa</button>
-                        <button class="action-btn btn-danger" onclick="confirmDelete('${table.id}', '${table.name}')">Xóa</button>
-                        <button class="action-btn" onclick="changeStatus('${table.id}')">Thay đổi trạng thái</button>
-                    </td>
-                </tr>
-            `);
-        });
-    }
+// State
+let tables = [];
+let currentPage = 1;
+let itemsPerPage = 10;
+let totalItems = 0;
 
-    // Cập nhật thống kê
-    function updateStats(stats) {
-        $('#total-tables').text(stats.total || 0);
-        $('#available-tables').text(stats.available || 0);
-        $('#occupied-tables').text(stats.occupied || 0);
-    }
+// DOM Elements
+let tableGrid;
+let searchInput;
+let statusFilter;
+let areaFilter;
+let tableStats;
+let paginationControls;
 
-    // Cập nhật phân trang
-    function updatePagination(total) {
-        totalItems = total;
-        const totalPages = Math.ceil(total / itemsPerPage);
-        $('#currentPage').text(`Trang ${currentPage} / ${totalPages}`);
-        $('#prevPage').prop('disabled', currentPage === 1);
-        $('#nextPage').prop('disabled', currentPage === totalPages);
-    }
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initDOMReferences();
+    setupEventListeners();
+    loadInitialData();
+});
 
-    // Tìm kiếm bàn
-    $('.search-box .search-btn').click(function() {
-        const query = $('#table-search').val().toLowerCase();
-        $.getJSON('/api/tables/search?q=' + query + '&limit=' + itemsPerPage, function(data) {
-            displayTables(data.tables);
-            updatePagination(data.total);
-        });
+// Initialize DOM element references
+function initDOMReferences() {
+    tableGrid = document.querySelector('.tables-grid');
+    searchInput = document.getElementById('table-search');
+    statusFilter = document.getElementById('statusFilter');
+    areaFilter = document.getElementById('areaFilter');
+    tableStats = {
+        total: document.getElementById('total-tables'),
+        available: document.getElementById('available-tables'),
+        occupied: document.getElementById('occupied-tables')
+    };
+    paginationControls = {
+        prev: document.getElementById('prevPage'),
+        next: document.getElementById('nextPage'),
+        current: document.getElementById('currentPage'),
+        itemsPerPage: document.getElementById('itemsPerPage')
+    };
+}
+
+// Setup event listeners
+function setupEventListeners() {
+    // Search
+    document.querySelector('.search-btn').addEventListener('click', applyFilters);
+    searchInput.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') applyFilters();
     });
 
-    // Lọc bàn
-    window.filterTables = function() {
-        const status = $('#statusFilter').val();
-        const area = $('#areaFilter').val();
-        $.getJSON('/api/tables/filter?status=' + status + '&area=' + area + '&limit=' + itemsPerPage, function(data) {
-            displayTables(data.tables);
-            updatePagination(data.total);
-        });
-    };
+    // Filters
+    statusFilter.addEventListener('change', applyFilters);
+    areaFilter.addEventListener('change', applyFilters);
 
-    // Thay đổi số mục trên trang
-    window.changeItemsPerPage = function() {
-        itemsPerPage = $('#itemsPerPage').val();
-        currentPage = 1;
-        loadTables();
-    };
-
-    // Phân trang
-    $('#prevPage').click(function() {
+    // Pagination
+    paginationControls.prev.addEventListener('click', () => {
         if (currentPage > 1) {
             currentPage--;
             loadTables();
         }
     });
-    $('#nextPage').click(function() {
+    paginationControls.next.addEventListener('click', () => {
         const totalPages = Math.ceil(totalItems / itemsPerPage);
         if (currentPage < totalPages) {
             currentPage++;
             loadTables();
         }
     });
-
-    // Thêm bàn
-    $('#add-table-btn').click(function() {
-        $('#tableId').val('');
-        $('#modalTableTitle').text('Thêm bàn mới');
-        $('#tableForm')[0].reset();
-        $('#tableModal').css('display', 'block');
+    paginationControls.itemsPerPage.addEventListener('change', () => {
+        itemsPerPage = parseInt(paginationControls.itemsPerPage.value);
+        currentPage = 1;
+        loadTables();
     });
 
-    // Sửa bàn
-    window.editTable = function(id) {
-        $.getJSON('/api/tables/' + id, function(table) {
-            $('#tableId').val(table.id);
-            $('#tableName').val(table.name);
-            $('#tableNumber').val(table.number);
-            $('#tableArea').val(table.area);
-            $('#tableCapacity').val(table.capacity);
-            $('#tableStatus').val(table.status);
-            $('#tableNotes').val(table.notes);
-            $('#modalTableTitle').text('Sửa bàn #' + table.number);
-            $('#tableModal').css('display', 'block');
-        });
-    };
-
-    // Lưu bàn
-    $('#tableForm').submit(function(e) {
-        e.preventDefault();
-        const tableData = {
-            id: $('#tableId').val(),
-            name: $('#tableName').val(),
-            number: $('#tableNumber').val(),
-            area: $('#tableArea').val(),
-            capacity: $('#tableCapacity').val(),
-            status: $('#tableStatus').val(),
-            notes: $('#tableNotes').val()
-        };
-        const url = tableData.id ? '/api/tables/' + tableData.id : '/api/tables';
-        const method = tableData.id ? 'PUT' : 'POST';
-        $.ajax({
-            url: url,
-            method: method,
-            contentType: 'application/json',
-            data: JSON.stringify(tableData),
-            success: function() {
-                $('#tableModal').css('display', 'none');
-                loadTables();
-            },
-            error: function() {
-                alert('Lỗi khi lưu bàn!');
-            }
+    // Modal events
+    document.querySelectorAll('.close, [data-close="modal"]').forEach(element => {
+        element.addEventListener('click', function() {
+            this.closest('.modal').style.display = 'none';
         });
     });
+}
 
-    // Xác nhận xóa
-    window.confirmDelete = function(id, name) {
-        $('#deleteTableName').text(name);
-        $('#deleteTableModal').css('display', 'block');
-        $('#confirmDeleteBtn').off('click').click(function() {
-            $.ajax({
-                url: '/api/tables/' + id,
-                method: 'DELETE',
-                success: function() {
-                    $('#deleteTableModal').css('display', 'none');
-                    loadTables();
-                },
-                error: function() {
-                    alert('Lỗi khi xóa bàn!');
-                }
-            });
+// Load initial data
+async function loadInitialData() {
+    try {
+        await loadTables();
+    } catch (error) {
+        console.error('Error loading initial data:', error);
+        showNotification('Không thể tải dữ liệu. Vui lòng thử lại sau.', 'error');
+    }
+}
+
+// Load tables from API
+async function loadTables() {
+    try {
+        const queryParams = new URLSearchParams({
+            page: currentPage,
+            limit: itemsPerPage,
+            status: statusFilter.value,
+            area: areaFilter.value,
+            search: searchInput.value
         });
-    };
 
-    // Thay đổi trạng thái
-    window.changeStatus = function(id) {
-        $('#statusTableId').val(id);
-        $('#statusForm')[0].reset();
-        $('#statusModal').css('display', 'block');
-    };
+        const response = await fetch(`${ENDPOINTS.TABLES}?${queryParams}`);
+        if (!response.ok) throw new Error('Failed to load tables');
+        
+        const data = await response.json();
+        tables = data.tables;
+        totalItems = data.total;
+        
+        renderTables();
+        updateTableStatistics();
+        updatePagination();
+    } catch (error) {
+        console.error('Error loading tables:', error);
+        showNotification('Không thể tải danh sách bàn.', 'error');
+    }
+}
 
-    // Lưu trạng thái
-    $('#statusForm').submit(function(e) {
-        e.preventDefault();
-        const statusData = {
-            status: $('#newStatus').val(),
-            notes: $('#statusNote').val()
-        };
-        $.ajax({
-            url: '/api/tables/' + $('#statusTableId').val() + '/status',
+// Render tables to grid
+function renderTables() {
+    tableGrid.innerHTML = '';
+    tables.forEach(table => {
+        tableGrid.appendChild(createTableElement(table));
+    });
+}
+
+// Create table element
+function createTableElement(table) {
+    const element = document.createElement('div');
+    element.className = `table-item ${table.status.toLowerCase()}`;
+    element.innerHTML = `
+        <div class="table-number">${table.number}</div>
+        <div class="table-location">${table.area}</div>
+        <div class="table-status ${table.status.toLowerCase()}">${table.status}</div>
+        <div class="table-capacity">
+            <i class="fas fa-user"></i>
+            <span>${table.capacity}</span>
+        </div>
+        <div class="table-actions">
+            <button class="action-btn" onclick="editTable('${table.id}')">
+                <i class="fas fa-edit"></i>
+            </button>
+            <button class="action-btn btn-danger" onclick="confirmDelete('${table.id}', '${table.number}')">
+                <i class="fas fa-trash"></i>
+            </button>
+            <button class="action-btn" onclick="toggleTableStatus('${table.id}')">
+                <i class="fas fa-exchange-alt"></i>
+            </button>
+        </div>
+    `;
+    return element;
+}
+
+// Update table statistics
+function updateTableStatistics() {
+    const stats = {
+        total: tables.length,
+        available: tables.filter(t => t.status.toLowerCase() === 'available').length,
+        occupied: tables.filter(t => t.status.toLowerCase() === 'occupied').length
+    };
+    
+    tableStats.total.textContent = stats.total;
+    tableStats.available.textContent = stats.available;
+    tableStats.occupied.textContent = stats.occupied;
+}
+
+// Update pagination
+function updatePagination() {
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    paginationControls.current.textContent = `Trang ${currentPage} / ${totalPages}`;
+    paginationControls.prev.disabled = currentPage === 1;
+    paginationControls.next.disabled = currentPage === totalPages;
+}
+
+// Toggle table status
+async function toggleTableStatus(tableId) {
+    try {
+        const table = tables.find(t => t.id === tableId);
+        if (!table) throw new Error('Table not found');
+
+        const newStatus = table.status.toLowerCase() === 'available' ? 'OCCUPIED' : 'AVAILABLE';
+        
+        const response = await fetch(`${ENDPOINTS.TABLE_STATUS}/${tableId}`, {
             method: 'PUT',
-            contentType: 'application/json',
-            data: JSON.stringify(statusData),
-            success: function() {
-                $('#statusModal').css('display', 'none');
-                loadTables();
+            headers: {
+                'Content-Type': 'application/json'
             },
-            error: function() {
-                alert('Lỗi khi thay đổi trạng thái!');
-            }
+            body: JSON.stringify({
+                status: newStatus
+            })
         });
-    });
 
-    // Đóng modal
-    $('.close, [data-close="modal"]').click(function() {
-        $(this).closest('.modal').css('display', 'none');
-    });
+        if (!response.ok) throw new Error('Failed to update table status');
+        
+        await loadTables();
+        showNotification('Cập nhật trạng thái bàn thành công.', 'success');
+    } catch (error) {
+        console.error('Error toggling table status:', error);
+        showNotification('Không thể cập nhật trạng thái bàn.', 'error');
+    }
+}
 
-    // Tải dữ liệu ban đầu và làm mới mỗi 30 giây
+// Apply filters
+function applyFilters() {
+    currentPage = 1;
     loadTables();
-    setInterval(loadTables, 30000);
-});
+}
+
+// Show notification
+function showNotification(message, type = 'info') {
+    // Implementation of notification system
+    console.log(`${type.toUpperCase()}: ${message}`);
+}
+
+// Export functions for global access
+window.editTable = function(id) {
+    // Implementation of edit table
+    console.log('Edit table:', id);
+};
+
+window.confirmDelete = function(id, number) {
+    // Implementation of delete confirmation
+    console.log('Confirm delete table:', id, number);
+};
+
+window.toggleTableStatus = toggleTableStatus;

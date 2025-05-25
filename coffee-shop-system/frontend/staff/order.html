@@ -3,16 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<<<<<<< HEAD
     <title>Quản lý Đơn hàng - T2K Coffee</title>
     <link rel="stylesheet" href="../assets/css/order.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+=======
+    <title>Gọi món - T2K Coffee</title>
+    <link rel="stylesheet" href="../assets/css/order.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
+>>>>>>> test7
 </head>
 <body>
     <div class="container">
         <aside class="sidebar">
             <div class="logo">
+<<<<<<< HEAD
                 <img src="../assets/images/logo.png" alt="T2K Coffee Logo">
                 <h2>T2K Coffee</h2>
+=======
+                <img src="../assets/images/logo.png" alt="T2K Logo" />
+                <h2>T2K Coffee</h2>
+            </div>
+            <ul class="menu">
+                <li><a href="dashboard.html"><i class="fa fa-home"></i> Tổng quan</a></li>
+                <li class="active"><i class="fa fa-receipt"></i> Gọi món</li>
+                <li><a href="table.html"><i class="fa fa-chair"></i> Quản lý bàn</a></li>
+                <li><a href="order-history.html"><i class="fa fa-money-bill"></i> Lịch sử đơn hàng</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div>Trang chủ / Gọi món</div>
+                <div class="user-info">
+                    <i class="fa fa-bell"></i><span class="badge">2</span>
+                    <img src="../assets/images/default-avatar.png" alt="avatar">
+                    <span>Staff</span>
+                </div>
+            </header>
+
+            <div class="order-container">
+                <!-- Menu Section -->
+                <section class="menu-section">
+                    <div class="menu-header">
+                        <div class="search-box">
+                            <input type="text" id="menu-search" placeholder="Tìm kiếm món...">
+                            <button class="search-btn"><i class="fa fa-search"></i></button>
+                        </div>
+                        <div class="category-filter">
+                            <button class="category-btn active" data-category="all">Tất cả</button>
+                            <button class="category-btn" data-category="coffee">Cà phê</button>
+                            <button class="category-btn" data-category="tea">Trà</button>
+                            <button class="category-btn" data-category="juice">Nước ép</button>
+                            <button class="category-btn" data-category="snack">Đồ ăn vặt</button>
+                        </div>
+                    </div>
+
+                    <div class="menu-grid" id="menuGrid">
+                        <!-- Menu items will be rendered here -->
+                    </div>
+                </section>
+
+                <!-- Order Summary Section -->
+                <section class="order-summary">
+                    <div class="summary-header">
+                        <h2>Đơn hàng</h2>
+                        <div class="table-select">
+                            <select id="tableSelect">
+                                <option value="">Chọn bàn (tùy chọn)</option>
+                                <!-- Tables will be loaded here -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="order-items" id="orderItems">
+                        <!-- Selected items will appear here -->
+                        <div class="empty-order">
+                            <i class="fa fa-receipt"></i>
+                            <p>Chưa có món nào được chọn</p>
+                        </div>
+                    </div>
+
+                    <div class="order-total">
+                        <div class="subtotal">
+                            <span>Tạm tính:</span>
+                            <span id="subtotal">0đ</span>
+                        </div>
+                        <div class="total">
+                            <span>Tổng cộng:</span>
+                            <span id="total">0đ</span>
+                        </div>
+                    </div>
+
+                    <div class="order-actions">
+                        <button class="action-btn clear-btn" id="clearOrder">
+                            <i class="fa fa-trash"></i> Xóa đơn
+                        </button>
+                        <button class="action-btn submit-btn" id="submitOrder">
+                            <i class="fa fa-money-bill-wave"></i> Thanh toán
+                        </button>
+                    </div>
+                </section>
+>>>>>>> test7
             </div>
             <ul class="menu">
                 <li><a href="dashboard.html"><i class="fa fa-home"></i> Tổng quan</a></li>
@@ -64,6 +157,7 @@
         </main>
     </div>
 
+<<<<<<< HEAD
     <!-- Modal để xem chi tiết hoặc xuất hóa đơn -->
     <div id="orderModal" class="modal">
         <div class="modal-content">
@@ -76,5 +170,43 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="order.js"></script>
+=======
+    <!-- Template for menu item -->
+    <template id="menuItemTemplate">
+        <div class="menu-item">
+            <div class="item-image">
+                <img src="" alt="">
+            </div>
+            <div class="item-info">
+                <h3 class="item-name"></h3>
+                <p class="item-price"></p>
+            </div>
+            <button class="add-item-btn">
+                <i class="fa fa-plus"></i>
+            </button>
+        </div>
+    </template>
+
+    <!-- Template for order item -->
+    <template id="orderItemTemplate">
+        <div class="order-item">
+            <div class="item-info">
+                <h4 class="item-name"></h4>
+                <p class="item-price"></p>
+            </div>
+            <div class="item-quantity">
+                <button class="quantity-btn minus"><i class="fa fa-minus"></i></button>
+                <span class="quantity">1</span>
+                <button class="quantity-btn plus"><i class="fa fa-plus"></i></button>
+            </div>
+            <button class="remove-item-btn">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+    </template>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="../assets/js/order.js"></script>
+>>>>>>> test7
 </body>
 </html>

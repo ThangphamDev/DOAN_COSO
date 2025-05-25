@@ -1,8 +1,8 @@
 package com.t2kcoffee.controller;
 
-import com.t2kcoffee.model.CafeOrder;
-import com.t2kcoffee.model.OrderDetail;
-import com.t2kcoffee.model.Product;
+import com.t2kcoffee.entity.CafeOrder;
+import com.t2kcoffee.entity.OrderDetail;
+import com.t2kcoffee.entity.Product;
 import com.t2kcoffee.service.AccountService;
 import com.t2kcoffee.service.CafeOrderService;
 import com.t2kcoffee.service.ProductService;

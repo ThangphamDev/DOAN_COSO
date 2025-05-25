@@ -1,6 +1,6 @@
 package com.t2kcoffee.controller;
 
-import com.t2kcoffee.model.Category;
+import com.t2kcoffee.entity.Category;
 import com.t2kcoffee.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

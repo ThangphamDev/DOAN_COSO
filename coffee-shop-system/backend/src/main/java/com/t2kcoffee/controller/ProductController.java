@@ -1,9 +1,9 @@
 package com.t2kcoffee.controller;
 
-import com.t2kcoffee.model.Product;
+import com.t2kcoffee.entity.Product;
 import com.t2kcoffee.service.ProductService;
 import com.t2kcoffee.dto.ProductDTO;
-import com.t2kcoffee.model.Category;
+import com.t2kcoffee.entity.Category;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

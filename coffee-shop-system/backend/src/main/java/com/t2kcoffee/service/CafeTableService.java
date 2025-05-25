@@ -1,6 +1,6 @@
 package com.t2kcoffee.service;
 
-import com.t2kcoffee.model.CafeTable;
+import com.t2kcoffee.entity.CafeTable;
 import com.t2kcoffee.repository.CafeTableRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

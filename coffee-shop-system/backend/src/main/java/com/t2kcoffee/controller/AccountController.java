@@ -1,6 +1,6 @@
 package com.t2kcoffee.controller;
 
-import com.t2kcoffee.model.Account;
+import com.t2kcoffee.entity.Account;
 import com.t2kcoffee.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

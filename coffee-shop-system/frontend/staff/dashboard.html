@@ -1,24 +1,46 @@
 <!DOCTYPE html>
 <html lang="vi">
+<<<<<<< HEAD
+=======
+
+>>>>>>> test7
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Nhân viên - T2K Coffee</title>
+<<<<<<< HEAD
     <link rel="stylesheet" href="../assets/css/staff.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+=======
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
+</head>
+
+>>>>>>> test7
 <body>
     <div class="container">
         <aside class="sidebar">
             <div class="logo">
+<<<<<<< HEAD
                 <img src="../assets/images/logo.png" alt="T2K Coffee Logo">
+=======
+                <img src="../assets/images/logo.png" alt="T2K Logo">
+>>>>>>> test7
                 <h2>T2K Coffee</h2>
             </div>
             <ul class="menu">
                 <li class="active"><i class="fa fa-home"></i> Tổng quan</li>
+<<<<<<< HEAD
                 <li><a href="order.html"><i class="fa fa-receipt"></i> Đơn hàng</a></li>
                 <li><a href="payment.html"><i class="fa fa-money-bill"></i> Kiểm tra thanh toán</a></li>
                 <li><a href="table.html"><i class="fa fa-chair"></i> Tình trạng bàn</a></li>
+=======
+                <li><a href="order.html"><i class="fa fa-receipt"></i> Gọi món</a></li>
+                <li><a href="table.html"><i class="fa fa-chair"></i> Quản lý bàn</a></li>
+                <li><a href="order-history.html"><i class="fa fa-history"></i> Lịch sử đơn hàng</a></li>
+>>>>>>> test7
             </ul>
         </aside>
 
@@ -26,13 +48,49 @@
             <header class="header">
                 <div>Trang chủ / Tổng quan</div>
                 <div class="user-info">
+<<<<<<< HEAD
                     <i class="fa fa-bell"></i><span class="badge">2</span>
                     <img src="../includes/staff-avatar.png" alt="avatar">
                     <span>Staff</span>
+=======
+                    <div class="notifications">
+                        <i class="fa fa-bell"></i>
+                        <span class="badge" id="notificationCount">0</span>
+                        <div class="notification-dropdown" id="notificationDropdown">
+                            <!-- Notifications will be loaded here -->
+                        </div>
+                    </div>
+                    <div class="user-profile">
+                        <div class="profile-info">
+                            <img src="../assets/images/default-avatar.png" alt="avatar">
+                            <span>Staff</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="profile-dropdown">
+                            <div class="dropdown-item">
+                                <i class="fas fa-user"></i>
+                                <span>Thông tin cá nhân</span>
+                            </div>
+                            <div class="dropdown-item">
+                                <i class="fas fa-key"></i>
+                                <span>Đổi mật khẩu</span>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-item" onclick="logout()">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Đăng xuất</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="refreshBtn" class="action-btn">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+>>>>>>> test7
                 </div>
             </header>
 
             <section class="dashboard">
+<<<<<<< HEAD
                 <h2>Tổng quan công việc</h2>
                 <div class="stats">
                     <div class="stat-card">
@@ -54,10 +112,70 @@
                         <div>
                             <h3 id="revenueOnline">0đ</h3>
                             <p>Doanh thu online</p>
+=======
+                <div class="quick-actions">
+                    <button class="action-card" onclick="window.location.href='order.html'">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Tạo đơn mới</span>
+                    </button>
+                    <button class="action-card" onclick="window.location.href='table.html'">
+                        <i class="fas fa-chair"></i>
+                        <span>Quản lý bàn</span>
+                    </button>
+                    <button class="action-card" onclick="window.location.href='order-history.html'">
+                        <i class="fas fa-history"></i>
+                        <span>Xem lịch sử</span>
+                    </button>
+                </div>
+
+                <div class="stats-container">
+                    <div class="stats-row">
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <i class="fas fa-receipt"></i>
+                                <h3>Đơn hàng hôm nay</h3>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-number" id="todayOrders">0</div>
+                                <div class="stat-details">
+                                    <span id="pendingOrders">0 chờ xử lý</span>
+                                    <span id="completedOrders">0 hoàn thành</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <h3>Doanh thu hôm nay</h3>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-number" id="todayRevenue">0đ</div>
+                                <div class="stat-details">
+                                    <span id="cashRevenue">Tiền mặt: 0đ</span>
+                                    <span id="transferRevenue">Chuyển khoản: 0đ</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <i class="fas fa-chair"></i>
+                                <h3>Tình trạng bàn</h3>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-number" id="totalTables">0</div>
+                                <div class="stat-details">
+                                    <span id="availableTables">0 bàn trống</span>
+                                    <span id="occupiedTables">0 đang phục vụ</span>
+                                </div>
+                            </div>
+>>>>>>> test7
                         </div>
                     </div>
                 </div>
 
+<<<<<<< HEAD
                 <div class="section">
                     <h3>Tình trạng bàn</h3>
                     <table id="tablesStatus">
@@ -86,12 +204,56 @@
                         </thead>
                         <tbody></tbody>
                     </table>
+=======
+                <div class="dashboard-grid">
+                    <div class="grid-item tables-status">
+                        <div class="section-header">
+                            <h3>Bàn đang phục vụ</h3>
+                            <button class="view-all-btn" onclick="window.location.href='table.html'">
+                                Xem tất cả <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                        <div class="active-tables" id="activeTablesList">
+                            <!-- Active tables will be loaded here -->
+                        </div>
+                    </div>
+
+                    <div class="grid-item recent-orders">
+                        <div class="section-header">
+                            <h3>Đơn hàng gần đây</h3>
+                            <button class="view-all-btn" onclick="window.location.href='order-history.html'">
+                                Xem tất cả <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                        <div class="orders-list" id="recentOrdersList">
+                            <!-- Recent orders will be loaded here -->
+                        </div>
+                    </div>
+
+                    <div class="grid-item notifications-panel">
+                        <div class="section-header">
+                            <h3>Thông báo</h3>
+                            <button class="clear-all-btn" onclick="clearAllNotifications()">
+                                Xóa tất cả
+                            </button>
+                        </div>
+                        <div class="notifications-list" id="notificationsList">
+                            <!-- Notifications will be loaded here -->
+                        </div>
+                    </div>
+>>>>>>> test7
                 </div>
             </section>
         </main>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<<<<<<< HEAD
     <script src="dashboard.js"></script>
 </body>
+=======
+    <script src="../assets/js/dashboard.js"></script>
+</body>
+
+>>>>>>> test7
 </html>
