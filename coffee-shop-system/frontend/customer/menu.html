@@ -1024,9 +1024,11 @@
                         </div>
                         
                         <div class="table-selection">
-                            <label for="tableSelect">Chọn bàn:</label>
+                            <label for="tableSelect">Chọn bàn (không bắt buộc):</label>
                             <select id="tableSelect">
                                 <option value="">Chọn bàn</option>
+                                <option value="dine-in">Tại chỗ</option>
+                                <option value="takeaway">Mang đi</option>
                             </select>
                         </div>
                         
@@ -1387,7 +1389,7 @@
                                 availableTables.forEach(table => {
                                     const option = document.createElement('option');
                                     option.value = table.idTable || table.ID_Table;
-                                    option.textContent = `Bàn ${table.idTable || table.ID_Table} (${table.location || ''} - ${table.capacity || table.Capacity || '2'} người)`;
+                                    option.textContent = `Bàn ${table.tableNumber || table.TableNumber || table.idTable} (${table.location || ''} - ${table.capacity || table.Capacity || '2'} người)`;
                                     tableSelect.appendChild(option);
                                 });
                                 
@@ -1450,7 +1452,7 @@
                     availableTables.forEach(table => {
                         const option = document.createElement('option');
                         option.value = table.idTable || table.ID_Table;
-                        option.textContent = `Bàn ${table.idTable || table.ID_Table} (${table.location || ''} - ${table.capacity || table.Capacity || '2'} người)`;
+                        option.textContent = `Bàn ${table.tableNumber || table.TableNumber || table.idTable} (${table.location || ''} - ${table.capacity || table.Capacity || '2'} người)`;
                         tableSelect.appendChild(option);
                     });
                     
@@ -1649,18 +1651,16 @@
             const proceedBtn = document.getElementById('proceedBtn');
             if (proceedBtn) {
                 proceedBtn.addEventListener('click', function() {
-                    const tableId = document.getElementById('tableSelect').value;
-                    if (!tableId) {
-                        alert('Vui lòng chọn bàn trước khi thanh toán!');
-                        return;
-                    }
                     const cartItems = JSON.parse(localStorage.getItem('cart') || '[]');
                     if (cartItems.length === 0) {
                         alert('Giỏ hàng của bạn đang trống!');
                         return;
                     }
-                    // Lưu số bàn đã chọn vào localStorage
-                    localStorage.setItem('selectedTable', tableId);
+                    
+                    // Lưu tùy chọn đã chọn vào localStorage
+                    const tableId = document.getElementById('tableSelect').value;
+                    localStorage.setItem('selectedTable', tableId || 'dine-in'); // Nếu không chọn, mặc định là "Tại chỗ"
+                    
                     // Chuyển sang trang checkout
                     window.location.href = "checkout.html";
                 });
