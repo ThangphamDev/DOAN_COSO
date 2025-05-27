@@ -196,6 +196,7 @@ body {
 /* Variants Section */
 .variants-section {
     margin-bottom: 30px;
+    
 }
 
 .variants-section h3 {
@@ -206,8 +207,17 @@ body {
 
 .size-options,
 .ice-options,
-.sugar-options {
+.sugar-options,
+.toppings-section {
     margin-bottom: 20px;
+    transition: opacity 0.3s ease, height 0.3s ease;
+}
+
+.size-options[style*="display: none"],
+.ice-options[style*="display: none"],
+.sugar-options[style*="display: none"],
+.toppings-section[style*="display: none"] {
+    margin-bottom: 0;
 }
 
 .option-label {

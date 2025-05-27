@@ -427,9 +427,25 @@ document.head.appendChild(style);
 
 async function showOrderDetails(orderId) {
     try {
+        // Load order details
         const response = await fetch(`${API_URL}/orders/${orderId}`);
         if (!response.ok) throw new Error('Failed to load order details');
         const order = await response.json();
+        
+        // Load payment information
+        let paymentInfo = null;
+        try {
+            const paymentResponse = await fetch(`${API_URL}/payments/order/${orderId}`);
+            if (paymentResponse.ok) {
+                const payments = await paymentResponse.json();
+                if (payments && payments.length > 0) {
+                    paymentInfo = payments[0]; // Lấy payment đầu tiên
+                }
+            }
+        } catch (error) {
+            console.warn('Could not load payment info:', error);
+        }
+        
         let modal = document.getElementById('orderDetailsModal');
         if (!modal) {
             modal = document.createElement('div');
@@ -437,6 +453,20 @@ async function showOrderDetails(orderId) {
             modal.className = 'modal';
             document.body.appendChild(modal);
         }
+        
+        // Determine payment method display
+        let paymentMethodDisplay = 'Chưa thanh toán';
+        if (paymentInfo) {
+            paymentMethodDisplay = getPaymentMethodText(paymentInfo.paymentMethod);
+            if (paymentInfo.paymentStatus) {
+                const statusText = paymentInfo.paymentStatus === 'completed' ? 'Đã thanh toán' : 'Chưa thanh toán';
+                paymentMethodDisplay += ` (${statusText})`;
+            }
+        } else if (order.payment?.paymentMethod) {
+            // Fallback to order payment info if available
+            paymentMethodDisplay = getPaymentMethodText(order.payment.paymentMethod);
+        }
+        
         modal.innerHTML = `
             <div class="modal-content">
                 <div class="modal-header">
@@ -459,7 +489,7 @@ async function showOrderDetails(orderId) {
                     
                     <div class="order-info-row">
                         <span class="label">Thanh toán:</span>
-                        <span class="payment-method ${order.payment?.paymentMethod?.toLowerCase()}">${getPaymentMethodText(order.payment?.paymentMethod)}</span>
+                        <span class="payment-method ${paymentInfo?.paymentMethod?.toLowerCase() || order.payment?.paymentMethod?.toLowerCase()}">${paymentMethodDisplay}</span>
                     </div>
                     <div class="order-info-row">
                         <span class="label">Ghi chú:</span>
@@ -536,9 +566,7 @@ function getStatusText(status) {
 
 function logout() {
     if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
-        localStorage.removeItem('T2K_CURRENT_ORDER');
-        localStorage.removeItem('T2K_ORDER_HISTORY');
-        localStorage.removeItem('appliedPromotion');
+        localStorage.clear();
         window.location.href = '../index.html';
     }
 }

@@ -9,12 +9,12 @@ let selectedOptions = {
     toppings: []
 };
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
     if (productId) {
-        loadProductDetails(productId);
-        loadVariants();
+        await loadProductDetails(productId);
+        await loadVariants();
     }
 });
 
@@ -36,11 +36,31 @@ async function loadVariants() {
         const response = await fetch(`${API_URL}/variants`);
         if (!response.ok) throw new Error('Failed to load variants');
         
-        variants = await response.json();
+        const allVariants = await response.json();
+        
+        // Lọc variants cho sản phẩm hiện tại
+        const productId = new URLSearchParams(window.location.search).get('id');
+        variants = [];
+        
+        if (currentProduct) {
+            // Tìm variants có category chứa sản phẩm hiện tại
+            variants = allVariants.filter(variant => {
+                if (!variant.category || !variant.category.products) return false;
+                
+                return variant.category.products.some(product => 
+                    product.idProduct.toString() === productId
+                );
+            });
+            
+        }
+       
         displayVariants();
     } catch (error) {
         console.error('Error loading variants:', error);
         showNotification('Không thể tải thông tin biến thể', 'error');
+        // Nếu lỗi, vẫn hiển thị variants rỗng để ẩn các section
+        variants = [];
+        displayVariants();
     }
 }
 
@@ -65,8 +85,11 @@ function displayProductDetails(product) {
 function displayVariants() {
     // Size
     const sizeVariants = variants.filter(v => v.variantType === 'size');
+    const sizeSection = document.querySelector('.size-options');
     const sizeOptions = document.getElementById('sizeOptions');
-    if (sizeOptions) {
+    
+    if (sizeVariants.length > 0 && sizeOptions) {
+        if (sizeSection) sizeSection.style.display = 'block';
         sizeOptions.innerHTML = sizeVariants
             .sort((a, b) => a.displayOrder - b.displayOrder)
             .map(variant => `
@@ -80,11 +103,19 @@ function displayVariants() {
         // Set default
         const defaultSize = sizeVariants.find(v => v.isDefault);
         if (defaultSize) selectedOptions.size = defaultSize.variantValue;
+    } else {
+        if (sizeSection) sizeSection.style.display = 'none';
+        // Reset size selection nếu không có variants
+        selectedOptions.size = null;
     }
+
     // Ice
     const iceVariants = variants.filter(v => v.variantType === 'ice');
+    const iceSection = document.querySelector('.ice-options');
     const iceOptions = document.getElementById('iceOptions');
-    if (iceOptions) {
+    
+    if (iceVariants.length > 0 && iceOptions) {
+        if (iceSection) iceSection.style.display = 'block';
         iceOptions.innerHTML = iceVariants
             .sort((a, b) => a.displayOrder - b.displayOrder)
             .map(variant => `
@@ -95,11 +126,18 @@ function displayVariants() {
             `).join('');
         const defaultIce = iceVariants.find(v => v.isDefault);
         if (defaultIce) selectedOptions.ice = defaultIce.variantValue;
+    } else {
+        if (iceSection) iceSection.style.display = 'none';
+        selectedOptions.ice = null;
     }
+
     // Sugar
     const sugarVariants = variants.filter(v => v.variantType === 'sugar');
+    const sugarSection = document.querySelector('.sugar-options');
     const sugarOptions = document.getElementById('sugarOptions');
-    if (sugarOptions) {
+    
+    if (sugarVariants.length > 0 && sugarOptions) {
+        if (sugarSection) sugarSection.style.display = 'block';
         sugarOptions.innerHTML = sugarVariants
             .sort((a, b) => a.displayOrder - b.displayOrder)
             .map(variant => `
@@ -110,11 +148,18 @@ function displayVariants() {
             `).join('');
         const defaultSugar = sugarVariants.find(v => v.isDefault);
         if (defaultSugar) selectedOptions.sugar = defaultSugar.variantValue;
+    } else {
+        if (sugarSection) sugarSection.style.display = 'none';
+        selectedOptions.sugar = null;
     }
+
     // Topping
     const toppingVariants = variants.filter(v => v.variantType === 'topping');
+    const toppingSection = document.querySelector('.toppings-section');
     const toppingOptions = document.getElementById('toppingOptions');
-    if (toppingOptions) {
+    
+    if (toppingVariants.length > 0 && toppingOptions) {
+        if (toppingSection) toppingSection.style.display = 'block';
         toppingOptions.innerHTML = toppingVariants.map((variant, index) => `
             <span class="topping-checkbox">
                 <input type="checkbox" 
@@ -126,7 +171,11 @@ function displayVariants() {
                 </label>
             </span>
         `).join('');
+    } else {
+        if (toppingSection) toppingSection.style.display = 'none';
+        selectedOptions.toppings = [];
     }
+
     setupEventListeners();
 }
 
@@ -173,13 +222,15 @@ function updateTotalPrice() {
     if (!currentProduct) return;
     let basePrice = currentProduct.price;
     const quantity = parseInt(document.getElementById('quantity').value);
-    // Size price
+    
+    // Size price (chỉ tính nếu có size được chọn)
     if (selectedOptions.size) {
         const selectedSize = variants.find(v => v.variantType === 'size' && v.variantValue === selectedOptions.size);
         if (selectedSize) {
             basePrice += selectedSize.additionalPrice;
         }
     }
+    
     // Topping price
     let toppingTotal = 0;
     if (selectedOptions.toppings && selectedOptions.toppings.length > 0) {
@@ -201,7 +252,14 @@ function toppingsEqual(a, b) {
 }
 
 function addToOrder() {
-    if (!currentProduct || !selectedOptions.size) {
+    if (!currentProduct) {
+        showNotification('Không tìm thấy thông tin sản phẩm', 'error');
+        return;
+    }
+
+    // Kiểm tra nếu có size variants thì size phải được chọn
+    const sizeVariants = variants.filter(v => v.variantType === 'size');
+    if (sizeVariants.length > 0 && !selectedOptions.size) {
         showNotification('Vui lòng chọn kích cỡ sản phẩm', 'error');
         return;
     }
@@ -209,10 +267,12 @@ function addToOrder() {
     // Tính toán giá dựa trên các lựa chọn
     let totalPrice = currentProduct.price;
     
-    // Thêm giá của size
-    const selectedSizeBtn = document.querySelector('.size-btn[data-size="' + selectedOptions.size + '"]');
-    if (selectedSizeBtn) {
-        totalPrice += parseFloat(selectedSizeBtn.dataset.price || 0);
+    // Thêm giá của size (nếu có)
+    if (selectedOptions.size) {
+        const selectedSizeBtn = document.querySelector('.size-btn[data-size="' + selectedOptions.size + '"]');
+        if (selectedSizeBtn) {
+            totalPrice += parseFloat(selectedSizeBtn.dataset.price || 0);
+        }
     }
 
     // Thêm giá của topping
