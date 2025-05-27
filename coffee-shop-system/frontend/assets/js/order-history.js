@@ -306,6 +306,20 @@ async function viewOrderDetails(orderId) {
         const order = await response.json();
         console.log('Order details:', order); // For debugging
 
+        // Load payment information
+        let paymentInfo = null;
+        try {
+            const paymentResponse = await fetch(`${API_URL}/payments/order/${orderId}`);
+            if (paymentResponse.ok) {
+                const payments = await paymentResponse.json();
+                if (payments && payments.length > 0) {
+                    paymentInfo = payments[0]; // Lấy payment đầu tiên
+                }
+            }
+        } catch (error) {
+            console.warn('Could not load payment info:', error);
+        }
+
         const modal = document.getElementById('paymentModal');
         const modalTitle = document.getElementById('modalTitle');
         const modalBody = document.getElementById('modalBody');
@@ -331,6 +345,19 @@ async function viewOrderDetails(orderId) {
             itemsHtml = '<div class="no-data">Không có thông tin sản phẩm</div>';
         }
 
+        // Determine payment method display
+        let paymentMethodDisplay = 'Chưa thanh toán';
+        if (paymentInfo) {
+            paymentMethodDisplay = getPaymentMethodText(paymentInfo.paymentMethod);
+            if (paymentInfo.paymentStatus) {
+                const statusText = paymentInfo.paymentStatus === 'completed' ? 'Đã thanh toán' : 'Chưa thanh toán';
+                paymentMethodDisplay += ` (${statusText})`;
+            }
+        } else if (order.payment?.paymentMethod) {
+            // Fallback to order payment info if available
+            paymentMethodDisplay = getPaymentMethodText(order.payment.paymentMethod);
+        }
+
         modalBody.innerHTML = `
             <div class="order-details">
                 <div class="detail-row">
@@ -347,8 +374,8 @@ async function viewOrderDetails(orderId) {
                 </div>
                 <div class="detail-row">
                     <span>Phương thức:</span>
-                    <span class="payment-method ${order.payment?.paymentMethod?.toLowerCase() || 'cash'}">
-                        ${getPaymentMethodText(order.payment?.paymentMethod || 'cash')}
+                    <span class="payment-method ${paymentInfo?.paymentMethod?.toLowerCase() || order.payment?.paymentMethod?.toLowerCase() || 'cash'}">
+                        ${paymentMethodDisplay}
                     </span>
                 </div>
                 <div class="detail-row">

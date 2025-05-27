@@ -991,11 +991,11 @@ function viewOrderDetails(orderId) {
             const quantity = detail.quantity || 0;
             const subtotal = unitPrice * quantity;
             
-            content += `
+            content += `                
                 <tr>
                     <td class="product-cell">
                         <div class="product-image">
-                            <img src="../assets/images/products/${detail.product.image || 'default.jpg'}" alt="${detail.product.productName}">
+                            <img src="${API_BASE_URL}/products/images/${detail.product.image || 'default.jpg'}" alt="${detail.product.productName}">
                         </div>
                         <div>
                             <div class="product-name">${detail.product.productName}</div>
