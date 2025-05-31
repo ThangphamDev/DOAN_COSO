@@ -556,21 +556,23 @@ document.addEventListener('DOMContentLoaded', function() {
         cart = updatedCart;
         updateCartDisplay();
     }
-    
-    const proceedBtn = document.getElementById('proceedBtn');
+      const proceedBtn = document.getElementById('proceedBtn');
     if (proceedBtn) {
         proceedBtn.addEventListener('click', function() {
-            const tableId = document.getElementById('tableSelect').value;
-            if (!tableId) {
-                alert('Vui lòng chọn bàn trước khi thanh toán!');
-                return;
-            }
+            // Check if cart has items
             const cartItems = JSON.parse(localStorage.getItem('cart') || '[]');
             if (cartItems.length === 0) {
                 alert('Giỏ hàng của bạn đang trống!');
                 return;
             }
-            localStorage.setItem('selectedTable', tableId);
+            
+            // Get table ID (optional - can be empty for takeaway)
+            const tableId = document.getElementById('tableSelect').value;
+            
+            // Save selected table (can be empty)
+            localStorage.setItem('selectedTable', tableId || '');
+            
+            // Proceed to checkout
             window.location.href = "checkout.html";
         });
     } else {

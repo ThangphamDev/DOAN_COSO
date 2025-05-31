@@ -23,10 +23,8 @@ function loadTables() {
     const tableSelect = document.getElementById("tableNumber");
     
     // Nếu đã có bàn được chọn trong localStorage, sử dụng nó
-    const savedTable = localStorage.getItem("selectedTable");
-    
-    // Xóa các options hiện tại
-    tableSelect.innerHTML = '<option value="">Chọn bàn</option>';
+    const savedTable = localStorage.getItem("selectedTable");    // Xóa các options hiện tại
+    tableSelect.innerHTML = '<option value="">Tại chỗ (không chọn bàn cụ thể)</option>';
     
     // Gọi API để lấy danh sách bàn
     fetch(`${API_BASE_URL.replace('/orders', '')}/tables`)
@@ -322,9 +320,8 @@ async function completeTransferPayment(order) {
                         createAt: new Date().toISOString(),
                         amount: totalAmount
                     }
-                };
-                // Thêm thông tin bàn
-                if (order.tableNumber && order.tableNumber !== 'takeaway') {
+                };                // Thêm thông tin bàn
+                if (order.tableNumber && order.tableNumber !== 'takeaway' && order.tableNumber !== 'tại chỗ') {
                     serverOrder.table = {
                         idTable: parseInt(order.tableNumber)
                     };
@@ -332,6 +329,12 @@ async function completeTransferPayment(order) {
                     serverOrder.table = {
                         idTable: "takeaway",
                         tableNumber: "takeaway"
+                    };
+                } else {
+                    // Trường hợp "tại chỗ" hoặc không chọn bàn cụ thể
+                    serverOrder.table = {
+                        idTable: "tại chỗ",
+                        tableNumber: "tại chỗ"
                     };
                 }
                 // Thêm sản phẩm
@@ -393,9 +396,8 @@ function prepareOrderData() {
     // Tính tổng tiền gốc (chưa giảm giá)
     const originalTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     // Tính tổng tiền sau giảm giá
-    const totalAmount = appliedPromotion && appliedPromotion.finalTotal ? appliedPromotion.finalTotal : originalTotal;
-    return {
-        tableNumber: document.getElementById("tableNumber").value || "chưa chọn",
+    const totalAmount = appliedPromotion && appliedPromotion.finalTotal ? appliedPromotion.finalTotal : originalTotal;    return {
+        tableNumber: document.getElementById("tableNumber").value || "tại chỗ",
         notes: document.getElementById("notes").value,
         cart: cart,
         orderTime: new Date().toISOString(),
@@ -472,9 +474,8 @@ function setupPlaceOrder() {
                                 amount: order.finalTotal || order.totalAmount
                             }
                         };
-                        
-                        // Thêm thông tin bàn
-                        if (order.tableNumber && order.tableNumber !== 'takeaway') {
+                          // Thêm thông tin bàn
+                        if (order.tableNumber && order.tableNumber !== 'takeaway' && order.tableNumber !== 'tại chỗ') {
                             serverOrder.table = {
                                 idTable: parseInt(order.tableNumber)
                             };
@@ -482,6 +483,12 @@ function setupPlaceOrder() {
                             serverOrder.table = {
                                 idTable: "takeaway",
                                 tableNumber: "takeaway"
+                            };
+                        } else {
+                            // Trường hợp "tại chỗ" hoặc không chọn bàn cụ thể
+                            serverOrder.table = {
+                                idTable: "tại chỗ",
+                                tableNumber: "tại chỗ"
                             };
                         }
                         
