@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function() {
         submitButton.disabled = true;
         
         try {
-            const registerUrl = `${API_BASE_URL}/api/accounts`;
+            const registerUrl = `${API_BASE_URL}/api/auth/signup`;
             
             // Send registration request
             const response = await fetch(registerUrl, {
@@ -65,7 +65,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     passWord: password,
                     phone: phone || null,
                     address: address || null,
-                    role: 'CUSTOMER' // Mặc định đăng ký là khách hàng
+                    image: null,
+                    role: 'CUSTOMER',
+                    status: 'active'
                 })
             });
             
@@ -81,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 handleSuccessfulRegistration(data);
             } else {
                 // Registration failed
-                if (response.status === 409) {
+                if (response.status === 400 && data.message.includes('Username is already taken')) {
                     showError('Tên đăng nhập đã tồn tại. Vui lòng chọn tên đăng nhập khác.');
                 } else {
                     showError(data.message || 'Đăng ký thất bại. Vui lòng thử lại.');

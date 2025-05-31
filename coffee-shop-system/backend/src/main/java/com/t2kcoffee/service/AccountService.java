@@ -4,6 +4,7 @@ import com.t2kcoffee.entity.Account;
 import com.t2kcoffee.repository.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,6 +24,9 @@ public class AccountService {
 
     @Value("${app.upload.dir}")
     private String uploadDir;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     public AccountService(AccountRepository accountRepository) {
@@ -46,7 +50,7 @@ public class AccountService {
         
         if (accountOpt.isPresent()) {
             Account account = accountOpt.get();
-            return password.equals(account.getPassWord());
+            return passwordEncoder.matches(password, account.getPassWord());
         }
         
         return false;
@@ -54,6 +58,10 @@ public class AccountService {
 
     @Transactional
     public Account saveAccount(Account account) {
+        // Encode password if it's not already encoded
+        if (account.getPassWord() != null && !account.getPassWord().startsWith("$2a$")) {
+            account.setPassWord(passwordEncoder.encode(account.getPassWord()));
+        }
         return accountRepository.save(account);
     }
 

@@ -2,12 +2,20 @@ package com.t2kcoffee.controller;
 
 import com.t2kcoffee.entity.Account;
 import com.t2kcoffee.service.AccountService;
+import com.t2kcoffee.security.jwt.JwtUtils;
+import com.t2kcoffee.security.services.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,8 +30,15 @@ import java.util.UUID;
 @RequestMapping("/api/accounts")
 @CrossOrigin(origins = "*")
 public class AccountController {
+    private static final Logger logger = LoggerFactory.getLogger(AccountController.class);
 
     private final AccountService accountService;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private JwtUtils jwtUtils;
 
     @Autowired
     public AccountController(AccountService accountService) {
@@ -122,37 +137,65 @@ public class AccountController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
-        String username = credentials.get("userName");
-        String password = credentials.get("passWord");
-        
-        if (username == null || password == null) {
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Username and password are required");
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-        }
-        
-        boolean isAuthenticated = accountService.authenticate(username, password);
-        
-        if (isAuthenticated) {
-            Optional<Account> accountOpt = accountService.getAccountByUsername(username);
-            if (accountOpt.isPresent()) {
-                Account account = accountOpt.get();
-                Map<String, Object> response = new HashMap<>();
-                response.put("token", "t2k-" + System.currentTimeMillis()); // Simple token generation
-                
-                // Chuyển role thành chữ hoa để đảm bảo tương thích với frontend
-                String roleUpperCase = account.getRole() != null ? account.getRole().toUpperCase() : "UNKNOWN";
-                
-                response.put("role", roleUpperCase);
-                response.put("userId", account.getId());
-                response.put("fullName", account.getFullName());
-                return new ResponseEntity<>(response, HttpStatus.OK);
+        try {
+            String username = credentials.get("userName");
+            String password = credentials.get("passWord");
+            
+            logger.info("Attempting login for user: {}", username);
+            
+            if (username == null || password == null) {
+                logger.warn("Login attempt failed: missing username or password");
+                return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Username and password are required"));
             }
+
+            // First check if the account exists
+            Optional<Account> accountOpt = accountService.getAccountByUsername(username);
+            if (accountOpt.isEmpty()) {
+                logger.warn("Login attempt failed: account not found for username: {}", username);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Invalid username or password"));
+            }
+
+            Account account = accountOpt.get();
+            
+            // Check if account is active
+            if (!"active".equals(account.getStatus())) {
+                logger.warn("Login attempt failed: account not active for username: {}", username);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Account is not active"));
+            }
+
+            // Create authentication token
+            Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(username, password));
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String jwt = jwtUtils.generateJwtToken(authentication);
+            
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            
+            logger.info("Login successful for user: {}", username);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("token", jwt);
+            response.put("type", "Bearer");
+            response.put("role", userDetails.getRole().toUpperCase());
+            response.put("userId", userDetails.getIdAccount());
+            response.put("fullName", userDetails.getFullName());
+            response.put("status", userDetails.getStatus());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (AuthenticationException e) {
+            logger.error("Authentication failed: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("message", "Invalid username or password"));
+        } catch (Exception e) {
+            logger.error("Login error: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("message", "An error occurred during login"));
         }
-        
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Invalid username or password");
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
 
     @PostMapping("/{id}/avatar")

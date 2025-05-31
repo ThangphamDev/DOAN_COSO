@@ -34,6 +34,9 @@ public class Account {
 
     @Column(name = "role")
     private String role;
+
+    @Column(name = "status")
+    private String status = "active";
     
     @JsonIgnore
     @OneToMany(mappedBy = "account")

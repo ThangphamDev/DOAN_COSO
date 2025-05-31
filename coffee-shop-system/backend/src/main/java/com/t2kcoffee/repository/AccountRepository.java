@@ -2,12 +2,12 @@ package com.t2kcoffee.repository;
 
 import com.t2kcoffee.entity.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+@Repository
 public interface AccountRepository extends JpaRepository<Account, Integer> {
-    @Query("SELECT a FROM Account a WHERE a.userName = :username")
-    Optional<Account> findByUserName(@Param("username") String username);
+    Optional<Account> findByUserName(String userName);
+    Boolean existsByUserName(String userName);
 }

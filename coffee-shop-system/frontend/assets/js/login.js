@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Handle the login process
     async function handleLogin(e) {
-    e.preventDefault();
+        e.preventDefault();
   
         // Get form values
         const username = document.getElementById('username').value.trim();
@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
         submitButton.disabled = true;
         
         try {
+            console.log('Attempting login with:', { username, password });
             const loginUrl = `${API_BASE_URL}/api/accounts/login`;
             
             // Send login request
@@ -57,8 +58,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
             });
             
+            console.log('Login response status:', response.status);
             // Parse response data
             const data = await response.json();
+            console.log('Login response data:', data);
             
             // Reset button state
             submitButton.textContent = originalText;
@@ -86,12 +89,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Handle successful login
     function handleSuccessfulLogin(data) {
-        // Kiểm tra và đảm bảo có role
-        if (!data.role) {
-            showError('Lỗi đăng nhập: Không nhận được quyền hạn người dùng từ máy chủ.');
-            return;
-        }
-        
         // Save data to local storage
         localStorage.setItem('token', data.token);
         localStorage.setItem('role', data.role);

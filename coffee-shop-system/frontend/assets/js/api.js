@@ -1,4 +1,3 @@
-
 const API = {
     BASE_URL: 'http://localhost:8081/api',
     ORDERS: '/orders',
@@ -702,16 +701,23 @@ async function deleteCategory(categoryId) {
     }
 }
 
+// Helper function to get authorization header
+function getAuthHeader() {
+    const token = localStorage.getItem('token');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
 // API xác thực và người dùng
 // Đăng nhập
 async function login(username, password) {
     try {
-        const response = await fetch(`${API.BASE_URL}${API.AUTH}/login`, {
+        const response = await fetch(`${API.BASE_URL}${API.AUTH}/signin`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                ...getAuthHeader()
             },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ userName: username, passWord: password })
         });
         
         if (!response.ok) {
@@ -723,6 +729,9 @@ async function login(username, password) {
         // Lưu token vào localStorage nếu có
         if (data.token) {
             localStorage.setItem('token', data.token);
+            localStorage.setItem('role', data.role);
+            localStorage.setItem('userId', data.idAccount);
+            localStorage.setItem('fullName', data.fullName);
         }
         
         return data;
@@ -742,7 +751,7 @@ async function getCurrentUser() {
         
         const response = await fetch(`${API.BASE_URL}${API.AUTH}/me`, {
             headers: {
-                'Authorization': `Bearer ${token}`
+                ...getAuthHeader()
             }
         });
         
