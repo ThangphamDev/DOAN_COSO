@@ -2,32 +2,40 @@ package com.t2kcoffee.service;
 
 import com.t2kcoffee.entity.Account;
 import com.t2kcoffee.repository.AccountRepository;
+import com.t2kcoffee.security.jwt.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
-public class AccountService {
-
-    private final AccountRepository accountRepository;
-
-    @Value("${app.upload.dir}")
-    private String uploadDir;
+public class AccountService implements UserDetailsService {
 
     @Autowired
-    public AccountService(AccountRepository accountRepository) {
-        this.accountRepository = accountRepository;
-    }
+    private AccountRepository accountRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
     public List<Account> getAllAccounts() {
         return accountRepository.findAll();
@@ -41,97 +49,100 @@ public class AccountService {
         return accountRepository.findByUserName(username);
     }
 
-    public boolean authenticate(String username, String password) {
-        Optional<Account> accountOpt = accountRepository.findByUserName(username);
-        
-        if (accountOpt.isPresent()) {
-            Account account = accountOpt.get();
-            return password.equals(account.getPassWord());
-        }
-        
-        return false;
-    }
-
-    @Transactional
     public Account saveAccount(Account account) {
+        validateAccount(account);
+        if (account.getId() == null) {
+            account.setPassWord(passwordEncoder.encode(account.getPassWord()));
+        }
         return accountRepository.save(account);
     }
 
-    @Transactional
-    public Account updateAccount(Integer id, Account accountDetails) {
-        Optional<Account> account = accountRepository.findById(id);
-        if (account.isPresent()) {
-            Account existingAccount = account.get();
-            existingAccount.setUserName(accountDetails.getUserName());
-            existingAccount.setFullName(accountDetails.getFullName());
-            
-            // Only update password if provided
-            if (accountDetails.getPassWord() != null && !accountDetails.getPassWord().isEmpty()) {
-                existingAccount.setPassWord(accountDetails.getPassWord());
-            }
-            
-            existingAccount.setPhone(accountDetails.getPhone());
-            existingAccount.setAddress(accountDetails.getAddress());
-            existingAccount.setRole(accountDetails.getRole());
-            
-            // Only update image if provided
-            if (accountDetails.getImage() != null) {
-                existingAccount.setImage(accountDetails.getImage());
-            }
-            
-            return accountRepository.save(existingAccount);
-        }
-        return null;
+    public Account updateAccount(Integer id, Account account) {
+        return accountRepository.findById(id)
+                .map(existingAccount -> {
+                    validateAccount(account);
+                    existingAccount.setUserName(account.getUserName());
+                    existingAccount.setFullName(account.getFullName());
+                    if (account.getPassWord() != null && !account.getPassWord().isEmpty()) {
+                        existingAccount.setPassWord(passwordEncoder.encode(account.getPassWord()));
+                    }
+                    existingAccount.setPhone(account.getPhone());
+                    existingAccount.setAddress(account.getAddress());
+                    existingAccount.setRole(account.getRole());
+                    if (account.getImage() != null) {
+                        existingAccount.setImage(account.getImage());
+                    }
+                    return accountRepository.save(existingAccount);
+                })
+                .orElseThrow(() -> new IllegalArgumentException("Account not found with id: " + id));
     }
 
-    @Transactional
-    public Account updateAccountWithImage(Integer id, String userName, String fullName, 
-                                         String password, String phone, String address, 
-                                         String role, String avatarPath) {
-        Optional<Account> accountOpt = accountRepository.findById(id);
-        if (accountOpt.isPresent()) {
-            Account account = accountOpt.get();
-            if (userName != null) account.setUserName(userName);
-            if (fullName != null) account.setFullName(fullName);
-            if (password != null && !password.isEmpty()) account.setPassWord(password);
-            if (phone != null) account.setPhone(phone);
-            if (address != null) account.setAddress(address);
-            if (role != null) account.setRole(role);
-            if (avatarPath != null) account.setImage(avatarPath);
-            return accountRepository.save(account);
-        }
-        return null;
-    }
-
-    @Transactional
     public void deleteAccount(Integer id) {
         accountRepository.deleteById(id);
     }
 
-    @Transactional
-    public void updateAvatarPath(Integer id, String avatarPath) {
-        Optional<Account> accountOpt = getAccountById(id);
-        if (accountOpt.isPresent()) {
-            Account account = accountOpt.get();
-            account.setImage(avatarPath);
-            accountRepository.save(account);
+    public Map<String, String> authenticate(String username, String password) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(username, password));
+
+        String accessToken = jwtTokenProvider.generateToken(username);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(username);
+
+        Map<String, String> tokens = new HashMap<>();
+        tokens.put("accessToken", accessToken);
+        tokens.put("refreshToken", refreshToken);
+
+        return tokens;
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        Account account = accountRepository.findByUserName(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+
+        List<SimpleGrantedAuthority> authorities = Collections.singletonList(
+                new SimpleGrantedAuthority("ROLE_" + account.getRole().toUpperCase()));
+
+        return new User(account.getUserName(), account.getPassWord(), authorities);
+    }
+
+    private void validateAccount(Account account) {
+        if (account.getUserName() == null || account.getUserName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Username is required");
+        }
+        if (account.getId() == null && (account.getPassWord() == null || account.getPassWord().length() < 6)) {
+            throw new IllegalArgumentException("Password must be at least 6 characters long");
+        }
+        if (account.getRole() == null || account.getRole().trim().isEmpty()) {
+            throw new IllegalArgumentException("Role is required");
         }
     }
 
-    @Transactional
     public String storeAvatarFile(MultipartFile file, Integer accountId) throws IOException {
-        Path uploadPath = Paths.get(uploadDir, "avatar").toAbsolutePath().normalize();
+        String uploadDir = "uploads/images/avatar";
+        Path uploadPath = Paths.get(uploadDir);
+        
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
         }
-        String originalFileName = file.getOriginalFilename();
-        String fileExtension = "";
-        if (originalFileName != null && originalFileName.contains(".")) {
-            fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
-        }
-        String fileName = accountId + "_" + UUID.randomUUID().toString() + fileExtension;
-        Path targetLocation = uploadPath.resolve(fileName);
-        Files.copy(file.getInputStream(), targetLocation);
+
+        String fileExtension = getFileExtension(file.getOriginalFilename());
+        String fileName = "avatar_" + accountId + "_" + UUID.randomUUID().toString() + fileExtension;
+        
+        Path filePath = uploadPath.resolve(fileName);
+        Files.copy(file.getInputStream(), filePath);
+
         return fileName;
+    }
+
+    private String getFileExtension(String fileName) {
+        return fileName.substring(fileName.lastIndexOf("."));
+    }
+
+    public void updateAvatarPath(Integer accountId, String avatarPath) {
+        accountRepository.findById(accountId).ifPresent(account -> {
+            account.setImage(avatarPath);
+            accountRepository.save(account);
+        });
     }
 }

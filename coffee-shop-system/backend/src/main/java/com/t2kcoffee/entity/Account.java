@@ -12,7 +12,7 @@ public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ID_Account")
-    private Integer idAccount;
+    private Integer id;
 
     @Column(name = "user_name")
     private String userName;
@@ -38,9 +38,4 @@ public class Account {
     @JsonIgnore
     @OneToMany(mappedBy = "account")
     private List<CafeOrder> orders;
-    
-    // Helper method to get id as per standard Java bean naming
-    public Integer getId() {
-        return idAccount;
-    }
 }
