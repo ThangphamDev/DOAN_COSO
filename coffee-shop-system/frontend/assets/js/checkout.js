@@ -318,14 +318,11 @@ function updateEstimatedRewardPoints() {
         if (window.AuthManager && typeof window.AuthManager.isLoggedIn === 'function') {
             if (window.AuthManager.isLoggedIn()) {
                 rewardPointsContainer.style.display = 'flex';
-                console.log("Đã đăng nhập, hiển thị thông báo tích điểm");
             } else {
                 rewardPointsContainer.style.display = 'none';
-                console.log("Chưa đăng nhập, ẩn thông báo tích điểm");
             }
         } else {
             // Nếu AuthManager chưa sẵn sàng, thử lại sau 1 giây
-            console.log("AuthManager chưa sẵn sàng, thử lại sau");
             setTimeout(updateEstimatedRewardPoints, 1000);
         }
     }
@@ -537,8 +534,7 @@ async function completeTransferPayment(order) {
             const createdOrder = await response.json();
             orderId = createdOrder.idOrder || createdOrder.id;
             console.log("DEBUG - Đơn hàng chuyển khoản được tạo với ID:", orderId);
-            
-            // Trừ điểm thưởng nếu đã sử dụng
+
             if (userId && redeemedPoints && redeemedPoints.points > 0) {
                 await subtractRewardPoints(userId, redeemedPoints.points);
             }
@@ -548,24 +544,14 @@ async function completeTransferPayment(order) {
             return;
         }
         
-        // Lưu thông tin đơn hàng
         order.idOrder = orderId;
         localStorage.setItem("currentOrder", JSON.stringify(order));
         localStorage.setItem("lastOrderId", orderId);
-        
-        // Xóa giỏ hàng
+    
         localStorage.removeItem("cart");
-        
-        // Xóa thông tin khuyến mãi
         localStorage.removeItem("appliedPromotion");
-        
-        // Xóa thông tin điểm thưởng đã đổi
         localStorage.removeItem("redeemedPoints");
-        
-        // Xóa bàn đã chọn
         localStorage.removeItem("selectedTable");
-        
-        // Chuyển đến trang thành công
         window.location.href = "order-success.html";
     } catch (error) {
         console.error("Lỗi khi xử lý thanh toán:", error);
@@ -579,52 +565,38 @@ function setupPlaceOrder() {
     if (!placeOrderBtn) return;
 
     placeOrderBtn.addEventListener("click", async function() {
-        // Lấy giỏ hàng
         const cart = JSON.parse(localStorage.getItem("cart")) || [];
-        
-        // Kiểm tra giỏ hàng có sản phẩm không
+
         if (cart.length === 0) {
             alert("Giỏ hàng của bạn đang trống. Vui lòng thêm sản phẩm trước khi đặt hàng.");
             return;
         }
         
-        // Lấy thông tin bàn - không bắt buộc
         const tableNumber = document.getElementById("tableNumber").value;
         
-        // Lưu bàn đã chọn vào localStorage để tiện sử dụng sau này (nếu có)
         if (tableNumber) {
             localStorage.setItem("selectedTable", tableNumber);
         }
-        
-        // Lấy phương thức thanh toán
+
         const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
         
-        // Nếu thanh toán bằng chuyển khoản, hiển thị QR và sau đó mới xử lý đơn hàng
         if (paymentMethod === "transfer") {
-            // Chuẩn bị dữ liệu đơn hàng
             const order = prepareOrderData();
             
-            // Hiển thị mã QR thanh toán
             showVietQR(order);
         } else {
-            // Xử lý đặt hàng khi thanh toán tiền mặt
             try {
-                // Lấy thông tin đơn hàng
                 const order = prepareOrderData();
                 
-                // Hiển thị thông báo
                 alert("Đơn hàng của bạn đang được xử lý!");
                 
-                // Lưu thông tin thanh toán
                 localStorage.setItem("paymentMethod", "cash");
                 localStorage.setItem("paymentCompleted", "false");
                 
-                // Lấy thông tin điểm thưởng đã đổi (nếu có)
                 const redeemedPoints = JSON.parse(localStorage.getItem('redeemedPoints') || 'null');
                 
                 let orderId;
                 try {
-                    // Chuẩn bị dữ liệu đơn hàng cho server
                     const serverOrder = {
                         totalAmount: order.finalTotal,
                         note: order.notes,
@@ -638,17 +610,14 @@ function setupPlaceOrder() {
                         }
                     };
                     
-                    // Biến để lưu ID tài khoản nếu người dùng đã đăng nhập
                     let userId = null;
                     
-                    // Thêm ID tài khoản nếu người dùng đã đăng nhập
                     if (window.AuthManager && window.AuthManager.isLoggedIn && window.AuthManager.isLoggedIn()) {
                         userId = window.AuthManager.getCurrentUser().userId;
                         if (userId) {
                             serverOrder.accountId = userId;
                             console.log("DEBUG - Đơn hàng được liên kết với tài khoản ID:", userId);
                             
-                            // Thêm thông tin điểm thưởng đã đổi (nếu có)
                             if (redeemedPoints && redeemedPoints.points > 0) {
                                 serverOrder.redeemedPoints = redeemedPoints.points;
                                 serverOrder.redeemedDiscount = redeemedPoints.discount;
@@ -656,7 +625,6 @@ function setupPlaceOrder() {
                         }
                     }
                     
-                    // Thêm thông tin bàn
                     if (order.tableNumber && order.tableNumber !== 'takeaway' && order.tableNumber !== 'tại chỗ') {
                         serverOrder.table = {
                             idTable: parseInt(order.tableNumber)
@@ -667,14 +635,12 @@ function setupPlaceOrder() {
                             tableNumber: "takeaway"
                         };
                     } else {
-                        // Trường hợp "tại chỗ" hoặc không chọn bàn cụ thể
                         serverOrder.table = {
                             idTable: "tại chỗ",
                             tableNumber: "tại chỗ"
                         };
                     }
                     
-                    // Thêm thông tin sản phẩm
                     serverOrder.productItems = order.cart.map(item => {
                         return {
                             productId: item.id,
@@ -683,7 +649,6 @@ function setupPlaceOrder() {
                         };
                     });
                     
-                    // Thêm thông tin khuyến mãi nếu có
                     if (order.promoCode) {
                         serverOrder.promotion = {
                             code: order.promoCode
@@ -693,7 +658,6 @@ function setupPlaceOrder() {
                     
                     console.log("DEBUG - Gửi dữ liệu đơn hàng đến server:", JSON.stringify(serverOrder, null, 2));
                     
-                    // Gọi API tạo đơn hàng
                     const response = await fetch(API_BASE_URL, {
                         method: 'POST',
                         headers: {
@@ -711,7 +675,6 @@ function setupPlaceOrder() {
                     orderId = createdOrder.idOrder || createdOrder.id;
                     console.log("DEBUG - Đơn hàng được tạo thành công với ID:", orderId);
                     
-                    // Trừ điểm thưởng nếu đã sử dụng
                     if (userId && redeemedPoints && redeemedPoints.points > 0) {
                         await subtractRewardPoints(userId, redeemedPoints.points);
                     }
@@ -724,23 +687,13 @@ function setupPlaceOrder() {
                 console.log("Đơn hàng đã được tạo với ID:", orderId);
                 localStorage.setItem("lastOrderId", orderId);
                 
-                // Xóa giỏ hàng
                 localStorage.removeItem("cart");
-                
-                // Xóa thông tin khuyến mãi
                 localStorage.removeItem("appliedPromotion");
-                
-                // Xóa thông tin điểm thưởng đã đổi
                 localStorage.removeItem("redeemedPoints");
-                
-                // Xóa bàn đã chọn
                 localStorage.removeItem("selectedTable");
-                
-                // Lưu thông tin đơn hàng vào localStorage
                 order.idOrder = orderId;
                 localStorage.setItem("currentOrder", JSON.stringify(order));
                 
-                // Chuyển hướng đến trang xem tình trạng đơn hàng
                 window.location.href = "order-success.html";
             } catch (error) {
                 console.error("Lỗi khi xử lý đặt hàng:", error);
@@ -750,56 +703,45 @@ function setupPlaceOrder() {
     });
 }
 
-// Calculate total from cart items
+
 function calculateTotal() {
     const cart = JSON.parse(localStorage.getItem("cart")) || [];
     const appliedPromotion = JSON.parse(localStorage.getItem('appliedPromotion') || 'null');
     
     let total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
-    // Áp dụng giảm giá nếu có
     if (appliedPromotion && appliedPromotion.finalTotal) {
         total = appliedPromotion.finalTotal;
     }
     
-    // Cập nhật điểm thưởng dự kiến
     updateEstimatedRewardPoints();
     
     return total;
 }
 
 function generateOrderCode() {
-    // Tạo mã hóa đơn bắt đầu bằng HD và theo sau là số ngẫu nhiên 6 chữ số
     const randomDigits = Math.floor(100000 + Math.random() * 900000);
     return `HD${randomDigits}`;
 }
 
-// Hiển thị mã QR chuyển khoản
 function showVietQR(order) {
-    // Lấy thông tin khuyến mãi và điểm thưởng đã đổi
     const appliedPromotion = JSON.parse(localStorage.getItem('appliedPromotion') || 'null');
     const redeemedPoints = JSON.parse(localStorage.getItem('redeemedPoints') || 'null');
     
-    // Tính toán số tiền cuối cùng, đảm bảo áp dụng cả khuyến mãi và điểm thưởng
     let amount;
     
-    // Nếu order đã có finalTotal (đã tính cả khuyến mãi và điểm thưởng)
     if (order.finalTotal) {
         amount = order.finalTotal;
     } 
-    // Nếu có cả khuyến mãi và điểm thưởng
     else if (appliedPromotion && appliedPromotion.finalTotal && redeemedPoints && redeemedPoints.discount) {
         amount = Math.max(0, appliedPromotion.finalTotal - redeemedPoints.discount);
     } 
-    // Nếu chỉ có khuyến mãi
     else if (appliedPromotion && appliedPromotion.finalTotal) {
         amount = appliedPromotion.finalTotal;
     } 
-    // Nếu chỉ có điểm thưởng
     else if (redeemedPoints && redeemedPoints.discount && order.totalAmount) {
         amount = Math.max(0, order.totalAmount - redeemedPoints.discount);
     } 
-    // Nếu không có cả hai, lấy tổng tiền gốc
     else {
         amount = order.totalAmount || 
                 (order.items ? order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) : 0) ||
