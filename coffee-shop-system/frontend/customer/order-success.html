@@ -5,13 +5,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Đặt Hàng Thành Công - T2K Coffee</title>
+  <script src="../assets/js/load-components.js"></script>
   <link rel="icon" href="../assets/images/logo.png" type="image/png">
   <link rel="stylesheet" href="../assets/css/style.css">
   <link rel="stylesheet" href="../assets/css/components.css">
   <link rel="stylesheet" href="../assets/css/order-success.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="../assets/js/api.js"></script>
-  <script src="../assets/js/load-components.js"></script>
+  
   <style>
     .order-success-page {
       padding: 80px 0 60px;
@@ -210,15 +211,41 @@
       // Hiển thị thông tin đơn hàng
       const infoTable = document.getElementById('orderInfoTable');
       let priceRows = '';
+      
+      // Kiểm tra nếu có điểm thưởng đã đổi
+      const hasRedeemedPoints = order.redeemedPoints && order.redeemedPoints > 0;
+      
       // Nếu có giá gốc và giá sau khuyến mãi
       if (order.originalTotal && order.originalTotal > order.totalAmount) {
-        priceRows = `
-          <tr><td class="label">Giá gốc:</td><td class="value"><s style='color:#888'>${formatPrice(order.originalTotal)}</s></td></tr>
-          <tr><td class="label">Giá sau khuyến mãi:</td><td class="value" style='color:#e67e22;font-weight:600;'>${formatPrice(order.totalAmount)}</td></tr>
-        `;
+        // Nếu có cả khuyến mãi và điểm thưởng
+        if (hasRedeemedPoints) {
+          priceRows = `
+            <tr><td class="label">Giá gốc:</td><td class="value"><s style='color:#888'>${formatPrice(order.originalTotal)}</s></td></tr>
+            <tr><td class="label">Giá sau khuyến mãi:</td><td class="value">${formatPrice(order.totalAmount)}</td></tr>
+            <tr><td class="label">Điểm thưởng đã dùng:</td><td class="value">${order.redeemedPoints} điểm</td></tr>
+            <tr><td class="label">Giảm giá từ điểm:</td><td class="value">${formatPrice(order.redeemedDiscount)}</td></tr>
+            <tr><td class="label">Tổng thanh toán:</td><td class="value" style='color:#e67e22;font-weight:600;'>${formatPrice(order.finalTotal)}</td></tr>
+          `;
+        } else {
+          priceRows = `
+            <tr><td class="label">Giá gốc:</td><td class="value"><s style='color:#888'>${formatPrice(order.originalTotal)}</s></td></tr>
+            <tr><td class="label">Tổng thanh toán:</td><td class="value" style='color:#e67e22;font-weight:600;'>${formatPrice(order.totalAmount)}</td></tr>
+          `;
+        }
       } else {
-        priceRows = `<tr><td class="label">Tổng tiền:</td><td class="value">${formatPrice(order.totalAmount)}</td></tr>`;
+        // Nếu chỉ có điểm thưởng mà không có khuyến mãi
+        if (hasRedeemedPoints) {
+          priceRows = `
+            <tr><td class="label">Giá gốc:</td><td class="value"><s style='color:#888'>${formatPrice(order.totalAmount)}</s></td></tr>
+            <tr><td class="label">Điểm thưởng đã dùng:</td><td class="value">${order.redeemedPoints} điểm</td></tr>
+            <tr><td class="label">Giảm giá từ điểm:</td><td class="value">${formatPrice(order.redeemedDiscount)}</td></tr>
+            <tr><td class="label">Tổng thanh toán:</td><td class="value" style='color:#e67e22;font-weight:600;'>${formatPrice(order.finalTotal)}</td></tr>
+          `;
+        } else {
+          priceRows = `<tr><td class="label">Tổng thanh toán:</td><td class="value" style='color:#e67e22;font-weight:600;'>${formatPrice(order.totalAmount)}</td></tr>`;
+        }
       }
+      
       infoTable.innerHTML = `
         <tr><td class="label">Mã đơn hàng:</td><td class="value">${order.idOrder || order.id || ''}</td></tr>
         <tr><td class="label">Bàn:</td><td class="value">${order.tableNumber ? (order.tableNumber==='takeaway'?'Mang đi':order.tableNumber) : '---'}</td></tr>

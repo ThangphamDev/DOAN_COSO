@@ -42,22 +42,23 @@ class AuthManager {
 
     // Get user's loyalty points (from orders)
     async getLoyaltyPoints() {
-        if (!this.isCustomer() || !this.userId) {
+        if (!this.isLoggedIn()) {
+            console.error('User is not logged in');
             return 0;
         }
 
         try {
-            // Fetch user's reward points directly from account
-            const response = await fetch(`http://localhost:8081/api/accounts/${this.userId}/reward-points`);
+            const currentUser = this.getCurrentUser();
+            const response = await fetch(`${API.BASE_URL}/accounts/${currentUser.userId}/reward-points`);
+            
             if (!response.ok) {
-                console.warn('Could not fetch user reward points');
-                return 0;
+                throw new Error('Failed to fetch loyalty points');
             }
-
+            
             const data = await response.json();
             return data.rewardPoints || 0;
         } catch (error) {
-            console.warn('Error fetching loyalty points:', error);
+            console.error('Error fetching loyalty points:', error);
             return 0;
         }
     }

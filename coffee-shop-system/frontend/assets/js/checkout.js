@@ -333,6 +333,86 @@ function updateEstimatedRewardPoints() {
     return points;
 }
 
+// Chuẩn bị dữ liệu đơn hàng
+function prepareOrderData() {
+    // Lấy thông tin khuyến mãi đã áp dụng (nếu có)
+    const appliedPromotion = JSON.parse(localStorage.getItem('appliedPromotion') || 'null');
+    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+    
+    // Tính tổng tiền gốc (chưa giảm giá)
+    const originalTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+    // Tính tổng tiền sau giảm giá khuyến mãi
+    let totalAmount = appliedPromotion && appliedPromotion.finalTotal ? appliedPromotion.finalTotal : originalTotal;
+    
+    // Lấy thông tin điểm thưởng đã đổi (nếu có)
+    const redeemedPoints = JSON.parse(localStorage.getItem('redeemedPoints') || 'null');
+    
+    // Tính tổng tiền sau khi áp dụng cả khuyến mãi và điểm thưởng
+    let finalTotal = totalAmount;
+    if (redeemedPoints && redeemedPoints.discount > 0) {
+        finalTotal = Math.max(0, totalAmount - redeemedPoints.discount);
+    }
+    
+    return {
+        tableNumber: document.getElementById("tableNumber").value || "tại chỗ",
+        notes: document.getElementById("notes").value,
+        cart: cart,
+        orderTime: new Date().toISOString(),
+        originalTotal: originalTotal,
+        totalAmount: totalAmount,
+        paymentMethod: document.querySelector('input[name="payment"]:checked').value,
+        promoCode: appliedPromotion ? appliedPromotion.code : null,
+        discountAmount: appliedPromotion ? appliedPromotion.discountAmount : 0,
+        redeemedPoints: redeemedPoints ? redeemedPoints.points : 0,
+        redeemedDiscount: redeemedPoints ? redeemedPoints.discount : 0,
+        finalTotal: finalTotal
+    };
+}
+
+// Hàm để trừ điểm thưởng đã sử dụng
+async function subtractRewardPoints(userId, points) {
+    try {
+        if (!userId || points <= 0) {
+            console.error('Không thể trừ điểm thưởng: Thiếu userId hoặc số điểm không hợp lệ');
+            return false;
+        }
+        
+        // Lấy số điểm hiện tại của người dùng
+        const response = await fetch(`${API_BASE_URL}/accounts/${userId}/reward-points`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const currentPoints = data.rewardPoints || 0;
+        
+        // Tính số điểm còn lại
+        const remainingPoints = Math.max(0, currentPoints - points);
+        
+        // Cập nhật số điểm mới
+        const updateResponse = await fetch(`${API_BASE_URL}/accounts/${userId}/reward-points`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                points: remainingPoints
+            })
+        });
+        
+        if (!updateResponse.ok) {
+            throw new Error(`HTTP error! Status: ${updateResponse.status}`);
+        }
+        
+        console.log(`Đã trừ ${points} điểm thưởng. Còn lại: ${remainingPoints} điểm`);
+        return true;
+    } catch (error) {
+        console.error('Lỗi khi trừ điểm thưởng:', error);
+        return false;
+    }
+}
+
 // Sửa hàm completeTransferPayment để sử dụng fetch API trực tiếp như trong file cũ
 async function completeTransferPayment(order) {
     alert("Cảm ơn bạn đã thanh toán! Đơn hàng của bạn đang được xử lý.");
@@ -349,15 +429,25 @@ async function completeTransferPayment(order) {
         
         // Lấy lại khuyến mãi nếu có
         const appliedPromotion = JSON.parse(localStorage.getItem('appliedPromotion') || 'null');
-        const totalAmount = (appliedPromotion && appliedPromotion.finalTotal)
-            ? appliedPromotion.finalTotal
-            : order.finalTotal || order.totalAmount;
+        
+        // Lấy thông tin điểm thưởng đã đổi (nếu có)
+        const redeemedPoints = JSON.parse(localStorage.getItem('redeemedPoints') || 'null');
+        
+        // Sử dụng finalTotal từ order nếu có, nếu không thì sử dụng totalAmount từ appliedPromotion hoặc order
+        const finalAmount = order.finalTotal || 
+                          (redeemedPoints && redeemedPoints.discount > 0 
+                            ? (appliedPromotion && appliedPromotion.finalTotal 
+                               ? Math.max(0, appliedPromotion.finalTotal - redeemedPoints.discount)
+                               : Math.max(0, order.totalAmount - redeemedPoints.discount))
+                            : (appliedPromotion && appliedPromotion.finalTotal 
+                               ? appliedPromotion.finalTotal 
+                               : order.totalAmount));
         
         let orderId;
         try {
             // Chuẩn bị dữ liệu đơn hàng cho server
             const serverOrder = {
-                totalAmount: totalAmount,
+                totalAmount: finalAmount,
                 note: order.notes,
                 status: "processing",
                 orderTime: order.orderTime || new Date().toISOString(),
@@ -365,16 +455,25 @@ async function completeTransferPayment(order) {
                     paymentMethod: "transfer",
                     paymentStatus: "completed", // Đã thanh toán
                     createAt: new Date().toISOString(),
-                    amount: totalAmount
+                    amount: finalAmount
                 }
             };
             
+            // Biến để lưu ID tài khoản nếu người dùng đã đăng nhập
+            let userId = null;
+            
             // Thêm ID tài khoản nếu người dùng đã đăng nhập
             if (window.AuthManager && window.AuthManager.isLoggedIn && window.AuthManager.isLoggedIn()) {
-                const userId = window.AuthManager.getCurrentUser().userId;
+                userId = window.AuthManager.getCurrentUser().userId;
                 if (userId) {
                     serverOrder.accountId = userId;
                     console.log("DEBUG - Đơn hàng chuyển khoản được liên kết với tài khoản ID:", userId);
+                    
+                    // Thêm thông tin điểm thưởng đã đổi (nếu có)
+                    if (redeemedPoints && redeemedPoints.points > 0) {
+                        serverOrder.redeemedPoints = redeemedPoints.points;
+                        serverOrder.redeemedDiscount = redeemedPoints.discount;
+                    }
                 }
             }
             
@@ -438,6 +537,11 @@ async function completeTransferPayment(order) {
             const createdOrder = await response.json();
             orderId = createdOrder.idOrder || createdOrder.id;
             console.log("DEBUG - Đơn hàng chuyển khoản được tạo với ID:", orderId);
+            
+            // Trừ điểm thưởng nếu đã sử dụng
+            if (userId && redeemedPoints && redeemedPoints.points > 0) {
+                await subtractRewardPoints(userId, redeemedPoints.points);
+            }
         } catch (error) {
             console.error("Lỗi khi gọi API tạo đơn hàng chuyển khoản:", error);
             alert("Không thể kết nối đến máy chủ. Vui lòng thử lại sau.");
@@ -455,6 +559,9 @@ async function completeTransferPayment(order) {
         // Xóa thông tin khuyến mãi
         localStorage.removeItem("appliedPromotion");
         
+        // Xóa thông tin điểm thưởng đã đổi
+        localStorage.removeItem("redeemedPoints");
+        
         // Xóa bàn đã chọn
         localStorage.removeItem("selectedTable");
         
@@ -464,28 +571,6 @@ async function completeTransferPayment(order) {
         console.error("Lỗi khi xử lý thanh toán:", error);
         alert("Đã xảy ra lỗi khi xử lý thanh toán. Vui lòng thử lại sau.");
     }
-}
-
-// Chuẩn bị dữ liệu đơn hàng
-function prepareOrderData() {
-    // Lấy thông tin khuyến mãi đã áp dụng (nếu có)
-    const appliedPromotion = JSON.parse(localStorage.getItem('appliedPromotion') || 'null');
-    const cart = JSON.parse(localStorage.getItem("cart")) || [];
-    // Tính tổng tiền gốc (chưa giảm giá)
-    const originalTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    // Tính tổng tiền sau giảm giá
-    const totalAmount = appliedPromotion && appliedPromotion.finalTotal ? appliedPromotion.finalTotal : originalTotal;    return {
-        tableNumber: document.getElementById("tableNumber").value || "tại chỗ",
-        notes: document.getElementById("notes").value,
-        cart: cart,
-        orderTime: new Date().toISOString(),
-        originalTotal: originalTotal,
-        totalAmount: totalAmount,
-        paymentMethod: document.querySelector('input[name="payment"]:checked').value,
-        promoCode: appliedPromotion ? appliedPromotion.code : null,
-        discountAmount: appliedPromotion ? appliedPromotion.discountAmount : 0,
-        finalTotal: appliedPromotion ? appliedPromotion.finalTotal : totalAmount
-    };
 }
 
 // Sửa hàm setupPlaceOrder để sử dụng fetch API trực tiếp như trong file cũ
@@ -534,11 +619,14 @@ function setupPlaceOrder() {
                 localStorage.setItem("paymentMethod", "cash");
                 localStorage.setItem("paymentCompleted", "false");
                 
+                // Lấy thông tin điểm thưởng đã đổi (nếu có)
+                const redeemedPoints = JSON.parse(localStorage.getItem('redeemedPoints') || 'null');
+                
                 let orderId;
                 try {
                     // Chuẩn bị dữ liệu đơn hàng cho server
                     const serverOrder = {
-                        totalAmount: order.finalTotal || order.totalAmount,
+                        totalAmount: order.finalTotal,
                         note: order.notes,
                         status: "processing",
                         orderTime: order.orderTime,
@@ -546,16 +634,25 @@ function setupPlaceOrder() {
                             paymentMethod: "cash",
                             paymentStatus: "pending",
                             createAt: new Date().toISOString(),
-                            amount: order.finalTotal || order.totalAmount
+                            amount: order.finalTotal
                         }
                     };
                     
+                    // Biến để lưu ID tài khoản nếu người dùng đã đăng nhập
+                    let userId = null;
+                    
                     // Thêm ID tài khoản nếu người dùng đã đăng nhập
                     if (window.AuthManager && window.AuthManager.isLoggedIn && window.AuthManager.isLoggedIn()) {
-                        const userId = window.AuthManager.getCurrentUser().userId;
+                        userId = window.AuthManager.getCurrentUser().userId;
                         if (userId) {
                             serverOrder.accountId = userId;
                             console.log("DEBUG - Đơn hàng được liên kết với tài khoản ID:", userId);
+                            
+                            // Thêm thông tin điểm thưởng đã đổi (nếu có)
+                            if (redeemedPoints && redeemedPoints.points > 0) {
+                                serverOrder.redeemedPoints = redeemedPoints.points;
+                                serverOrder.redeemedDiscount = redeemedPoints.discount;
+                            }
                         }
                     }
                     
@@ -613,6 +710,11 @@ function setupPlaceOrder() {
                     const createdOrder = await response.json();
                     orderId = createdOrder.idOrder || createdOrder.id;
                     console.log("DEBUG - Đơn hàng được tạo thành công với ID:", orderId);
+                    
+                    // Trừ điểm thưởng nếu đã sử dụng
+                    if (userId && redeemedPoints && redeemedPoints.points > 0) {
+                        await subtractRewardPoints(userId, redeemedPoints.points);
+                    }
                 } catch (error) {
                     console.error("Lỗi khi gọi API tạo đơn hàng:", error);
                     alert("Không thể kết nối đến máy chủ. Vui lòng thử lại sau.");
@@ -627,6 +729,9 @@ function setupPlaceOrder() {
                 
                 // Xóa thông tin khuyến mãi
                 localStorage.removeItem("appliedPromotion");
+                
+                // Xóa thông tin điểm thưởng đã đổi
+                localStorage.removeItem("redeemedPoints");
                 
                 // Xóa bàn đã chọn
                 localStorage.removeItem("selectedTable");

@@ -74,6 +74,33 @@
               </div>
             </div>
             
+            <!-- Phần đổi điểm thưởng -->
+            <div class="redeem-points-container" id="redeemPointsContainer" style="display: none;">
+              <div class="redeem-points-icon">
+                <i class="fas fa-exchange-alt"></i>
+              </div>
+              <div class="redeem-points-info">
+                <h4>Đổi điểm thưởng</h4>
+                <p>Bạn có <span id="availablePoints">0</span> điểm thưởng.</p>
+                <div class="redeem-points-controls">
+                  <div class="redeem-slider-container">
+                    <input type="range" id="pointsSlider" min="0" max="0" value="0" step="10" class="points-slider">
+                    <div class="slider-labels">
+                      <span>0</span>
+                      <span id="maxPointsLabel">0</span>
+                    </div>
+                  </div>
+                  <div class="points-input-group">
+                    <input type="number" id="pointsInput" min="0" max="0" value="0" class="points-input">
+                    <span class="points-label">điểm</span>
+                  </div>
+                </div>
+                <p class="redeem-value">Giảm giá: <span id="redeemValue">0đ</span></p>
+                <button id="applyPointsBtn" class="btn-apply-points">Áp dụng điểm</button>
+                <button id="cancelPointsBtn" class="btn-cancel-points" style="display: none;">Hủy áp dụng</button>
+              </div>
+            </div>
+            
             <div class="payment-methods">
               <h3>Phương Thức Thanh Toán</h3>
               <div class="payment-options">
@@ -260,6 +287,146 @@
       font-weight: bold;
       color: #27ae60;
     }
+    
+    /* CSS cho phần đổi điểm thưởng */
+    .redeem-points-container {
+      margin: 20px 0;
+      padding: 15px;
+      border: 1px solid #3498db;
+      border-radius: 8px;
+      background-color: #eaf2f8;
+      display: flex;
+      align-items: flex-start;
+    }
+    
+    .redeem-points-icon {
+      font-size: 24px;
+      color: #3498db;
+      margin-right: 15px;
+    }
+    
+    .redeem-points-info {
+      flex: 1;
+    }
+    
+    .redeem-points-info h4 {
+      margin: 0 0 5px 0;
+      color: #3498db;
+      font-size: 16px;
+    }
+    
+    .redeem-points-info p {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+    }
+    
+    .redeem-points-controls {
+      margin: 15px 0;
+    }
+    
+    .redeem-slider-container {
+      margin-bottom: 10px;
+    }
+    
+    .points-slider {
+      width: 100%;
+      height: 5px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: #ddd;
+      outline: none;
+      border-radius: 5px;
+    }
+    
+    .points-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #3498db;
+      cursor: pointer;
+    }
+    
+    .points-slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #3498db;
+      cursor: pointer;
+    }
+    
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
+    
+    .points-input-group {
+      display: flex;
+      align-items: center;
+      margin-top: 10px;
+    }
+    
+    .points-input {
+      width: 80px;
+      padding: 5px 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      text-align: center;
+      font-size: 14px;
+    }
+    
+    .points-label {
+      margin-left: 5px;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .redeem-value {
+      font-weight: bold;
+      color: #3498db;
+    }
+    
+    #redeemValue {
+      font-size: 16px;
+    }
+    
+    .btn-apply-points, .btn-cancel-points {
+      padding: 8px 15px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    
+    .btn-apply-points {
+      background-color: #3498db;
+      color: white;
+      margin-right: 10px;
+    }
+    
+    .btn-apply-points:hover {
+      background-color: #2980b9;
+    }
+    
+    .btn-cancel-points {
+      background-color: #e74c3c;
+      color: white;
+    }
+    
+    .btn-cancel-points:hover {
+      background-color: #c0392b;
+    }
+    
+    #availablePoints {
+      font-weight: bold;
+      color: #3498db;
+    }
   </style>
   
   <!-- JavaScript cho xử lý mã khuyến mãi -->
@@ -368,6 +535,174 @@
         }
       }, 500);
     });
+  </script>
+  
+  <!-- JavaScript cho xử lý đổi điểm thưởng -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(() => {
+        initRedeemPointsFeature();
+      }, 1500); // Đợi AuthManager tải xong
+    });
+
+    function initRedeemPointsFeature() {
+      // Kiểm tra xem người dùng đã đăng nhập chưa
+      if (!window.AuthManager || !window.AuthManager.isLoggedIn()) {
+        return; // Không hiển thị phần đổi điểm nếu chưa đăng nhập
+      }
+
+      const redeemContainer = document.getElementById('redeemPointsContainer');
+      const availablePointsElement = document.getElementById('availablePoints');
+      const pointsSlider = document.getElementById('pointsSlider');
+      const pointsInput = document.getElementById('pointsInput');
+      const maxPointsLabel = document.getElementById('maxPointsLabel');
+      const redeemValueElement = document.getElementById('redeemValue');
+      const applyPointsBtn = document.getElementById('applyPointsBtn');
+      const cancelPointsBtn = document.getElementById('cancelPointsBtn');
+      const totalElement = document.querySelector('.summary-total h4');
+
+      let availablePoints = 0;
+      let originalTotal = 0;
+      let pointsValue = 1000; // Giá trị 1 điểm = 1000đ
+      let appliedPoints = 0;
+      let appliedDiscount = 0;
+
+      // Lấy điểm thưởng của người dùng
+      window.AuthManager.getLoyaltyPoints()
+        .then(points => {
+          availablePoints = points;
+          
+          // Chỉ hiển thị nếu có điểm
+          if (availablePoints > 0) {
+            redeemContainer.style.display = 'flex';
+            availablePointsElement.textContent = availablePoints;
+            
+            // Lấy tổng tiền hiện tại
+            originalTotal = getCurrentTotal();
+            
+            // Giới hạn điểm có thể sử dụng
+            const maxPoints = Math.min(availablePoints, Math.floor(originalTotal / pointsValue) * 10);
+            
+            // Cập nhật slider và input
+            pointsSlider.max = maxPoints;
+            pointsInput.max = maxPoints;
+            maxPointsLabel.textContent = maxPoints;
+            
+            // Thiết lập các sự kiện
+            setupEventListeners();
+          }
+        })
+        .catch(error => {
+          console.error('Error loading loyalty points:', error);
+        });
+
+      function setupEventListeners() {
+        // Đồng bộ slider và input
+        pointsSlider.addEventListener('input', function() {
+          pointsInput.value = this.value;
+          updateRedeemValue();
+        });
+
+        pointsInput.addEventListener('input', function() {
+          let value = parseInt(this.value) || 0;
+          
+          // Giới hạn giá trị
+          if (value < 0) value = 0;
+          if (value > parseInt(pointsSlider.max)) value = parseInt(pointsSlider.max);
+          
+          this.value = value;
+          pointsSlider.value = value;
+          updateRedeemValue();
+        });
+
+        // Xử lý áp dụng điểm
+        applyPointsBtn.addEventListener('click', function() {
+          const pointsToRedeem = parseInt(pointsInput.value) || 0;
+          if (pointsToRedeem <= 0) {
+            alert('Vui lòng nhập số điểm cần đổi');
+            return;
+          }
+
+          appliedPoints = pointsToRedeem;
+          appliedDiscount = calculateDiscount(pointsToRedeem);
+          
+          // Cập nhật tổng tiền
+          updateTotalWithDiscount();
+          
+          // Lưu thông tin đổi điểm vào localStorage
+          localStorage.setItem('redeemedPoints', JSON.stringify({
+            points: appliedPoints,
+            discount: appliedDiscount
+          }));
+          
+          // Cập nhật giao diện
+          applyPointsBtn.style.display = 'none';
+          cancelPointsBtn.style.display = 'inline-block';
+          
+          // Vô hiệu hóa slider và input
+          pointsSlider.disabled = true;
+          pointsInput.disabled = true;
+        });
+
+        // Xử lý hủy áp dụng điểm
+        cancelPointsBtn.addEventListener('click', function() {
+          appliedPoints = 0;
+          appliedDiscount = 0;
+          
+          // Cập nhật tổng tiền
+          updateTotalWithDiscount();
+          
+          // Xóa thông tin đổi điểm khỏi localStorage
+          localStorage.removeItem('redeemedPoints');
+          
+          // Cập nhật giao diện
+          applyPointsBtn.style.display = 'inline-block';
+          cancelPointsBtn.style.display = 'none';
+          
+          // Kích hoạt lại slider và input
+          pointsSlider.disabled = false;
+          pointsInput.disabled = false;
+        });
+      }
+
+      function getCurrentTotal() {
+        // Lấy tổng tiền từ element
+        const totalText = totalElement.textContent;
+        return parseInt(totalText.replace(/[^\d]/g, '')) || 0;
+      }
+
+      function calculateDiscount(points) {
+        // Tính giảm giá dựa trên số điểm
+        return points * pointsValue / 10; // 10 điểm = 1000đ
+      }
+
+      function updateRedeemValue() {
+        const points = parseInt(pointsInput.value) || 0;
+        const discount = calculateDiscount(points);
+        redeemValueElement.textContent = discount.toLocaleString('vi-VN') + 'đ';
+      }
+
+      function updateTotalWithDiscount() {
+        // Lấy tổng tiền gốc
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        const appliedPromotion = JSON.parse(localStorage.getItem('appliedPromotion') || 'null');
+        
+        let total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        
+        // Áp dụng khuyến mãi nếu có
+        if (appliedPromotion && appliedPromotion.finalTotal) {
+          total = appliedPromotion.finalTotal;
+        }
+        
+        // Áp dụng giảm giá từ điểm thưởng
+        const finalTotal = Math.max(0, total - appliedDiscount);
+        
+        // Cập nhật hiển thị tổng tiền
+        if (totalElement) {
+          totalElement.textContent = `Tổng cộng: ${finalTotal.toLocaleString('vi-VN')}đ`;
+        }
+      }
+    }
   </script>
 </body>
 

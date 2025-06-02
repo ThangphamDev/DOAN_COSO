@@ -1,3 +1,6 @@
+<!-- Thêm script API.js -->
+<script src="/assets/js/api.js"></script>
+
 <header class="main-header">
     <div class="container">
         <div class="logo">
@@ -93,51 +96,41 @@
             const user = authManager.getCurrentUser();
             
             if (authManager.isCustomer()) {
+                // Hiển thị placeholder trước khi có dữ liệu điểm thưởng
+                userActionsDiv.innerHTML = `
+                    <div class="user-dropdown">
+                        <div class="user-greeting">
+                            <i class="fas fa-user"></i>
+                            <span>Xin chào, ${user.fullName}</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="dropdown-content">
+                            <div class="dropdown-item loyalty-points">
+                                <i class="fas fa-star"></i>
+                                <span>Đang tải điểm thưởng...</span>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-item logout-item" onclick="handleLogout()">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Đăng xuất</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
                 
+                // Sau đó lấy và cập nhật điểm thưởng
                 try {
                     const loyaltyPoints = await authManager.getLoyaltyPoints();
-                    userActionsDiv.innerHTML = `
-                        <div class="user-dropdown">
-                            <div class="user-greeting">
-                                <i class="fas fa-user"></i>
-                                <span>Xin chào, ${user.fullName}</span>
-                                <i class="fas fa-chevron-down"></i>
-                            </div>
-                            <div class="dropdown-content">
-                                <div class="dropdown-item loyalty-points">
-                                    <i class="fas fa-star"></i>
-                                    <span>${loyaltyPoints} điểm thưởng</span>
-                                </div>
-                                <div class="dropdown-divider"></div>
-                                <div class="dropdown-item logout-item" onclick="handleLogout()">
-                                    <i class="fas fa-sign-out-alt"></i>
-                                    <span>Đăng xuất</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                    const loyaltyPointsElement = userActionsDiv.querySelector('.loyalty-points span');
+                    if (loyaltyPointsElement) {
+                        loyaltyPointsElement.textContent = `${loyaltyPoints} điểm thưởng`;
+                    }
                 } catch (error) {
                     console.error("Error loading loyalty points:", error);
-                    userActionsDiv.innerHTML = `
-                        <div class="user-dropdown">
-                            <div class="user-greeting">
-                                <i class="fas fa-user"></i>
-                                <span>Xin chào, ${user.fullName}</span>
-                                <i class="fas fa-chevron-down"></i>
-                            </div>
-                            <div class="dropdown-content">
-                                <div class="dropdown-item loyalty-points">
-                                    <i class="fas fa-star"></i>
-                                    <span>0 điểm thưởng</span>
-                                </div>
-                                <div class="dropdown-divider"></div>
-                                <div class="dropdown-item logout-item" onclick="handleLogout()">
-                                    <i class="fas fa-sign-out-alt"></i>
-                                    <span>Đăng xuất</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                    const loyaltyPointsElement = userActionsDiv.querySelector('.loyalty-points span');
+                    if (loyaltyPointsElement) {
+                        loyaltyPointsElement.textContent = `0 điểm thưởng`;
+                    }
                 }
             } else {
                 // For staff/admin, show role in dropdown
