@@ -54,26 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error("Toggle cart button not found");
     }
     
-    fetch('../components/header.html')
-        .then(response => response.text())
-        .then(data => {
-            document.getElementById('header-container').innerHTML = data;
-            // Activate current page in menu after header loads
-            setTimeout(() => {
-                const menuLinks = document.querySelectorAll('.main-nav a');
-                menuLinks.forEach(link => {
-                    if (link.href.includes('menu.html')) {
-                        link.classList.add('active');
-                    }
-                });
-            }, 100);
-        });
-
-    fetch('../components/footer.html')
-        .then(response => response.text())
-        .then(data => {
-            document.getElementById('footer-container').innerHTML = data;
-        });
+    // Components are loaded by load-components.js
     
     if (!document.querySelector('.menu-items')) {
         const menuItems = document.createElement('div');
@@ -730,17 +711,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (orderTotal) {
             orderTotal.textContent = formatPrice(total);
         }
-    }
-    
-    function loadComponent(url, targetId) {
-        fetch(`../components/${url}`)
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById(targetId).innerHTML = data;
-            })
-            .catch(error => {
-                console.error(`Error loading component ${url}:`, error);
-            });
     }
     
     function loadMenuData() {

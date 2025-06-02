@@ -16,49 +16,189 @@
                 <li><a href="/customer/contact.html"><i class="fas fa-envelope"></i> Liên hệ</a></li>
             </ul>
         </nav>
-        <div class="user-actions">
-            <a href="/auth/login.html" class="btn-login">Đăng nhập</a>
-            <a href="/auth/register.html" class="btn-signup">Đăng ký</a>
+        
+        <!-- User actions - will be dynamically updated based on login status -->
+        <div class="user-actions" id="userActions">
+            <!-- Content will be populated by JavaScript -->
         </div>
     </div>
 </header>
 
 <script>
-    // Đóng/mở menu trên thiết bị di động
-    document.getElementById('mobileMenuToggle').addEventListener('click', function() {
-        document.getElementById('mainNav').classList.toggle('active');
+    // Load authentication utility
+    if (typeof window.AuthManager === 'undefined') {
+        const authScript = document.createElement('script');
+        authScript.src = '/assets/js/auth.js';
+        document.head.appendChild(authScript);
         
-        // Đổi icon dựa trên trạng thái
-        const icon = this.querySelector('i');
-        if (icon.classList.contains('fa-bars')) {
-            icon.classList.remove('fa-bars');
-            icon.classList.add('fa-times');
-        } else {
-            icon.classList.remove('fa-times');
-            icon.classList.add('fa-bars');
+        // Wait for auth script to load
+        authScript.onload = function() {
+            initializeHeader();
+        };
+    } else {
+        initializeHeader();
+    }
+
+    function initializeHeader() {
+        // Initialize mobile menu toggle
+        const mobileToggle = document.getElementById('mobileMenuToggle');
+        const mainNav = document.getElementById('mainNav');
+        
+        if (mobileToggle && mainNav) {
+            mobileToggle.addEventListener('click', function() {
+                mainNav.classList.toggle('active');
+                
+                // Change icon based on state
+                const icon = this.querySelector('i');
+                if (icon.classList.contains('fa-bars')) {
+                    icon.classList.remove('fa-bars');
+                    icon.classList.add('fa-times');
+                } else {
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }
+            });
         }
-    });
-    
-    // Xử lý làm nổi bật mục menu đang chọn
-    document.addEventListener('DOMContentLoaded', function() {
-        // Lấy đường dẫn trang hiện tại
-        const currentPath = window.location.pathname;
+
+        // Highlight active menu item
+        highlightActiveMenuItem();
         
-        // Đánh dấu mục menu đang chọn
+        // Update user actions based on authentication status
+        updateUserActions();
+        
+        // Update cart count if on customer pages
+        updateCartCount();
+    }
+
+    function highlightActiveMenuItem() {
+        const currentPath = window.location.pathname;
         const navLinks = document.querySelectorAll('.main-nav a');
+        
         navLinks.forEach(link => {
             const linkPath = link.getAttribute('href');
             if (currentPath === linkPath || currentPath.endsWith(linkPath)) {
                 link.parentElement.classList.add('active');
             }
         });
+    }
+
+    async function updateUserActions() {
+        const userActionsDiv = document.getElementById('userActions');
+        if (!userActionsDiv) return;
+
+        const authManager = window.AuthManager;
         
-        // Lấy số lượng sản phẩm trong giỏ hàng từ localStorage
-        const cart = JSON.parse(localStorage.getItem('cart')) || [];
-        let totalItems = 0;
-        cart.forEach(item => {
-            totalItems += item.quantity;
-        });
-        document.getElementById('cartCount').textContent = totalItems;
+        if (authManager && authManager.isLoggedIn()) {
+            // User is logged in - show user info and logout
+            const user = authManager.getCurrentUser();
+            
+            if (authManager.isCustomer()) {
+                // For customers, show name with dropdown containing loyalty points and logout
+                try {
+                    const loyaltyPoints = await authManager.getLoyaltyPoints();
+                    userActionsDiv.innerHTML = `
+                        <div class="user-dropdown">
+                            <div class="user-greeting">
+                                <i class="fas fa-user"></i>
+                                <span>Xin chào, ${user.fullName}</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="dropdown-content">
+                                <div class="dropdown-item loyalty-points">
+                                    <i class="fas fa-star"></i>
+                                    <span>${loyaltyPoints} điểm</span>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <div class="dropdown-item logout-item" onclick="handleLogout()">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span>Đăng xuất</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } catch (error) {
+                    console.warn('Could not load loyalty points:', error);
+                    userActionsDiv.innerHTML = `
+                        <div class="user-dropdown">
+                            <div class="user-greeting">
+                                <i class="fas fa-user"></i>
+                                <span>Xin chào, ${user.fullName}</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="dropdown-content">
+                                <div class="dropdown-item logout-item" onclick="handleLogout()">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span>Đăng xuất</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else {
+                // For staff/admin, show role in dropdown
+                userActionsDiv.innerHTML = `
+                    <div class="user-dropdown">
+                        <div class="user-greeting">
+                            <i class="fas fa-user"></i>
+                            <span>Xin chào, ${user.fullName}</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="dropdown-content">
+                            <div class="dropdown-item">
+                                <i class="fas fa-id-badge"></i>
+                                <span>Vai trò: ${user.role}</span>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-item logout-item" onclick="handleLogout()">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Đăng xuất</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        } else {
+            // User not logged in - show login/signup buttons
+            userActionsDiv.innerHTML = `
+                <a href="/auth/login.html" class="btn-login">Đăng nhập</a>
+                <a href="/auth/register.html" class="btn-signup">Đăng ký</a>
+            `;
+        }
+    }
+
+    function handleLogout() {
+        if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+            const authManager = window.AuthManager;
+            if (authManager) {
+                authManager.logout();
+            }
+        }
+    }
+
+    function updateCartCount() {
+        const cartCountElement = document.getElementById('cartCount');
+        if (cartCountElement) {
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            let totalItems = 0;
+            cart.forEach(item => {
+                totalItems += item.quantity;
+            });
+            cartCountElement.textContent = totalItems;
+        }
+    }
+
+    // Listen for authentication changes
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'token' || e.key === 'role' || e.key === 'fullName') {
+            // User authentication status changed, update header
+            updateUserActions();
+        }
     });
+
+    // Auto-update loyalty points every 30 seconds for customers
+    if (window.AuthManager && window.AuthManager.isCustomer()) {
+        setInterval(() => {
+            updateUserActions();
+        }, 30000);
+    }
 </script>

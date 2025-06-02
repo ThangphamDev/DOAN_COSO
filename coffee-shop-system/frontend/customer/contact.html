@@ -4,9 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Liên Hệ - T2K Coffee</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/components.css">
+    <link rel="stylesheet" href="../assets/css/contact.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/load-components.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary-color: #7b4f28;
@@ -552,46 +556,6 @@
     <div id="footer-container"></div>
     
     <script>
-        // Load header and footer
-        fetch('../components/header.html')
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById('header-container').innerHTML = data;
-                
-                // Đánh dấu menu đang chọn sau khi header được load
-                const currentPath = window.location.pathname;
-                const navLinks = document.querySelectorAll('.main-nav a');
-                navLinks.forEach(link => {
-                    const linkPath = link.getAttribute('href');
-                    if (currentPath === linkPath || currentPath.endsWith(linkPath)) {
-                        link.parentElement.classList.add('active');
-                    }
-                });
-                
-                // Mobile menu functionality
-                document.getElementById('mobileMenuToggle').addEventListener('click', function() {
-                    document.getElementById('mainNav').classList.toggle('active');
-                    
-                    // Đổi icon dựa trên trạng thái
-                    const icon = this.querySelector('i');
-                    if (icon.classList.contains('fa-bars')) {
-                        icon.classList.remove('fa-bars');
-                        icon.classList.add('fa-times');
-                    } else {
-                        icon.classList.remove('fa-times');
-                        icon.classList.add('fa-bars');
-                    }
-                });
-            })
-            .catch(error => console.error('Error loading header:', error));
-        
-        fetch('../components/footer.html')
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById('footer-container').innerHTML = data;
-            })
-            .catch(error => console.error('Error loading footer:', error));
-        
         // Form Submission
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('contactForm').addEventListener('submit', function(e) {
