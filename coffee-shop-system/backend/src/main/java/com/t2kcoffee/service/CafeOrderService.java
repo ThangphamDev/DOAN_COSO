@@ -6,10 +6,12 @@ import com.t2kcoffee.entity.OrderDetail;
 import com.t2kcoffee.entity.OrderDetailId;
 import com.t2kcoffee.entity.Product;
 import com.t2kcoffee.entity.Payment;
+import com.t2kcoffee.entity.Account;
 import com.t2kcoffee.repository.CafeOrderRepository;
 import com.t2kcoffee.repository.CafeTableRepository;
 import com.t2kcoffee.repository.OrderDetailRepository;
 import com.t2kcoffee.repository.ProductRepository;
+import com.t2kcoffee.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,16 +34,19 @@ public class CafeOrderService {
     private final CafeTableRepository cafeTableRepository;
     private final ProductRepository productRepository;
     private final OrderDetailRepository orderDetailRepository;
+    private final AccountService accountService;
 
     @Autowired
     public CafeOrderService(CafeOrderRepository cafeOrderRepository, 
                            CafeTableRepository cafeTableRepository,
                            ProductRepository productRepository,
-                           OrderDetailRepository orderDetailRepository) {
+                           OrderDetailRepository orderDetailRepository,
+                           AccountService accountService) {
         this.cafeOrderRepository = cafeOrderRepository;
         this.cafeTableRepository = cafeTableRepository;
         this.productRepository = productRepository;
         this.orderDetailRepository = orderDetailRepository;
+        this.accountService = accountService;
     }
 
     public List<CafeOrder> getAllOrders() {
@@ -84,6 +89,11 @@ public class CafeOrderService {
         if (savedOrder.getTable() != null) {
             Integer tableId = savedOrder.getTable().getIdTable();
             cafeTableRepository.updateTableStatus(tableId, "Occupied");
+        }
+        
+        // Tích điểm thưởng cho khách hàng nếu đơn hàng có liên kết với tài khoản
+        if (savedOrder.getAccount() != null && savedOrder.getTotalAmount() != null) {
+            addRewardPointsForOrder(savedOrder);
         }
 
         return savedOrder;
@@ -216,21 +226,24 @@ public class CafeOrderService {
     
     // Thêm phương thức để cập nhật trạng thái đơn hàng
     @Transactional
-    public CafeOrder updateOrderStatus(Integer id, String status) {
-        Optional<CafeOrder> orderOpt = cafeOrderRepository.findById(id);
-        if(orderOpt.isPresent()) {
+    public CafeOrder updateOrderStatus(Integer orderId, String status) {
+        Optional<CafeOrder> orderOpt = cafeOrderRepository.findById(orderId);
+        if (orderOpt.isPresent()) {
             CafeOrder order = orderOpt.get();
+            String oldStatus = order.getStatus();
             order.setStatus(status);
-
-            // Nếu hủy đơn và có bàn, trả bàn về trạng thái Available
-            if (order.getTable() != null && 
-                ("cancelled".equalsIgnoreCase(status) || "canceled".equalsIgnoreCase(status))) {
-                CafeTable table = order.getTable();
-                table.setStatus("Available");
-                cafeTableRepository.save(table);
+            
+            CafeOrder updatedOrder = cafeOrderRepository.save(order);
+            
+            // Nếu đơn hàng chuyển sang trạng thái hoàn thành, tích điểm thưởng cho khách hàng
+            if (("completed".equals(status) || "finished".equals(status)) && 
+                !status.equals(oldStatus) && 
+                updatedOrder.getAccount() != null && 
+                updatedOrder.getTotalAmount() != null) {
+                addRewardPointsForOrder(updatedOrder);
             }
-
-            return cafeOrderRepository.save(order);
+            
+            return updatedOrder;
         }
         return null;
     }
@@ -310,5 +323,28 @@ public class CafeOrderService {
         }
 
         return result;
+    }
+
+    /**
+     * Tích điểm thưởng cho khách hàng dựa trên giá trị đơn hàng
+     * Quy đổi: 1 điểm cho mỗi 10,000 VND
+     */
+    private void addRewardPointsForOrder(CafeOrder order) {
+        if (order.getAccount() == null || order.getTotalAmount() == null) {
+            return;
+        }
+        
+        // Lấy ID tài khoản
+        Integer accountId = order.getAccount().getIdAccount();
+        
+        // Tính số điểm thưởng: 1 điểm cho mỗi 10,000 VND
+        BigDecimal amount = order.getTotalAmount();
+        BigDecimal pointsPerUnit = new BigDecimal("10000");
+        Integer points = amount.divide(pointsPerUnit, 0, BigDecimal.ROUND_DOWN).intValue();
+        
+        if (points > 0) {
+            // Gọi service để thêm điểm thưởng
+            accountService.addRewardPoints(accountId, points);
+        }
     }
 } 

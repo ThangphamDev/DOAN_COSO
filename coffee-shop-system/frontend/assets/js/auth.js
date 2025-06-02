@@ -47,26 +47,17 @@ class AuthManager {
         }
 
         try {
-            // Fetch user's orders to calculate loyalty points
-            const response = await fetch(`http://localhost:8081/api/orders/account/${this.userId}`);
+            // Fetch user's reward points directly from account
+            const response = await fetch(`http://localhost:8081/api/accounts/${this.userId}/reward-points`);
             if (!response.ok) {
-                console.warn('Could not fetch user orders for loyalty points');
+                console.warn('Could not fetch user reward points');
                 return 0;
             }
 
-            const orders = await response.json();
-            
-            // Calculate loyalty points: 1 point per 1000 VND spent (completed orders only)
-            let totalSpent = 0;
-            orders.forEach(order => {
-                if (order.status === 'completed' || order.status === 'finished') {
-                    totalSpent += parseFloat(order.totalAmount || 0);
-                }
-            });
-
-            return Math.floor(totalSpent / 1000); // 1 point per 1000 VND
+            const data = await response.json();
+            return data.rewardPoints || 0;
         } catch (error) {
-            console.warn('Error calculating loyalty points:', error);
+            console.warn('Error fetching loyalty points:', error);
             return 0;
         }
     }

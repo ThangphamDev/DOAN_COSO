@@ -62,6 +62,18 @@
               </div>
             </div>
             
+            <!-- Thông báo tích điểm thưởng -->
+            <div class="reward-points-container">
+              <div class="reward-points-icon">
+                <i class="fas fa-gift"></i>
+              </div>
+              <div class="reward-points-info">
+                <h4>Tích điểm thưởng</h4>
+                <p>Bạn sẽ nhận được <span id="estimatedPoints">0</span> điểm thưởng cho đơn hàng này.</p>
+                <p class="reward-points-note">Mỗi 10,000đ = 1 điểm thưởng</p>
+              </div>
+            </div>
+            
             <div class="payment-methods">
               <h3>Phương Thức Thanh Toán</h3>
               <div class="payment-options">
@@ -119,10 +131,20 @@
     // Đảm bảo tải components khi trang đã tải xong
     document.addEventListener('DOMContentLoaded', function() {
         // Load header và footer
-        loadComponent('../components/header.html', 'header-container');
+        loadComponent('../components/header.html', 'header-container')
+            .then(() => {
+                // Sau khi tải header (nơi chứa AuthManager), gọi hàm cập nhật điểm thưởng
+                // Chờ 1 giây để đảm bảo AuthManager đã được khởi tạo
+                setTimeout(() => {
+                    if (typeof updateEstimatedRewardPoints === 'function') {
+                        updateEstimatedRewardPoints();
+                    }
+                }, 1000);
+            });
         loadComponent('../components/footer.html', 'footer-container');
     });
   </script>
+  <script src="../assets/js/auth.js"></script>
   <script src="../assets/js/checkout.js"></script>
   
   <!-- CSS cho phần mã khuyến mãi -->
@@ -198,6 +220,45 @@
     .discount-amount {
       font-weight: bold;
       color: #e67e22;
+    }
+    
+    /* CSS cho phần tích điểm thưởng */
+    .reward-points-container {
+      margin: 20px 0;
+      padding: 15px;
+      border: 1px solid #27ae60;
+      border-radius: 8px;
+      background-color: #f0fff4;
+      display: flex;
+      align-items: center;
+    }
+    
+    .reward-points-icon {
+      font-size: 24px;
+      color: #27ae60;
+      margin-right: 15px;
+    }
+    
+    .reward-points-info h4 {
+      margin: 0 0 5px 0;
+      color: #27ae60;
+      font-size: 16px;
+    }
+    
+    .reward-points-info p {
+      margin: 0;
+      font-size: 14px;
+    }
+    
+    .reward-points-note {
+      font-size: 12px !important;
+      color: #666;
+      margin-top: 5px !important;
+    }
+    
+    #estimatedPoints {
+      font-weight: bold;
+      color: #27ae60;
     }
   </style>
   

@@ -120,6 +120,57 @@ public class AccountController {
         }
     }
 
+    @GetMapping("/{id}/reward-points")
+    public ResponseEntity<Map<String, Object>> getRewardPoints(@PathVariable Integer id) {
+        Integer points = accountService.getRewardPoints(id);
+        Map<String, Object> response = new HashMap<>();
+        response.put("accountId", id);
+        response.put("rewardPoints", points);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PutMapping("/{id}/reward-points/add")
+    public ResponseEntity<Map<String, Object>> addRewardPoints(
+            @PathVariable Integer id,
+            @RequestBody Map<String, Integer> pointsData) {
+        
+        Integer pointsToAdd = pointsData.get("points");
+        if (pointsToAdd == null || pointsToAdd <= 0) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        
+        accountService.addRewardPoints(id, pointsToAdd);
+        
+        // Lấy số điểm mới sau khi cập nhật
+        Integer updatedPoints = accountService.getRewardPoints(id);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("accountId", id);
+        response.put("pointsAdded", pointsToAdd);
+        response.put("totalPoints", updatedPoints);
+        
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    
+    @PutMapping("/{id}/reward-points")
+    public ResponseEntity<Map<String, Object>> updateRewardPoints(
+            @PathVariable Integer id,
+            @RequestBody Map<String, Integer> pointsData) {
+        
+        Integer newPoints = pointsData.get("points");
+        if (newPoints == null || newPoints < 0) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        
+        accountService.updateRewardPoints(id, newPoints);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("accountId", id);
+        response.put("rewardPoints", newPoints);
+        
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
         String username = credentials.get("userName");

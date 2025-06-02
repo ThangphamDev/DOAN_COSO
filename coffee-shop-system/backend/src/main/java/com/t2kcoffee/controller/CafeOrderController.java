@@ -4,8 +4,10 @@ import com.t2kcoffee.entity.CafeOrder;
 import com.t2kcoffee.entity.OrderDetail;
 import com.t2kcoffee.entity.Product;
 import com.t2kcoffee.entity.Payment;
+import com.t2kcoffee.entity.Account;
 import com.t2kcoffee.service.CafeOrderService;
 import com.t2kcoffee.service.ProductService;
+import com.t2kcoffee.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -27,11 +29,13 @@ public class CafeOrderController {
 
     private final CafeOrderService cafeOrderService;
     private final ProductService productService;
+    private final AccountService accountService;
 
     @Autowired
-    public CafeOrderController(CafeOrderService cafeOrderService, ProductService productService) {
+    public CafeOrderController(CafeOrderService cafeOrderService, ProductService productService, AccountService accountService) {
         this.cafeOrderService = cafeOrderService;
         this.productService = productService;
+        this.accountService = accountService;
     }
 
     @GetMapping("/today")
@@ -107,6 +111,23 @@ public class CafeOrderController {
                         } catch (NumberFormatException e) {
                             System.out.println("DEBUG - Error parsing table ID: " + idTableObj.toString());
                         }
+                    }
+                }
+            }
+            
+            // Thiết lập tài khoản người dùng nếu có
+            if (requestData.containsKey("accountId")) {
+                Object accountIdObj = requestData.get("accountId");
+                if (accountIdObj != null) {
+                    try {
+                        Integer accountId = Integer.parseInt(accountIdObj.toString());
+                        Optional<Account> accountOpt = accountService.getAccountById(accountId);
+                        if (accountOpt.isPresent()) {
+                            order.setAccount(accountOpt.get());
+                            System.out.println("DEBUG - Đơn hàng được liên kết với tài khoản: " + accountId);
+                        }
+                    } catch (NumberFormatException e) {
+                        System.out.println("DEBUG - Error parsing account ID: " + accountIdObj.toString());
                     }
                 }
             }

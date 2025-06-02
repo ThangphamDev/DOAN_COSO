@@ -134,4 +134,42 @@ public class AccountService {
         Files.copy(file.getInputStream(), targetLocation);
         return fileName;
     }
+
+    @Transactional
+    public void addRewardPoints(Integer accountId, Integer points) {
+        if (points <= 0) {
+            return; // Không thêm điểm nếu số điểm <= 0
+        }
+        
+        Optional<Account> accountOpt = getAccountById(accountId);
+        if (accountOpt.isPresent()) {
+            Account account = accountOpt.get();
+            Integer currentPoints = account.getRewardPoints() != null ? account.getRewardPoints() : 0;
+            account.setRewardPoints(currentPoints + points);
+            accountRepository.save(account);
+        }
+    }
+    
+    @Transactional
+    public void updateRewardPoints(Integer accountId, Integer newPoints) {
+        if (newPoints < 0) {
+            newPoints = 0; // Đảm bảo điểm không âm
+        }
+        
+        Optional<Account> accountOpt = getAccountById(accountId);
+        if (accountOpt.isPresent()) {
+            Account account = accountOpt.get();
+            account.setRewardPoints(newPoints);
+            accountRepository.save(account);
+        }
+    }
+    
+    public Integer getRewardPoints(Integer accountId) {
+        Optional<Account> accountOpt = getAccountById(accountId);
+        if (accountOpt.isPresent()) {
+            Account account = accountOpt.get();
+            return account.getRewardPoints() != null ? account.getRewardPoints() : 0;
+        }
+        return 0;
+    }
 }
