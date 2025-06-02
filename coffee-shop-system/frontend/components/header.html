@@ -93,7 +93,7 @@
             const user = authManager.getCurrentUser();
             
             if (authManager.isCustomer()) {
-                // For customers, show name with dropdown containing loyalty points and logout
+                
                 try {
                     const loyaltyPoints = await authManager.getLoyaltyPoints();
                     userActionsDiv.innerHTML = `

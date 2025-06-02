@@ -283,7 +283,7 @@ body {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     overflow-y: auto;
     max-height: calc(100vh - 150px);
-    width: 260px; /* Giảm kích thước giỏ hàng */
+    width: 260px; 
     z-index: 1000;
     transition: all 0.3s ease;
     border: 1px solid rgba(0,0,0,0.08);
@@ -561,10 +561,10 @@ body {
     }
     
     .toggle-cart {
-        width: 50px;
-        height: 50px;
-        bottom: 15px;
-        right: 15px;
+        bottom: 30px;
+        right: 20px;
+        width: 55px;
+        height: 55px;
     }
     
     .toggle-cart i {
@@ -596,10 +596,10 @@ body {
     }
     
     .toggle-cart {
+        bottom: 25px;
+        right: 15px;
         width: 50px;
         height: 50px;
-        bottom: 15px;
-        right: 15px;
     }
     
     .toggle-cart i {
@@ -775,7 +775,7 @@ html {
 /* Toggle cart button for mobile */
 .toggle-cart {
     position: fixed;
-    bottom: 20px;
+    bottom: 60px;
     right: 20px;
     width: 50px;
     height: 50px;
@@ -862,7 +862,7 @@ html {
 .toggle-cart {
     cursor: pointer;
     position: fixed;
-    bottom: 20px;
+    bottom: 60px;
     right: 20px;
     width: 60px;
     height: 60px;
