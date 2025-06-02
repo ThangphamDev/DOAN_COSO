@@ -363,7 +363,74 @@
     <script src="../assets/js/main.js"></script>
     <script src="../assets/js/admin.js"></script>
     <script src="../assets/js/api-client.js"></script>
+    <script src="../assets/js/api.js"></script>
     <script src="../assets/js/admin-core.js"></script>
+    <script src="../assets/js/sidebar.js"></script>
+    <script>
+        // Kiểm tra xem Chart.js đã được tải hay chưa
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js chưa được tải. Tải lại từ CDN...');
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+            script.onload = function() {
+                console.log('Chart.js đã được tải thành công');
+                // Tải dashboard-admin.js sau khi Chart.js đã tải xong
+                const dashboardScript = document.createElement('script');
+                dashboardScript.src = '../assets/js/dashboard-admin.js';
+                document.body.appendChild(dashboardScript);
+            };
+            script.onerror = function() {
+                console.error('Không thể tải Chart.js từ CDN');
+                alert('Không thể tải thư viện biểu đồ. Vui lòng làm mới trang.');
+            };
+            document.body.appendChild(script);
+        } else {
+            console.log('Chart.js đã được tải sẵn');
+        }
+    </script>
+    <script src="../assets/js/dashboard-admin.js"></script>
+    
+    <!-- Token Handler Script -->
+    <script>
+        // Script để đảm bảo token được gửi đúng cách với mỗi request
+        document.addEventListener('DOMContentLoaded', function() {
+            // Kiểm tra token
+            const token = localStorage.getItem('token');
+            const role = localStorage.getItem('role');
+            
+            console.log("Current auth status:", {
+                hasToken: !!token,
+                tokenFirstChars: token ? token.substring(0, 15) + '...' : 'none',
+                role: role || 'none'
+            });
+            
+            if (!token) {
+                console.warn("No token found! Redirecting to login page...");
+                window.location.href = '../login.html';
+                return;
+            }
+            
+            // Thêm interceptor cho tất cả các fetch requests
+            const originalFetch = window.fetch;
+            window.fetch = function(url, options = {}) {
+                // Tạo options nếu không có
+                options = options || {};
+                // Tạo headers nếu không có
+                options.headers = options.headers || {};
+                
+                // Chỉ thêm token nếu URL là API endpoint
+                if (typeof url === 'string' && (url.includes('/api/') || url.includes('localhost:8081'))) {
+                    // Thêm token vào header
+                    options.headers['Authorization'] = `Bearer ${token}`;
+                    console.log(`Added token to request: ${url}`);
+                }
+                
+                return originalFetch(url, options);
+            };
+            
+            console.log("Fetch interceptor installed for API requests");
+        });
+    </script>
 </body>
 
 </html>

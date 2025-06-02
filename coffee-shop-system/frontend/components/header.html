@@ -19,6 +19,7 @@
         <div class="user-actions">
             <a href="/auth/login.html" class="btn-login">Đăng nhập</a>
             <a href="/auth/register.html" class="btn-signup">Đăng ký</a>
+            
         </div>
     </div>
 </header>
@@ -39,10 +40,141 @@
         }
     });
     
-    // Xử lý làm nổi bật mục menu đang chọn
-    document.addEventListener('DOMContentLoaded', function() {
+    // Xử lý làm nổi bật mục menu đang chọn và kiểm tra đăng nhập
+    function updateHeader() {
+        console.log("Đang cập nhật header...");
+        
+        // Kiểm tra xem người dùng đã đăng nhập chưa
+        const token = localStorage.getItem('token');
+        const fullName = localStorage.getItem('fullName');
+        const userId = localStorage.getItem('userId');
+        const userActions = document.querySelector('.user-actions');
+        
+        console.log("Token:", token ? "Có" : "Không");
+        console.log("FullName:", fullName);
+        console.log("UserId:", userId);
+        
+        if (token && fullName) {
+            console.log("Người dùng đã đăng nhập, cập nhật UI");
+            // Lấy điểm thưởng từ localStorage hoặc API
+            const rewardPoints = localStorage.getItem('rewardPoints') || '0';
+            
+            // Người dùng đã đăng nhập
+            userActions.innerHTML = `
+                <div class="user-menu-wrapper">
+                    <div class="user-menu-trigger">
+                        <i class="fas fa-user-circle"></i>
+                        <span>${fullName}</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="user-dropdown">
+                        <div class="user-info">
+                            <div class="user-name">${fullName}</div>
+                            <div class="reward-points"><i class="fas fa-star"></i> ${rewardPoints} điểm</div>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <a href="/customer/profile.html"><i class="fas fa-user"></i> Thông tin cá nhân</a>
+                        <a href="/customer/orders.html"><i class="fas fa-shopping-bag"></i> Đơn hàng của tôi</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="/" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                    </div>
+                </div>
+                <a href="customer/cart.html" class="btn-cart">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count" id="cartCount">0</span>
+                </a>
+            `;
+            
+            // Xử lý sự kiện đăng xuất
+            document.getElementById('logoutBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log("Đăng xuất...");
+                localStorage.removeItem('token');
+                localStorage.removeItem('role');
+                localStorage.removeItem('userId');
+                localStorage.removeItem('fullName');
+                localStorage.removeItem('rewardPoints');
+                window.location.href = 'index.html';
+            });
+            
+            // Xử lý hiển thị dropdown
+            const userMenuTrigger = document.querySelector('.user-menu-trigger');
+            const userDropdown = document.querySelector('.user-dropdown');
+            
+            userMenuTrigger.addEventListener('click', function() {
+                userDropdown.classList.toggle('active');
+            });
+            
+            // Đóng dropdown khi click ra ngoài
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.user-menu-wrapper')) {
+                    userDropdown.classList.remove('active');
+                }
+            });
+            
+            // Nếu có API endpoint để lấy thông tin người dùng, gọi API để cập nhật điểm thưởng
+            if (userId) {
+                console.log("Đang gọi API để lấy thông tin người dùng với userId:", userId);
+                // Sử dụng userId để lấy thông tin người dùng
+                fetch(`http://localhost:8081/api/accounts/me?userId=${userId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => {
+                    console.log("API response status:", response.status);
+                    if (response.ok) return response.json();
+                    throw new Error(`Không thể lấy thông tin người dùng (${response.status})`);
+                })
+                .then(userData => {
+                    console.log("Dữ liệu người dùng:", userData);
+                    if (userData && userData.rewardPoints !== undefined) {
+                        // Cập nhật điểm thưởng vào localStorage và UI
+                        localStorage.setItem('rewardPoints', userData.rewardPoints);
+                        const pointsElement = document.querySelector('.reward-points');
+                        if (pointsElement) {
+                            pointsElement.innerHTML = `<i class="fas fa-star"></i> ${userData.rewardPoints} điểm`;
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Lỗi khi lấy thông tin người dùng:', error);
+                    // Thử lại với token trong header
+                    fetch('http://localhost:8081/api/accounts/me', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        if (response.ok) return response.json();
+                        throw new Error(`Không thể lấy thông tin người dùng với token (${response.status})`);
+                    })
+                    .then(userData => {
+                        console.log("Dữ liệu người dùng (từ token):", userData);
+                        if (userData && userData.rewardPoints !== undefined) {
+                            localStorage.setItem('rewardPoints', userData.rewardPoints);
+                            const pointsElement = document.querySelector('.reward-points');
+                            if (pointsElement) {
+                                pointsElement.innerHTML = `<i class="fas fa-star"></i> ${userData.rewardPoints} điểm`;
+                            }
+                        }
+                    })
+                    .catch(secondError => {
+                        console.error('Lỗi khi lấy thông tin người dùng với token:', secondError);
+                    });
+                });
+            }
+        } else {
+            console.log("Người dùng chưa đăng nhập");
+        }
+        
         // Lấy đường dẫn trang hiện tại
         const currentPath = window.location.pathname;
+        console.log("Đường dẫn hiện tại:", currentPath);
         
         // Đánh dấu mục menu đang chọn
         const navLinks = document.querySelectorAll('.main-nav a');
@@ -59,6 +191,134 @@
         cart.forEach(item => {
             totalItems += item.quantity;
         });
-        document.getElementById('cartCount').textContent = totalItems;
+        const cartCountElement = document.getElementById('cartCount');
+        if (cartCountElement) {
+            cartCountElement.textContent = totalItems;
+        }
+    }
+    
+    // Gọi hàm cập nhật header khi trang được tải
+    document.addEventListener('DOMContentLoaded', updateHeader);
+    
+    // Thêm sự kiện lắng nghe thay đổi localStorage để cập nhật header khi đăng nhập/đăng xuất
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'token' || e.key === 'fullName') {
+            console.log("Phát hiện thay đổi localStorage:", e.key);
+            updateHeader();
+        }
     });
+    
+    // Kiểm tra lại sau 1 giây để đảm bảo header được cập nhật
+    setTimeout(updateHeader, 1000);
 </script>
+
+<style>
+    /* Styles cho user menu */
+    .user-menu-wrapper {
+        position: relative;
+    }
+    
+    .user-menu-trigger {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        padding: 8px 12px;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+    }
+    
+    .user-menu-trigger:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .user-dropdown {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: rgb(255, 255, 255);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        border-radius: 4px;
+        width: 220px;
+        z-index: 100;
+        display: none;
+    }
+    
+    .user-dropdown.active {
+        display: block;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    .user-dropdown a {
+        display: block;
+        padding: 12px 16px;
+        color: #333;
+        text-decoration: none;
+        transition: background-color 0.3s;
+    }
+    
+    .user-dropdown a:hover {
+        background-color: #f5f5f5;
+    }
+    
+    .dropdown-divider {
+        height: 1px;
+        background-color: #eee;
+        margin: 8px 0;
+    }
+    
+    .user-info {
+        padding: 12px 16px;
+        background-color: #6487b6;
+        border-radius: 4px 4px 0 0;
+    }
+    
+    .user-name {
+        font-weight: bold;
+        margin-bottom: 4px;
+    }
+    
+    .reward-points {
+        font-size: 0.9em;
+        color: #e67e22;
+    }
+    
+    .reward-points i {
+        color: gold;
+    }
+    
+    /* Styles cho giỏ hàng */
+    .btn-cart {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background-color: #e67e22;
+        color: white;
+        border-radius: 50%;
+        text-decoration: none;
+        margin-left: 10px;
+    }
+    
+    .cart-count {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background-color: #e74c3c;
+        color: white;
+        font-size: 12px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>

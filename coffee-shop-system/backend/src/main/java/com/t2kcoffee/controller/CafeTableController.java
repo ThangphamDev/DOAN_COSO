@@ -5,6 +5,7 @@ import com.t2kcoffee.service.CafeTableService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -54,12 +55,14 @@ public class CafeTableController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF')")
     public ResponseEntity<CafeTable> createTable(@RequestBody CafeTable cafeTable) {
         CafeTable savedTable = cafeTableService.saveTable(cafeTable);
         return new ResponseEntity<>(savedTable, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF')")
     public ResponseEntity<CafeTable> updateTable(@PathVariable Integer id, @RequestBody CafeTable cafeTable) {
         Optional<CafeTable> existingTable = cafeTableService.getTableById(id);
         if (existingTable.isPresent()) {
@@ -72,6 +75,7 @@ public class CafeTableController {
     }
 
     @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF')")
     public ResponseEntity<CafeTable> updateTableStatus(
             @PathVariable Integer id, 
             @RequestParam String status) {
@@ -85,6 +89,7 @@ public class CafeTableController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<Void> deleteTable(@PathVariable Integer id) {
         Optional<CafeTable> table = cafeTableService.getTableById(id);
         if (table.isPresent()) {

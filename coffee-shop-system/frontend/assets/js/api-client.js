@@ -32,25 +32,47 @@ async function fetchApi(endpoint, options = {}) {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      mode: 'cors' // Thêm chế độ CORS
+      mode: 'cors', // Sử dụng CORS
+      credentials: 'include' // Luôn gửi credentials để hỗ trợ xác thực
     };
 
     // Kết hợp options mặc định với options được cung cấp
     const fetchOptions = { ...defaultOptions, ...options };
     
-    // Nếu có token trong localStorage, thêm vào header
+    // Kiểm tra xem endpoint có phải là API công khai không
+    const isPublicAPI = 
+      endpoint.includes('/tables') || 
+      endpoint.includes('/products') || 
+      endpoint.includes('/promotions') ||
+      endpoint.includes('/accounts/login') ||
+      endpoint.includes('/accounts/register');
+    
+    // Nếu có token trong localStorage và endpoint không phải là API công khai, thêm vào header
     const token = localStorage.getItem('token');
-    if (token) {
+    if (token && !isPublicAPI) {
+      // Log token để debug (chỉ hiển thị 20 ký tự đầu tiên)
+      console.log(`Token found, adding to authenticated request: ${endpoint}`);
+      console.log(`Token: ${token.substring(0, 20)}...`);
+      
       fetchOptions.headers.Authorization = `Bearer ${token}`;
+    } else if (isPublicAPI) {
+      console.log(`Public API request, no token needed: ${endpoint}`);
     }
 
-    console.log(`Gọi API: ${API_BASE_URL}${endpoint}`, fetchOptions);
+    console.log(`Gọi API: ${API_BASE_URL}${endpoint}`, { 
+      method: fetchOptions.method,
+      headers: Object.keys(fetchOptions.headers),
+      credentials: fetchOptions.credentials,
+      isPublicAPI: isPublicAPI
+    });
     
     // Gọi API
     const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
     
     // Xử lý lỗi HTTP
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`HTTP error! Status: ${response.status}, Details:`, errorText);
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
 

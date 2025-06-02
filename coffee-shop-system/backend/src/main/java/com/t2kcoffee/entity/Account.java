@@ -35,6 +35,9 @@ public class Account {
     @Column(name = "role")
     private String role;
     
+    @Column(name = "reward_points")
+    private Integer rewardPoints = 0;
+    
     @JsonIgnore
     @OneToMany(mappedBy = "account")
     private List<CafeOrder> orders;

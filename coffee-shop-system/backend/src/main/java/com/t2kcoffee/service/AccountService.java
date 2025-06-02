@@ -4,6 +4,11 @@ import com.t2kcoffee.entity.Account;
 import com.t2kcoffee.repository.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,13 +25,19 @@ import java.util.UUID;
 public class AccountService {
 
     private final AccountRepository accountRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
 
     @Value("${app.upload.dir}")
     private String uploadDir;
 
     @Autowired
-    public AccountService(AccountRepository accountRepository) {
+    public AccountService(AccountRepository accountRepository, 
+                         PasswordEncoder passwordEncoder,
+                         AuthenticationManager authenticationManager) {
         this.accountRepository = accountRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
     }
 
     public List<Account> getAllAccounts() {
@@ -41,19 +52,33 @@ public class AccountService {
         return accountRepository.findByUserName(username);
     }
 
-    public boolean authenticate(String username, String password) {
-        Optional<Account> accountOpt = accountRepository.findByUserName(username);
-        
-        if (accountOpt.isPresent()) {
-            Account account = accountOpt.get();
-            return password.equals(account.getPassWord());
-        }
-        
-        return false;
+    public Authentication authenticate(String username, String password) throws AuthenticationException {
+        return authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(username, password)
+        );
     }
 
     @Transactional
     public Account saveAccount(Account account) {
+        // Mã hóa mật khẩu trước khi lưu
+        account.setPassWord(passwordEncoder.encode(account.getPassWord()));
+        return accountRepository.save(account);
+    }
+    
+    @Transactional
+    public Account registerUser(Account account) {
+        // Kiểm tra xem username đã tồn tại chưa
+        if (accountRepository.findByUserName(account.getUserName()).isPresent()) {
+            throw new RuntimeException("Username is already taken!");
+        }
+        
+        // Đặt role mặc định là USER nếu không được chỉ định
+        if (account.getRole() == null || account.getRole().isEmpty()) {
+            account.setRole("USER");
+        }
+        
+        // Mã hóa mật khẩu và lưu account
+        account.setPassWord(passwordEncoder.encode(account.getPassWord()));
         return accountRepository.save(account);
     }
 
@@ -65,16 +90,16 @@ public class AccountService {
             existingAccount.setUserName(accountDetails.getUserName());
             existingAccount.setFullName(accountDetails.getFullName());
             
-            // Only update password if provided
+            // Chỉ cập nhật mật khẩu nếu được cung cấp và mã hóa trước khi lưu
             if (accountDetails.getPassWord() != null && !accountDetails.getPassWord().isEmpty()) {
-                existingAccount.setPassWord(accountDetails.getPassWord());
+                existingAccount.setPassWord(passwordEncoder.encode(accountDetails.getPassWord()));
             }
             
             existingAccount.setPhone(accountDetails.getPhone());
             existingAccount.setAddress(accountDetails.getAddress());
             existingAccount.setRole(accountDetails.getRole());
             
-            // Only update image if provided
+            // Chỉ cập nhật ảnh nếu được cung cấp
             if (accountDetails.getImage() != null) {
                 existingAccount.setImage(accountDetails.getImage());
             }
@@ -93,7 +118,7 @@ public class AccountService {
             Account account = accountOpt.get();
             if (userName != null) account.setUserName(userName);
             if (fullName != null) account.setFullName(fullName);
-            if (password != null && !password.isEmpty()) account.setPassWord(password);
+            if (password != null && !password.isEmpty()) account.setPassWord(passwordEncoder.encode(password));
             if (phone != null) account.setPhone(phone);
             if (address != null) account.setAddress(address);
             if (role != null) account.setRole(role);

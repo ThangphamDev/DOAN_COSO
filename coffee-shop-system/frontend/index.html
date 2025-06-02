@@ -670,6 +670,58 @@
             });
         });
     </script>
+    
+    <!-- Token Handler Script -->
+    <script>
+        // Script để đảm bảo token được gửi đúng cách với mỗi request
+        document.addEventListener('DOMContentLoaded', function() {
+            // Kiểm tra token
+            const token = localStorage.getItem('token');
+            const role = localStorage.getItem('role');
+            
+            if (token) {
+                console.log("Current auth status:", {
+                    hasToken: true,
+                    tokenFirstChars: token.substring(0, 15) + '...',
+                    role: role || 'none'
+                });
+                
+                // Thêm interceptor cho tất cả các fetch requests
+                const originalFetch = window.fetch;
+                window.fetch = function(url, options = {}) {
+                    // Tạo options nếu không có
+                    options = options || {};
+                    // Tạo headers nếu không có
+                    options.headers = options.headers || {};
+                    
+                    // Chỉ thêm token nếu URL là API endpoint yêu cầu xác thực
+                    // Không gửi token cho các API công khai: bàn, khuyến mãi, sản phẩm, đăng nhập, đăng ký
+                    if (typeof url === 'string' && (url.includes('/api/') || url.includes('localhost:8081'))) {
+                        // Kiểm tra nếu là API công khai
+                        const isPublicAPI = 
+                            url.includes('/api/tables') || 
+                            url.includes('/api/products') || 
+                            url.includes('/api/promotions') ||
+                            url.includes('/api/categories') ||
+                            url.includes('/api/accounts/login') ||
+                            url.includes('/api/accounts/register');
+                        
+                        // Chỉ thêm token nếu không phải là API công khai
+                        if (!isPublicAPI) {
+                            options.headers['Authorization'] = `Bearer ${token}`;
+                            console.log(`Added token to authenticated request: ${url}`);
+                        } else {
+                            console.log(`Public API request, no token needed: ${url}`);
+                        }
+                    }
+                    
+                    return originalFetch(url, options);
+                };
+                
+                console.log("Fetch interceptor installed for API requests");
+            }
+        });
+    </script>
 </body>
 
 </html>

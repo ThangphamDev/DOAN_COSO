@@ -307,36 +307,42 @@ async function completeTransferPayment(order) {
         // Kiểm tra kết nối API
         const apiStatus = await window.CafeAPI.checkApiConnection();
         let orderId;
+
         if (apiStatus.available) {
             try {
+                // Chuẩn bị dữ liệu đơn hàng cho server
                 const serverOrder = {
                     totalAmount: totalAmount,
                     note: order.notes,
                     status: "processing",
-                    orderTime: order.orderTime || new Date().toISOString(),
+                    orderTime: new Date().toISOString(),
                     payment: {
                         paymentMethod: "transfer",
-                        paymentStatus: "pending",
+                        paymentStatus: "completed", // Đã thanh toán
                         createAt: new Date().toISOString(),
                         amount: totalAmount
                     }
-                };                // Thêm thông tin bàn
-                if (order.tableNumber && order.tableNumber !== 'takeaway' && order.tableNumber !== 'tại chỗ') {
-                    serverOrder.table = {
-                        idTable: parseInt(order.tableNumber)
-                    };
-                } else if (order.tableNumber === 'takeaway') {
-                    serverOrder.table = {
-                        idTable: "takeaway",
-                        tableNumber: "takeaway"
-                    };
+                };
+                
+                // Thêm thông tin bàn
+                if (order.tableNumber && order.tableNumber !== 'takeaway' && order.tableNumber !== '') {
+                    try {
+                        const tableId = parseInt(order.tableNumber);
+                        if (!isNaN(tableId)) {
+                            serverOrder.table = {
+                                idTable: tableId
+                            };
+                        } else {
+                            serverOrder.table = null;
+                        }
+                    } catch (e) {
+                        console.error("Error parsing table ID:", e);
+                        serverOrder.table = null;
+                    }
                 } else {
-                    // Trường hợp "tại chỗ" hoặc không chọn bàn cụ thể
-                    serverOrder.table = {
-                        idTable: "tại chỗ",
-                        tableNumber: "tại chỗ"
-                    };
+                    serverOrder.table = null; // Không có bàn hoặc mang đi
                 }
+                
                 // Thêm sản phẩm
                 if (order.cart && order.cart.length > 0) {
                     serverOrder.productItems = order.cart.map(item => ({
@@ -396,17 +402,36 @@ function prepareOrderData() {
     // Tính tổng tiền gốc (chưa giảm giá)
     const originalTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     // Tính tổng tiền sau giảm giá
-    const totalAmount = appliedPromotion && appliedPromotion.finalTotal ? appliedPromotion.finalTotal : originalTotal;    return {
-        tableNumber: document.getElementById("tableNumber").value || "tại chỗ",
-        notes: document.getElementById("notes").value,
+    const totalAmount = appliedPromotion && appliedPromotion.finalTotal ? appliedPromotion.finalTotal : originalTotal;
+    
+    // Lấy thông tin bàn
+    const tableNumber = document.getElementById("tableNumber").value || "";
+    
+    // Lấy ghi chú đơn hàng
+    const notes = document.getElementById("notes").value || "";
+    
+    // Lấy phương thức thanh toán
+    const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+    
+    console.log("Thông tin đơn hàng: ", {
+        tableNumber: tableNumber, 
+        notes: notes,
+        totalAmount: totalAmount,
+        paymentMethod: paymentMethod
+    });
+    
+    return {
+        tableNumber: tableNumber,
+        notes: notes,
         cart: cart,
         orderTime: new Date().toISOString(),
         originalTotal: originalTotal,
         totalAmount: totalAmount,
-        paymentMethod: document.querySelector('input[name="payment"]:checked').value,
+        paymentMethod: paymentMethod,
         promoCode: appliedPromotion ? appliedPromotion.code : null,
         discountAmount: appliedPromotion ? appliedPromotion.discountAmount : 0,
-        finalTotal: appliedPromotion ? appliedPromotion.finalTotal : totalAmount
+        finalTotal: appliedPromotion ? appliedPromotion.finalTotal : totalAmount,
+        status: "processing"
     };
 }
 
@@ -474,22 +499,31 @@ function setupPlaceOrder() {
                                 amount: order.finalTotal || order.totalAmount
                             }
                         };
-                          // Thêm thông tin bàn
-                        if (order.tableNumber && order.tableNumber !== 'takeaway' && order.tableNumber !== 'tại chỗ') {
-                            serverOrder.table = {
-                                idTable: parseInt(order.tableNumber)
-                            };
+                        
+                        // Thêm thông tin bàn
+                        if (order.tableNumber && order.tableNumber !== 'takeaway' && order.tableNumber !== 'tại chỗ' && order.tableNumber !== '') {
+                            try {
+                                // Thử chuyển đổi sang số
+                                const tableId = parseInt(order.tableNumber);
+                                if (!isNaN(tableId)) {
+                                    serverOrder.table = {
+                                        idTable: tableId
+                                    };
+                                } else {
+                                    // Nếu không chuyển được, sử dụng giá trị gốc
+                                    serverOrder.table = {
+                                        idTable: order.tableNumber
+                                    };
+                                }
+                            } catch (e) {
+                                console.error("Error parsing table number:", e);
+                                serverOrder.table = {
+                                    idTable: order.tableNumber
+                                };
+                            }
                         } else if (order.tableNumber === 'takeaway') {
-                            serverOrder.table = {
-                                idTable: "takeaway",
-                                tableNumber: "takeaway"
-                            };
-                        } else {
-                            // Trường hợp "tại chỗ" hoặc không chọn bàn cụ thể
-                            serverOrder.table = {
-                                idTable: "tại chỗ",
-                                tableNumber: "tại chỗ"
-                            };
+                            // Không thêm thông tin bàn cho takeaway
+                            serverOrder.table = null;
                         }
                         
                         // Thêm thông tin sản phẩm

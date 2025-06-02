@@ -33,20 +33,30 @@ function checkAdminAuthentication() {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
     
-    if (!token || !role || !role.toLowerCase().includes('admin')) {
-        // Người dùng chưa đăng nhập hoặc không phải admin - chuyển hướng đến trang đăng nhập
-        console.warn('Người dùng chưa đăng nhập hoặc không phải admin - chuyển hướng đến trang đăng nhập');
-        
-        // Lưu URL hiện tại để đăng nhập xong quay lại
-        const currentPath = window.location.pathname;
-        if (currentPath.includes('/admin/')) {
-            localStorage.setItem('redirectAfterLogin', currentPath);
-        }
-        
-        // Chuyển hướng về trang đăng nhập
-        window.location.href = '../auth/login.html';
+    console.log("Admin Core - Checking authentication");
+    
+    if (!token) {
+        console.warn("No authentication token found. Redirecting to login...");
+        redirectToLogin();
         return false;
     }
+    
+    // Kiểm tra role có phải là admin không
+    if (!role || !role.toLowerCase().includes('admin')) {
+        console.warn(`User role (${role}) is not authorized for admin panel. Redirecting...`);
+        redirectToLogin();
+        return false;
+    }
+    
+    // Kiểm tra token có đúng định dạng JWT không
+    if (!isValidJWT(token)) {
+        console.warn("Invalid token format. Redirecting to login...");
+        redirectToLogin();
+        return false;
+    }
+    
+    // Thêm Authorization header cho mọi request
+    setupRequestInterceptor(token);
     
     // Hiển thị thông tin người dùng đã đăng nhập
     const fullName = localStorage.getItem('fullName') || 'Admin';
@@ -481,4 +491,102 @@ window.AdminCore.closeModal = function(modalId) {
         // Fallback
         modal.style.display = 'none';
     }
-}; 
+};
+
+/**
+ * Check if a string is a valid JWT token format
+ */
+function isValidJWT(token) {
+    // JWT có 3 phần, phân cách bởi dấu chấm
+    const parts = token.split('.');
+    return parts.length === 3;
+}
+
+/**
+ * Redirect to login page
+ */
+function redirectToLogin() {
+    // Lưu lại trang hiện tại để sau khi đăng nhập có thể quay lại
+    const currentPage = window.location.pathname;
+    localStorage.setItem('redirectAfterLogin', currentPage);
+    
+    // Chuyển hướng đến trang đăng nhập
+    window.location.href = '../login.html';
+}
+
+/**
+ * Set up request interceptor to add token to all API requests
+ */
+function setupRequestInterceptor(token) {
+    // Save original fetch
+    const originalFetch = window.fetch;
+    
+    // Override fetch to add Authorization header
+    window.fetch = function(url, options = {}) {
+        // Set default options if not provided
+        options = options || {};
+        options.headers = options.headers || {};
+        
+        // Add token to API requests
+        if (typeof url === 'string' && (url.includes('/api/') || url.includes('localhost:8081'))) {
+            console.log(`Intercepting request to: ${url}`);
+            options.headers['Authorization'] = `Bearer ${token}`;
+            console.log('Token added to request headers');
+        }
+        
+        // Call original fetch with modified options
+        return originalFetch(url, options);
+    };
+    
+    // Log the token (masked for security) for debugging
+    if (token) {
+        const maskedToken = token.substring(0, 15) + '...' + token.substring(token.length - 5);
+        console.log(`Admin Core - Using token: ${maskedToken}`);
+    }
+    
+    console.log("Admin Core - Request interceptor set up successfully");
+    
+    // Make a test request to verify the token works
+    testApiConnection();
+}
+
+/**
+ * Test API connection with token
+ */
+function testApiConnection() {
+    console.log("Testing API connection with token...");
+    
+    fetch('http://localhost:8081/api/categories', {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json'
+            // Token will be added by the interceptor
+        }
+    })
+    .then(response => {
+        console.log(`API test response status: ${response.status}`);
+        if (!response.ok) {
+            throw new Error(`API responded with status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log("API connection test successful:", data);
+    })
+    .catch(error => {
+        console.error("API connection test failed:", error);
+    });
+}
+
+/**
+ * Update admin name in the UI
+ */
+function updateAdminName() {
+    const adminNameEl = document.getElementById('adminName');
+    if (adminNameEl) {
+        const fullName = localStorage.getItem('fullName');
+        if (fullName) {
+            adminNameEl.textContent = fullName;
+        }
+    }
+} 

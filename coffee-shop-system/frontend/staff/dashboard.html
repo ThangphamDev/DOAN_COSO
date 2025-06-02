@@ -168,5 +168,73 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="../assets/js/dashboard.js"></script>
+    
+    <!-- Token Handler Script -->
+    <script>
+        // Script để đảm bảo token được gửi đúng cách với mỗi request
+        document.addEventListener('DOMContentLoaded', function() {
+            // Kiểm tra token
+            const token = localStorage.getItem('token');
+            const role = localStorage.getItem('role');
+            
+            console.log("Current auth status:", {
+                hasToken: !!token,
+                tokenFirstChars: token ? token.substring(0, 15) + '...' : 'none',
+                role: role || 'none'
+            });
+            
+            // Kiểm tra xác thực và quyền truy cập
+            if (!token) {
+                console.warn("No token found! Redirecting to login page...");
+                window.location.href = '../login.html';
+                return;
+            }
+            
+            // Kiểm tra role
+            if (!role || !role.toLowerCase().includes('staff')) {
+                console.warn("User does not have staff permissions! Redirecting to login page...");
+                window.location.href = '../login.html';
+                return;
+            }
+            
+            // Thêm interceptor cho tất cả các fetch requests
+            const originalFetch = window.fetch;
+            window.fetch = function(url, options = {}) {
+                // Tạo options nếu không có
+                options = options || {};
+                // Tạo headers nếu không có
+                options.headers = options.headers || {};
+                
+                // Chỉ thêm token nếu URL là API endpoint
+                if (typeof url === 'string' && (url.includes('/api/') || url.includes('localhost:8081'))) {
+                    // Thêm token vào header
+                    options.headers['Authorization'] = `Bearer ${token}`;
+                    console.log(`Added token to request: ${url}`);
+                }
+                
+                return originalFetch(url, options);
+            };
+            
+            console.log("Fetch interceptor installed for API requests");
+            
+            // Cập nhật tên người dùng
+            const userNameElements = document.querySelectorAll('.user-info span');
+            const fullName = localStorage.getItem('fullName');
+            if (fullName && userNameElements.length > 0) {
+                userNameElements.forEach(el => {
+                    el.textContent = fullName;
+                });
+            }
+        });
+        
+        // Hàm đăng xuất
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('role');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('fullName');
+            window.location.href = '../login.html';
+        }
+    </script>
 </body>
 </html>

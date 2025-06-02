@@ -7,6 +7,7 @@ import com.t2kcoffee.entity.Category;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.core.io.Resource;
@@ -91,6 +92,7 @@ public class ProductController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF')")
     public ResponseEntity<ProductDTO> createProduct(@RequestBody ProductDTO productDTO) {
         Product product = new Product();
         product.setProductName(productDTO.getProductName());
@@ -112,6 +114,7 @@ public class ProductController {
     }
 
     @PostMapping("/with-image")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF')")
     public ResponseEntity<Product> createProductWithImage(
             @RequestParam("image") MultipartFile file,
             @RequestParam("productName") String productName,
@@ -161,6 +164,7 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF')")
     public ResponseEntity<ProductDTO> updateProduct(@PathVariable Integer id, @RequestBody ProductDTO productDTO) {
         Optional<Product> existingProduct = productService.getProductById(id);
         if (existingProduct.isPresent()) {
@@ -186,6 +190,7 @@ public class ProductController {
     }
 
     @PatchMapping("/{id}/availability")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF')")
     public ResponseEntity<Product> updateProductAvailability(
             @PathVariable Integer id, 
             @RequestParam boolean isAvailable) {
@@ -199,6 +204,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<Void> deleteProduct(@PathVariable Integer id) {
         Optional<Product> product = productService.getProductById(id);
         if (product.isPresent()) {
@@ -210,50 +216,24 @@ public class ProductController {
     }
 
     @PostMapping("/{id}/image")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF')")
     public ResponseEntity<ProductDTO> updateProductImage(@PathVariable Integer id, @RequestParam("image") MultipartFile file) {
+        if (file.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+        Optional<Product> productOpt = productService.getProductById(id);
+        if (!productOpt.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
         try {
-            System.out.println("Đang xử lý upload ảnh cho sản phẩm ID: " + id);
-            System.out.println("Thông tin file: tên=" + file.getOriginalFilename() + ", kích thước=" + file.getSize() + " bytes");
-            
-            Optional<Product> existingProduct = productService.getProductById(id);
-            if (existingProduct.isEmpty()) {
-                System.out.println("Không tìm thấy sản phẩm với ID: " + id);
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-            
-            Product product = existingProduct.get();
-            
-            if (file.isEmpty()) {
-                System.out.println("File rỗng, không thể xử lý");
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
-            
-            // Kiểm tra kích thước file
-            if (file.getSize() > 5 * 1024 * 1024) { // 5MB
-                System.out.println("File quá lớn (> 5MB)");
-                return new ResponseEntity<>(HttpStatus.PAYLOAD_TOO_LARGE);
-            }
-            
-            try {
-                // Lưu file vào thư mục và lấy tên file
-                String fileName = productService.storeFile(file, id);
-                
-                // Cập nhật đường dẫn ảnh trong product
-                product.setImage(fileName);
-                
-                Product updatedProduct = productService.saveProduct(product);
-                System.out.println("Đã cập nhật ảnh thành công cho sản phẩm ID: " + id);
-                
-                ProductDTO productDTO = toDTO(updatedProduct);
-                return new ResponseEntity<>(productDTO, HttpStatus.OK);
-            } catch (IOException e) {
-                System.err.println("Lỗi khi lưu file: " + e.getMessage());
-                e.printStackTrace();
-                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-            }
+            Product product = productOpt.get();
+            String fileName = productService.storeFile(file, id);
+            product.setImage(fileName);
+            Product updatedProduct = productService.saveProduct(product);
+            return new ResponseEntity<>(toDTO(updatedProduct), HttpStatus.OK);
         } catch (Exception e) {
-            System.err.println("Lỗi không xác định khi upload ảnh: " + e.getMessage());
-            e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -265,25 +245,13 @@ public class ProductController {
             Resource resource = new UrlResource(filePath.toUri());
             
             if (resource.exists()) {
-                System.out.println("Serving image file: " + filename);
-                
-                // Determine content type
-                String contentType = "image/jpeg"; // Default
-                if (filename.endsWith(".png")) {
-                    contentType = "image/png";
-                } else if (filename.endsWith(".gif")) {
-                    contentType = "image/gif";
-                }
-                
                 return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(contentType))
-                    .body(resource);
+                        .contentType(MediaType.IMAGE_JPEG) // Adjust content type as necessary
+                        .body(resource);
             } else {
-                System.out.println("Image file not found: " + filename);
                 return ResponseEntity.notFound().build();
             }
         } catch (MalformedURLException e) {
-            System.err.println("Error serving image file: " + e.getMessage());
             return ResponseEntity.badRequest().build();
         }
     }

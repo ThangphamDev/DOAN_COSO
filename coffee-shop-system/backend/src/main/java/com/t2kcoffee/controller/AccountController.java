@@ -1,10 +1,16 @@
 package com.t2kcoffee.controller;
 
 import com.t2kcoffee.entity.Account;
+import com.t2kcoffee.security.JwtTokenProvider;
 import com.t2kcoffee.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.util.StringUtils;
@@ -24,10 +30,14 @@ import java.util.UUID;
 public class AccountController {
 
     private final AccountService accountService;
+    private final JwtTokenProvider tokenProvider;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public AccountController(AccountService accountService) {
+    public AccountController(AccountService accountService, JwtTokenProvider tokenProvider, PasswordEncoder passwordEncoder) {
         this.accountService = accountService;
+        this.tokenProvider = tokenProvider;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @GetMapping
@@ -41,6 +51,62 @@ public class AccountController {
         Optional<Account> account = accountService.getAccountById(id);
         return account.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(@RequestParam(required = false) Integer userId) {
+        // Lấy thông tin xác thực từ SecurityContext
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        // Biến để lưu username cần tìm
+        String username = null;
+        
+        // Trường hợp 1: Lấy từ token trong SecurityContext
+        if (authentication != null && authentication.isAuthenticated() && 
+            !authentication.getPrincipal().equals("anonymousUser")) {
+            
+            if (authentication.getPrincipal() instanceof UserDetails) {
+                username = ((UserDetails) authentication.getPrincipal()).getUsername();
+            } else {
+                username = authentication.getName();
+            }
+        }
+        
+        // Trường hợp 2: Lấy từ userId được truyền vào
+        if (username == null && userId != null) {
+            Optional<Account> accountById = accountService.getAccountById(userId);
+            if (accountById.isPresent()) {
+                return createUserResponse(accountById.get());
+            }
+        }
+        
+        // Nếu có username từ token, tìm account theo username
+        if (username != null) {
+            Optional<Account> accountOpt = accountService.getAccountByUsername(username);
+            if (accountOpt.isPresent()) {
+                return createUserResponse(accountOpt.get());
+            }
+        }
+        
+        return new ResponseEntity<>("Không tìm thấy thông tin tài khoản", HttpStatus.NOT_FOUND);
+    }
+
+    // Phương thức hỗ trợ để tạo response từ Account
+    private ResponseEntity<?> createUserResponse(Account account) {
+        // Tạo đối tượng response với thông tin cần thiết
+        Map<String, Object> response = new HashMap<>();
+        response.put("id", account.getId());
+        response.put("userName", account.getUserName());
+        response.put("fullName", account.getFullName());
+        response.put("role", account.getRole());
+        response.put("phone", account.getPhone());
+        response.put("address", account.getAddress());
+        response.put("image", account.getImage());
+        
+        // Thêm điểm thưởng
+        response.put("rewardPoints", account.getRewardPoints() != null ? account.getRewardPoints() : 0);
+        
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping
@@ -131,14 +197,24 @@ public class AccountController {
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
         
-        boolean isAuthenticated = accountService.authenticate(username, password);
-        
-        if (isAuthenticated) {
+        try {
+            // Xác thực thông qua Spring Security
+            Authentication authentication = accountService.authenticate(username, password);
+            
+            // Đặt thông tin xác thực vào SecurityContext
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            
+            // Tạo token JWT
+            String jwt = tokenProvider.generateToken(authentication);
+            
+            // Lấy thông tin người dùng
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             Optional<Account> accountOpt = accountService.getAccountByUsername(username);
+            
             if (accountOpt.isPresent()) {
                 Account account = accountOpt.get();
                 Map<String, Object> response = new HashMap<>();
-                response.put("token", "t2k-" + System.currentTimeMillis()); // Simple token generation
+                response.put("token", jwt);
                 
                 // Chuyển role thành chữ hoa để đảm bảo tương thích với frontend
                 String roleUpperCase = account.getRole() != null ? account.getRole().toUpperCase() : "UNKNOWN";
@@ -148,11 +224,39 @@ public class AccountController {
                 response.put("fullName", account.getFullName());
                 return new ResponseEntity<>(response, HttpStatus.OK);
             }
+            
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (BadCredentialsException e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Invalid username or password");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
         }
-        
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Invalid username or password");
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+    
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody Account account) {
+        try {
+            // Đăng ký tài khoản mới với role mặc định là USER
+            Account registeredAccount = accountService.registerUser(account);
+            
+            // Tạo token JWT từ thông tin người dùng
+            String jwt = tokenProvider.generateTokenFromUsernameAndRole(
+                registeredAccount.getUserName(), 
+                registeredAccount.getRole()
+            );
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("token", jwt);
+            response.put("role", registeredAccount.getRole().toUpperCase());
+            response.put("userId", registeredAccount.getId());
+            response.put("fullName", registeredAccount.getFullName());
+            
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (RuntimeException e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("message", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
     }
 
     @PostMapping("/{id}/avatar")

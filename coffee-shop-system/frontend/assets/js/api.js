@@ -1,4 +1,3 @@
-
 const API = {
     BASE_URL: 'http://localhost:8081/api',
     ORDERS: '/orders',
@@ -200,9 +199,15 @@ function convertOrderToServer(clientOrder) {
 // Lấy tất cả đơn hàng
 async function getAllOrders() {
     try {
-        const response = await fetch(`${API.BASE_URL}${API.ORDERS}`);
+        const response = await fetch(`${API.BASE_URL}${API.ORDERS}`, {
+            method: 'GET',
+            mode: 'cors',
+            headers: getAuthHeaders()
+        });
         
         if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Lỗi khi lấy đơn hàng: ${response.status}`, errorText);
             throw new Error(`Lỗi khi lấy đơn hàng: ${response.status}`);
         }
         
@@ -217,9 +222,15 @@ async function getAllOrders() {
 // Lấy thông tin một đơn hàng theo ID
 async function getOrderById(orderId) {
     try {
-        const response = await fetch(`${API.BASE_URL}${API.ORDERS}/${orderId}`);
+        const response = await fetch(`${API.BASE_URL}${API.ORDERS}/${orderId}`, {
+            method: 'GET',
+            mode: 'cors',
+            headers: getAuthHeaders()
+        });
         
         if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Lỗi khi lấy đơn hàng: ${response.status}`, errorText);
             throw new Error(`Lỗi khi lấy đơn hàng: ${response.status}`);
         }
         
@@ -234,9 +245,15 @@ async function getOrderById(orderId) {
 // Lấy các đơn hàng theo trạng thái
 async function getOrdersByStatus(status) {
     try {
-        const response = await fetch(`${API.BASE_URL}${API.ORDERS}/status/${status}`);
+        const response = await fetch(`${API.BASE_URL}${API.ORDERS}/status/${status}`, {
+            method: 'GET',
+            mode: 'cors',
+            headers: getAuthHeaders()
+        });
         
         if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Lỗi khi lấy đơn hàng theo trạng thái: ${response.status}`, errorText);
             throw new Error(`Lỗi khi lấy đơn hàng theo trạng thái: ${response.status}`);
         }
         
@@ -249,9 +266,11 @@ async function getOrdersByStatus(status) {
 }
 
 // Lấy các đơn hàng gần đây
-    async function getRecentOrders() {
+async function getRecentOrders() {
     try {
-        const response = await fetch(`${API.BASE_URL}${API.ORDERS}/recent`);
+        const response = await fetch(`${API.BASE_URL}${API.ORDERS}/recent`, {
+            headers: getAuthHeaders()
+        });
         
         if (!response.ok) {
             throw new Error(`Lỗi khi lấy đơn hàng gần đây: ${response.status}`);
@@ -266,7 +285,7 @@ async function getOrdersByStatus(status) {
 }
 
 // Tạo đơn hàng mới
-    async function createOrder(order) {
+async function createOrder(order) {
     try {
         // Chuyển đổi dữ liệu nếu cần
         let orderData = order;
@@ -292,10 +311,7 @@ async function getOrdersByStatus(status) {
         
             const response = await fetch(`${API.BASE_URL}${API.ORDERS}`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify(orderData)
         });
         
@@ -322,9 +338,7 @@ async function updateOrder(orderId, orderData) {
         
         const response = await fetch(`${API.BASE_URL}${API.ORDERS}/${orderId}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify(serverOrder)
         });
         
@@ -345,9 +359,7 @@ async function updateOrderStatus(orderId, status) {
     try {
         const response = await fetch(`${API.BASE_URL}${API.ORDERS}/${orderId}/status`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify({ status })
         });
         
@@ -451,10 +463,12 @@ async function deleteOrder(orderId) {
 // Lấy tất cả bàn
 async function getAllTables() {
     try {
-        const response = await fetch(`${API.BASE_URL}${API.TABLES}`);
+        const response = await fetch(`${API.BASE_URL}${API.TABLES}`, {
+            headers: getAuthHeaders()
+        });
         
         if (!response.ok) {
-            throw new Error(`Lỗi khi lấy danh sách bàn: ${response.status}`);
+            throw new Error(`Lỗi khi lấy bàn: ${response.status}`);
         }
         
         return await response.json();
@@ -484,10 +498,12 @@ async function getTablesByStatus(status) {
 // Lấy tất cả sản phẩm
 async function getAllProducts() {
     try {
-        const response = await fetch(`${API.BASE_URL}${API.PRODUCTS}`);
+        const response = await fetch(`${API.BASE_URL}${API.PRODUCTS}`, {
+            headers: getAuthHeaders()
+        });
         
         if (!response.ok) {
-            throw new Error(`Lỗi khi lấy danh sách sản phẩm: ${response.status}`);
+            throw new Error(`Lỗi khi lấy sản phẩm: ${response.status}`);
         }
         
         return await response.json();
@@ -500,10 +516,12 @@ async function getAllProducts() {
 // Lấy sản phẩm theo ID
 async function getProductById(productId) {
     try {
-        const response = await fetch(`${API.BASE_URL}${API.PRODUCTS}/${productId}`);
+        const response = await fetch(`${API.BASE_URL}${API.PRODUCTS}/${productId}`, {
+            headers: getAuthHeaders()
+        });
         
         if (!response.ok) {
-            throw new Error(`Lỗi khi lấy thông tin sản phẩm: ${response.status}`);
+            throw new Error(`Lỗi khi lấy sản phẩm: ${response.status}`);
         }
         
         return await response.json();
@@ -550,9 +568,7 @@ async function createProduct(productData) {
     try {
         const response = await fetch(`${API.BASE_URL}${API.PRODUCTS}`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify(productData)
         });
         
@@ -786,6 +802,32 @@ async function logout() {
     }
 }
 
+// Thêm hàm trợ giúp để tạo headers với token
+function getAuthHeaders() {
+    const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    };
+    
+    const token = localStorage.getItem('token');
+    if (token) {
+        // Kiểm tra chi tiết về token để debug
+        console.log(`API.js - Token length: ${token.length}`);
+        console.log(`API.js - Token format valid: ${token.split('.').length === 3}`);
+        console.log(`API.js - Token start: ${token.substring(0, 15)}...`);
+        console.log(`API.js - Token end: ...${token.substring(token.length - 10)}`);
+        
+        // Thêm token vào header
+        headers['Authorization'] = `Bearer ${token}`;
+    } else {
+        console.warn('API.js - No token found in localStorage');
+    }
+    
+    // Hiển thị headers để debug
+    console.log('API.js - Headers being sent:', Object.keys(headers).join(', '));
+    
+    return headers;
+}
 
 window.CafeAPI = {
     checkApiConnection,
