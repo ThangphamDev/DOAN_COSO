@@ -379,7 +379,7 @@ async function subtractRewardPoints(userId, points) {
         }
         
         // Lấy số điểm hiện tại của người dùng
-        const response = await fetch(`${API_BASE_URL}/accounts/${userId}/reward-points`);
+        const response = await fetch(`${API_BASE_URL.replace('/orders', '')}/accounts/${userId}/reward-points`);
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -391,7 +391,7 @@ async function subtractRewardPoints(userId, points) {
         const remainingPoints = Math.max(0, currentPoints - points);
         
         // Cập nhật số điểm mới
-        const updateResponse = await fetch(`${API_BASE_URL}/accounts/${userId}/reward-points`, {
+        const updateResponse = await fetch(`${API_BASE_URL.replace('/orders', '')}/accounts/${userId}/reward-points`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -413,7 +413,7 @@ async function subtractRewardPoints(userId, points) {
     }
 }
 
-// Sửa hàm completeTransferPayment để sử dụng fetch API trực tiếp như trong file cũ
+
 async function completeTransferPayment(order) {
     alert("Cảm ơn bạn đã thanh toán! Đơn hàng của bạn đang được xử lý.");
     try {
@@ -573,7 +573,7 @@ async function completeTransferPayment(order) {
     }
 }
 
-// Sửa hàm setupPlaceOrder để sử dụng fetch API trực tiếp như trong file cũ
+
 function setupPlaceOrder() {
     const placeOrderBtn = document.getElementById("placeOrderBtn");
     if (!placeOrderBtn) return;
