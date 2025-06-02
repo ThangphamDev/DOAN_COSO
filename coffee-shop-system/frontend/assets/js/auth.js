@@ -42,23 +42,34 @@ class AuthManager {
 
     // Get user's loyalty points (from orders)
     async getLoyaltyPoints() {
-        if (!this.isLoggedIn()) {
-            console.error('User is not logged in');
-            return 0;
-        }
-
         try {
+            // Kiểm tra xem người dùng đã đăng nhập chưa
+            if (!this.isLoggedIn()) {
+                console.error('Người dùng chưa đăng nhập, không thể lấy điểm thưởng');
+                return 0;
+            }
+            
+            // Lấy thông tin người dùng hiện tại
             const currentUser = this.getCurrentUser();
-            const response = await fetch(`${API.BASE_URL}/accounts/${currentUser.userId}/reward-points`);
+            if (!currentUser || !currentUser.userId) {
+                console.error('Không tìm thấy thông tin người dùng');
+                return 0;
+            }
+            
+            // Gọi API để lấy điểm thưởng
+            const response = await fetch(`http://localhost:8081/api/accounts/${currentUser.userId}/reward-points`);
             
             if (!response.ok) {
-                throw new Error('Failed to fetch loyalty points');
+                throw new Error(`HTTP error! Status: ${response.status}`);
             }
             
             const data = await response.json();
+            console.log('Điểm thưởng:', data);
+            
+            // Trả về số điểm thưởng
             return data.rewardPoints || 0;
         } catch (error) {
-            console.error('Error fetching loyalty points:', error);
+            console.error('Error loading loyalty points:', error);
             return 0;
         }
     }

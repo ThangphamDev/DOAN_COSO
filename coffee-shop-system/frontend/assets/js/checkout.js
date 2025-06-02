@@ -776,13 +776,42 @@ function generateOrderCode() {
 
 // Hiển thị mã QR chuyển khoản
 function showVietQR(order) {
-    // Lấy số tiền sau khuyến mãi nếu có
+    // Lấy thông tin khuyến mãi và điểm thưởng đã đổi
     const appliedPromotion = JSON.parse(localStorage.getItem('appliedPromotion') || 'null');
-    const amount = (appliedPromotion && appliedPromotion.finalTotal)
-        ? appliedPromotion.finalTotal
-        : order.finalTotal || order.totalAmount || 
-          (order.items ? order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) : 0) ||
-          (order.cart ? order.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) : 0);
+    const redeemedPoints = JSON.parse(localStorage.getItem('redeemedPoints') || 'null');
+    
+    // Tính toán số tiền cuối cùng, đảm bảo áp dụng cả khuyến mãi và điểm thưởng
+    let amount;
+    
+    // Nếu order đã có finalTotal (đã tính cả khuyến mãi và điểm thưởng)
+    if (order.finalTotal) {
+        amount = order.finalTotal;
+    } 
+    // Nếu có cả khuyến mãi và điểm thưởng
+    else if (appliedPromotion && appliedPromotion.finalTotal && redeemedPoints && redeemedPoints.discount) {
+        amount = Math.max(0, appliedPromotion.finalTotal - redeemedPoints.discount);
+    } 
+    // Nếu chỉ có khuyến mãi
+    else if (appliedPromotion && appliedPromotion.finalTotal) {
+        amount = appliedPromotion.finalTotal;
+    } 
+    // Nếu chỉ có điểm thưởng
+    else if (redeemedPoints && redeemedPoints.discount && order.totalAmount) {
+        amount = Math.max(0, order.totalAmount - redeemedPoints.discount);
+    } 
+    // Nếu không có cả hai, lấy tổng tiền gốc
+    else {
+        amount = order.totalAmount || 
+                (order.items ? order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) : 0) ||
+                (order.cart ? order.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) : 0);
+    }
+
+    console.log("DEBUG - Số tiền thanh toán QR:", {
+        originalAmount: order.totalAmount,
+        promotionDiscount: appliedPromotion ? appliedPromotion.discountAmount : 0,
+        pointsDiscount: redeemedPoints ? redeemedPoints.discount : 0,
+        finalAmount: amount
+    });
 
     // Đảm bảo có mã đơn hàng
     const orderCode = order.orderId || generateOrderCode();
@@ -793,13 +822,6 @@ function showVietQR(order) {
     // Đảm bảo truyền đúng số bàn
     const tableNumber = order.tableNumber || document.getElementById("tableNumber")?.value || localStorage.getItem("selectedTable") || "";
     order.tableNumber = tableNumber;
-
-    console.log("Hiển thị QR chuyển khoản cho đơn hàng:", {
-        orderId: orderCode,
-        amount: amount,
-        paymentMethod: order.paymentMethod,
-        tableNumber: tableNumber
-    });
 
     // Thông tin tài khoản
     const accountNumber = "1028272356";
