@@ -57,28 +57,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
             });
             
-            // Parse response data
-            const data = await response.json();
-            
-            // Reset button state
-            submitButton.textContent = originalText;
-            submitButton.disabled = false;
-            
             if (response.ok) {
+                const data = await response.json();
                 // Login successful
                 handleSuccessfulLogin(data);
+                // Reset button state
+                submitButton.textContent = originalText;
+                submitButton.disabled = false;
             } else {
-                // Login failed
-                showError(data.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
+                let errorMsg = 'Đăng nhập thất bại. Vui lòng thử lại.';
+                try {
+                    const text = await response.text();
+                    const errJson = JSON.parse(text);
+                    errorMsg = errJson.message || errorMsg;
+                } catch (e) {
+                    // Nếu không phải JSON, lấy text thường
+                }
+                showError(errorMsg);
+                // Reset button state
+                submitButton.textContent = originalText;
+                submitButton.disabled = false;
             }
-            
         } catch (error) {
             console.error('Lỗi đăng nhập:', error);
-            
             // Reset button state
             submitButton.textContent = originalText;
             submitButton.disabled = false;
-            
             // Show connection error message
             showError('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng hoặc máy chủ.');
         }

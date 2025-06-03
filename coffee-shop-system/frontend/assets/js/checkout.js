@@ -375,23 +375,37 @@ async function subtractRewardPoints(userId, points) {
             return false;
         }
         
+        console.log(`Đang trừ ${points} điểm thưởng cho user ID: ${userId}`);
+        
         // Lấy số điểm hiện tại của người dùng
-        const response = await fetch(`${API_BASE_URL.replace('/orders', '')}/accounts/${userId}/reward-points`);
+        const response = await fetch(`${API_BASE_URL.replace('/orders', '')}/accounts/${userId}/reward-points`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+        
         if (!response.ok) {
+            console.error(`Lỗi khi lấy điểm thưởng: ${response.status}`);
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
         
         const data = await response.json();
+        console.log('Dữ liệu điểm thưởng hiện tại:', data);
         const currentPoints = data.rewardPoints || 0;
         
         // Tính số điểm còn lại
         const remainingPoints = Math.max(0, currentPoints - points);
         
+        console.log(`Điểm thưởng hiện tại: ${currentPoints}, Điểm sẽ trừ: ${points}, Còn lại: ${remainingPoints}`);
+        
         // Cập nhật số điểm mới
         const updateResponse = await fetch(`${API_BASE_URL.replace('/orders', '')}/accounts/${userId}/reward-points`, {
             method: 'PUT',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
             body: JSON.stringify({
                 points: remainingPoints
@@ -399,13 +413,17 @@ async function subtractRewardPoints(userId, points) {
         });
         
         if (!updateResponse.ok) {
+            console.error(`Lỗi khi cập nhật điểm thưởng: ${updateResponse.status}`);
             throw new Error(`HTTP error! Status: ${updateResponse.status}`);
         }
         
+        const updateData = await updateResponse.json();
+        console.log('Kết quả cập nhật điểm thưởng:', updateData);
         console.log(`Đã trừ ${points} điểm thưởng. Còn lại: ${remainingPoints} điểm`);
         return true;
     } catch (error) {
         console.error('Lỗi khi trừ điểm thưởng:', error);
+        alert(`Không thể cập nhật điểm thưởng. Lỗi: ${error.message}`);
         return false;
     }
 }

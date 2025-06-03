@@ -1,12 +1,6 @@
-/**
- * admin-module.js
- * File chính kết hợp tất cả các module JavaScript cho trang admin
- */
 
-// Khai báo namespace cho ứng dụng admin
 window.T2KAdmin = window.T2KAdmin || {};
 
-// Import tất cả module khi DOM đã sẵn sàng
 document.addEventListener('DOMContentLoaded', async function() {
     // Tải core module trước
     await loadModule('../assets/js/admin-core.js');
@@ -37,7 +31,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 /**
- * Tải một module JavaScript bằng Promises
  * @param {string} url - Đường dẫn đến file module
  * @returns {Promise} - Promise sẽ được resolved khi module được tải thành công
  */
@@ -51,9 +44,7 @@ function loadModule(url) {
     });
 }
 
-/**
- * Khởi tạo ứng dụng admin
- */
+
 function initializeAdmin() {
     console.log('Khởi tạo ứng dụng admin...');
     
@@ -111,9 +102,7 @@ function initializeAdmin() {
     }
 }
 
-/**
- * Kiểm tra xác thực người dùng admin
- */
+ 
 function checkAdminAuthentication() {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
@@ -141,8 +130,8 @@ function checkAdminAuthentication() {
 
 /**
  * Hiển thị thông báo toast
- * @param {string} message - Nội dung thông báo
- * @param {string} type - Loại thông báo (success, error, warning, info)
+ * @param {string} message -
+ * @param {string} type 
  */
 function showToast(message, type = 'info') {
     // Sử dụng AdminUI nếu có sẵn
@@ -197,7 +186,7 @@ function showToast(message, type = 'info') {
     }
 }
 
-// ==================== Product Management ====================
+
 async function loadProducts() {
     try {
         console.log("Đang tải danh sách sản phẩm...");
@@ -211,7 +200,6 @@ async function loadProducts() {
     }
 }
 
-// Export hàm nếu cần thiết cho các module khác gọi
 window.AdminModule = {
     loadProducts
 };

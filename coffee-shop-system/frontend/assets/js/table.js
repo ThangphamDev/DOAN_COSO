@@ -9,6 +9,26 @@ const STATUS_TRANSLATIONS = {
     'Occupied': 'Đang phục vụ'
 };
 
+// Hàm trợ giúp để lấy token từ localStorage
+function getAuthToken() {
+    return localStorage.getItem('token');
+}
+
+// Hàm trợ giúp để tạo headers với token xác thực
+function getAuthHeaders() {
+    const token = getAuthToken();
+    const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    };
+    
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return headers;
+}
+
 // State variables
 let tables = [];
 let filteredTables = [];
@@ -21,10 +41,27 @@ let areaFilterSelect;
 
 // Khởi tạo khi trang tải xong
 document.addEventListener('DOMContentLoaded', function() {
-    initDOMReferences();
-    setupEventListeners();
-    loadTables();
+    // Kiểm tra xác thực trước khi tải trang
+    if (checkAuthentication()) {
+        initDOMReferences();
+        setupEventListeners();
+        loadTables();
+    }
 });
+
+// Kiểm tra xác thực
+function checkAuthentication() {
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    
+    if (!token || !role || !(role.toLowerCase().includes('staff') || role.toLowerCase().includes('admin'))) {
+        // Chuyển hướng về trang đăng nhập nếu không phải nhân viên hoặc admin
+        window.location.href = '../auth/login.html';
+        return false;
+    }
+    
+    return true;
+}
 
 // Khởi tạo tham chiếu đến các phần tử DOM
 function initDOMReferences() {
@@ -39,7 +76,18 @@ function initDOMReferences() {
 // Tải dữ liệu bàn từ API
 async function loadTables() {
     try {
-        const response = await fetch(TABLE_API_URL);
+        // Check for authentication token
+        const token = getAuthToken();
+        if (!token) {
+            window.location.href = '../auth/login.html';
+            return;
+        }
+        
+        const response = await fetch(TABLE_API_URL, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+        
         if (!response.ok) {
             throw new Error('Không thể tải dữ liệu bàn. Mã lỗi: ' + response.status);
         }
@@ -116,13 +164,29 @@ function updateTableStatistics() {
 
 // Chuyển đổi trạng thái bàn
 async function toggleTableStatus(table) {
+    // Check for authentication token
+    const token = getAuthToken();
+    if (!token) {
+        window.location.href = '../auth/login.html';
+        return;
+    }
+    
     const newStatus = table.status === 'Available' ? 'Occupied' : 'Available';
     try {
-        const response = await fetch(`${TABLE_API_URL}/${table.id}/status?status=${newStatus}`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json'
-            }
+        // Tạo đối tượng dữ liệu để gửi lên server
+        const tableData = {
+            idTable: table.id,
+            tableNumber: table.number,
+            capacity: table.capacity,
+            location: table.area,
+            status: newStatus,
+            description: table.notes || ''
+        };
+        
+        const response = await fetch(`${TABLE_API_URL}/${table.id}`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(tableData)
         });
 
         if (!response.ok) {

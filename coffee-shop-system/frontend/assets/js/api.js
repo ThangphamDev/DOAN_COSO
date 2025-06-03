@@ -1,4 +1,3 @@
-
 const API = {
     BASE_URL: 'http://localhost:8081/api',
     ORDERS: '/orders',
@@ -14,6 +13,25 @@ const API = {
     VARIANTS: '/variants' 
 };
 
+// Hàm trợ giúp để lấy token từ localStorage
+function getAuthToken() {
+    return localStorage.getItem('token');
+}
+
+// Hàm trợ giúp để tạo headers với token xác thực
+function getAuthHeaders() {
+    const token = getAuthToken();
+    const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    };
+    
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return headers;
+}
 
 async function checkApiConnection() {
     try {
@@ -22,20 +40,18 @@ async function checkApiConnection() {
         
         const response = await fetch(`${API.BASE_URL}${API.ORDERS}`, {
             method: 'GET',
-            headers: {
-                'Accept': 'application/json'
-            },
+            headers: getAuthHeaders(),
             signal: controller.signal
         });
         
-            clearTimeout(timeoutId);
+        clearTimeout(timeoutId);
         
-            return {
+        return {
             available: response.ok,
             status: response.status,
             statusText: response.statusText
         };
-        } catch (error) {
+    } catch (error) {
         console.error("Lỗi kết nối API:", error);
         if (error.name === 'AbortError') {
             console.error("Timeout: Máy chủ không phản hồi sau 5 giây");
@@ -60,6 +76,7 @@ async function checkApiConnection() {
         };
     }
 }
+
 // Chuyển đổi đơn hàng từ server sang client
 function convertOrderFromServer(serverOrder) {
     const order = { ...serverOrder };
@@ -292,10 +309,7 @@ async function getOrdersByStatus(status) {
         
             const response = await fetch(`${API.BASE_URL}${API.ORDERS}`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify(orderData)
         });
         
@@ -322,9 +336,7 @@ async function updateOrder(orderId, orderData) {
         
         const response = await fetch(`${API.BASE_URL}${API.ORDERS}/${orderId}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify(serverOrder)
         });
         
@@ -345,20 +357,17 @@ async function updateOrderStatus(orderId, status) {
     try {
         const response = await fetch(`${API.BASE_URL}${API.ORDERS}/${orderId}/status`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify({ status })
         });
         
         if (!response.ok) {
-            throw new Error(`Lỗi khi cập nhật trạng thái đơn hàng: ${response.status}`);
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        const updatedOrder = await response.json();
-        return convertOrderFromServer(updatedOrder);
+        return await response.json();
     } catch (error) {
-        console.error(`Lỗi khi cập nhật trạng thái đơn hàng ID: ${orderId}`, error);
+        console.error("Lỗi khi cập nhật trạng thái đơn hàng:", error);
         throw error;
     }
 }
@@ -381,9 +390,7 @@ async function updatePaymentInfo(orderId, paymentMethod, isCompleted = true) {
         
         const response = await fetch(url, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify(paymentInfo)
         });
         
@@ -416,7 +423,10 @@ async function updatePaymentInfo(orderId, paymentMethod, isCompleted = true) {
 // Lấy trạng thái đơn hàng
 async function getOrderStatus(orderId) {
     try {
-        const response = await fetch(`${API.BASE_URL}${API.ORDERS}/${orderId}/status`);
+        const response = await fetch(`${API.BASE_URL}${API.ORDERS}/${orderId}/status`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
         
         if (!response.ok) {
             throw new Error(`Lỗi khi lấy trạng thái đơn hàng: ${response.status}`);
@@ -434,7 +444,8 @@ async function getOrderStatus(orderId) {
 async function deleteOrder(orderId) {
     try {
         const response = await fetch(`${API.BASE_URL}${API.ORDERS}/${orderId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: getAuthHeaders()
         });
         
         if (!response.ok) {
@@ -451,7 +462,10 @@ async function deleteOrder(orderId) {
 // Lấy tất cả bàn
 async function getAllTables() {
     try {
-        const response = await fetch(`${API.BASE_URL}${API.TABLES}`);
+        const response = await fetch(`${API.BASE_URL}${API.TABLES}`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
         
         if (!response.ok) {
             throw new Error(`Lỗi khi lấy danh sách bàn: ${response.status}`);
@@ -467,7 +481,10 @@ async function getAllTables() {
 // Lấy bàn theo trạng thái
 async function getTablesByStatus(status) {
     try {
-        const response = await fetch(`${API.BASE_URL}${API.TABLES}/status/${status}`);
+        const response = await fetch(`${API.BASE_URL}${API.TABLES}/status/${status}`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
         
         if (!response.ok) {
             throw new Error(`Lỗi khi lấy bàn theo trạng thái: ${response.status}`);
@@ -484,7 +501,10 @@ async function getTablesByStatus(status) {
 // Lấy tất cả sản phẩm
 async function getAllProducts() {
     try {
-        const response = await fetch(`${API.BASE_URL}${API.PRODUCTS}`);
+        const response = await fetch(`${API.BASE_URL}${API.PRODUCTS}`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
         
         if (!response.ok) {
             throw new Error(`Lỗi khi lấy danh sách sản phẩm: ${response.status}`);
@@ -500,7 +520,10 @@ async function getAllProducts() {
 // Lấy sản phẩm theo ID
 async function getProductById(productId) {
     try {
-        const response = await fetch(`${API.BASE_URL}${API.PRODUCTS}/${productId}`);
+        const response = await fetch(`${API.BASE_URL}${API.PRODUCTS}/${productId}`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
         
         if (!response.ok) {
             throw new Error(`Lỗi khi lấy thông tin sản phẩm: ${response.status}`);
@@ -516,7 +539,10 @@ async function getProductById(productId) {
 // Lấy sản phẩm nổi bật
 async function getFeaturedProducts() {
     try {
-        const response = await fetch(`${API.BASE_URL}${API.PRODUCTS}/featured`);
+        const response = await fetch(`${API.BASE_URL}${API.PRODUCTS}/featured`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
         
         if (!response.ok) {
             throw new Error(`Lỗi khi lấy sản phẩm nổi bật: ${response.status}`);
@@ -532,7 +558,10 @@ async function getFeaturedProducts() {
 // Tìm kiếm sản phẩm
 async function searchProducts(query) {
     try {
-        const response = await fetch(`${API.BASE_URL}${API.PRODUCTS}/search?q=${encodeURIComponent(query)}`);
+        const response = await fetch(`${API.BASE_URL}${API.PRODUCTS}/search?q=${encodeURIComponent(query)}`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
         
         if (!response.ok) {
             throw new Error(`Lỗi khi tìm kiếm sản phẩm: ${response.status}`);
@@ -550,9 +579,7 @@ async function createProduct(productData) {
     try {
         const response = await fetch(`${API.BASE_URL}${API.PRODUCTS}`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify(productData)
         });
         
@@ -572,9 +599,7 @@ async function updateProduct(productId, productData) {
     try {
         const response = await fetch(`${API.BASE_URL}${API.PRODUCTS}/${productId}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify(productData)
         });
         
@@ -593,7 +618,8 @@ async function updateProduct(productId, productData) {
 async function deleteProduct(productId) {
     try {
         const response = await fetch(`${API.BASE_URL}${API.PRODUCTS}/${productId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: getAuthHeaders()
         });
         
         if (!response.ok) {
@@ -611,7 +637,10 @@ async function deleteProduct(productId) {
 // Lấy tất cả danh mục
 async function getAllCategories() {
     try {
-        const response = await fetch(`${API.BASE_URL}${API.CATEGORIES}`);
+        const response = await fetch(`${API.BASE_URL}${API.CATEGORIES}`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
         
         if (!response.ok) {
             throw new Error(`Lỗi khi lấy danh sách danh mục: ${response.status}`);
@@ -627,7 +656,10 @@ async function getAllCategories() {
 // Lấy danh mục theo ID
 async function getCategoryById(categoryId) {
     try {
-        const response = await fetch(`${API.BASE_URL}${API.CATEGORIES}/${categoryId}`);
+        const response = await fetch(`${API.BASE_URL}${API.CATEGORIES}/${categoryId}`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
         
         if (!response.ok) {
             throw new Error(`Lỗi khi lấy thông tin danh mục: ${response.status}`);
@@ -645,9 +677,7 @@ async function createCategory(categoryData) {
     try {
         const response = await fetch(`${API.BASE_URL}${API.CATEGORIES}`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify(categoryData)
         });
         
@@ -667,9 +697,7 @@ async function updateCategory(categoryId, categoryData) {
     try {
         const response = await fetch(`${API.BASE_URL}${API.CATEGORIES}/${categoryId}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify(categoryData)
         });
         
@@ -688,7 +716,8 @@ async function updateCategory(categoryId, categoryData) {
 async function deleteCategory(categoryId) {
     try {
         const response = await fetch(`${API.BASE_URL}${API.CATEGORIES}/${categoryId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: getAuthHeaders()
         });
         
         if (!response.ok) {

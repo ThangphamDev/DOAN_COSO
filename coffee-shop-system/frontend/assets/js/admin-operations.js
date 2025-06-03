@@ -1,7 +1,4 @@
-/**
- * admin-operations.js
- * Quản lý các hoạt động như orders, tables, promotions, activities, etc.
- */
+
 
 document.addEventListener('DOMContentLoaded', function() {
     // Kiểm tra API client đã được tải chưa
@@ -34,11 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-/**
- * ==========================
- * QUẢN LÝ ĐƠN HÀNG
- * ==========================
- */
+
 function initializeOrderManagement() {
     console.log('Khởi tạo chức năng quản lý đơn hàng');
     
@@ -58,7 +51,7 @@ function initializeOrderManagement() {
     setupSorting();
 }
 
-// Tải dữ liệu đơn hàng
+
 async function loadOrderData() {
     showLoadingMessage('Đang tải dữ liệu đơn hàng...');
     
@@ -74,7 +67,7 @@ async function loadOrderData() {
     }
 }
 
-// Hiển thị danh sách đơn hàng
+
 function displayOrders(orders) {
     const tableBody = document.getElementById('orderTableBody');
     if (!tableBody) return;
@@ -111,11 +104,7 @@ function displayOrders(orders) {
     setupOrderActions();
 }
 
-/**
- * ==========================
- * QUẢN LÝ BÀN
- * ==========================
- */
+
 function initializeTableManagement() {
     console.log('Khởi tạo chức năng quản lý bàn');
     
@@ -151,11 +140,7 @@ async function loadTableData() {
     }
 }
 
-/**
- * ==========================
- * QUẢN LÝ KHUYẾN MÃI
- * ==========================
- */
+
 function initializePromotionManagement() {
     console.log('Khởi tạo chức năng quản lý khuyến mãi');
     
@@ -191,11 +176,7 @@ async function loadPromotionData() {
     }
 }
 
-/**
- * ==========================
- * NHẬT KÝ HOẠT ĐỘNG
- * ==========================
- */
+
 function initializeActivityLog() {
     console.log('Khởi tạo chức năng nhật ký hoạt động');
     
@@ -212,11 +193,7 @@ function initializeActivityLog() {
     setupDateFilter();
 }
 
-/**
- * ==========================
- * TRANG TỔNG QUAN (DASHBOARD)
- * ==========================
- */
+
 function initializeDashboard() {
     console.log('Khởi tạo trang tổng quan');
     
@@ -233,7 +210,7 @@ function initializeDashboard() {
     setupDateFilter();
 }
 
-// Tải dữ liệu tổng quan
+
 async function loadDashboardData() {
     showLoadingMessage('Đang tải dữ liệu tổng quan...');
     
@@ -249,7 +226,7 @@ async function loadDashboardData() {
     }
 }
 
-// Hiển thị dữ liệu tổng quan
+
 function displayDashboardData(data) {
     // Cập nhật các số liệu thống kê
     updateElement('todayRevenue', formatCurrency(data.todayRevenue));
@@ -348,13 +325,7 @@ function initializeCharts() {
     }
 }
 
-/**
- * ==========================
- * CÁC HÀM TIỆN ÍCH DÙNG CHUNG
- * ==========================
- */
 
-// Khởi tạo modal
 function initializeModal(modalId, openBtnId) {
     const modal = document.getElementById(modalId);
     if (!modal) return;
@@ -484,10 +455,9 @@ function showErrorMessage(message) {
     }
 }
 
-// ==================== Product Operations ====================
+
 
 /**
- * Xử lý yêu cầu xóa sản phẩm.
  * @param {string|number} productId ID của sản phẩm cần xóa.
  */
 async function deleteProduct(productId) {

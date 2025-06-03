@@ -26,6 +26,26 @@ document.addEventListener('DOMContentLoaded', function() {
     setupNavigation();
 });
 
+// Hàm trợ giúp để lấy token từ localStorage
+function getAuthToken() {
+    return localStorage.getItem('token');
+}
+
+// Hàm trợ giúp để tạo headers với token xác thực
+function getAuthHeaders() {
+    const token = getAuthToken();
+    const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    };
+    
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return headers;
+}
+
 /**
  * Kiểm tra xác thực người dùng admin
  */
@@ -55,21 +75,28 @@ function checkAdminAuthentication() {
 }
 
 /**
- * Kiểm tra kết nối tới API
+ * Kiểm tra kết nối đến API
  */
 async function checkApiConnection() {
     try {
-        if (!window.ApiClient) {
-            console.error('API Client chưa được tải!');
-            showNotification('Không thể kết nối đến server', 'error');
+        const response = await fetch('http://localhost:8081/api/system/health', {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('API Health Check: OK');
+            console.log('API Status:', data);
+            return true;
+        } else {
+            console.warn('API Health Check: Failed - Status:', response.status);
+            showNotification('Không thể kết nối đến máy chủ. Một số chức năng có thể không hoạt động.', 'warning');
             return false;
         }
-        
-        console.log('API Client đã được tải thành công');
-        return true;
     } catch (error) {
-        console.error('Lỗi khi kiểm tra kết nối API:', error);
-        showNotification('Cảnh báo: Không thể kết nối đến máy chủ.', 'warning');
+        console.error('API Health Check: Error -', error);
+        showNotification('Không thể kết nối đến máy chủ. Một số chức năng có thể không hoạt động.', 'warning');
         return false;
     }
 }

@@ -4,6 +4,8 @@ import com.t2kcoffee.entity.Account;
 import com.t2kcoffee.repository.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,6 +25,8 @@ public class AccountService {
 
     @Value("${app.upload.dir}")
     private String uploadDir;
+
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Autowired
     public AccountService(AccountRepository accountRepository) {
@@ -46,14 +50,17 @@ public class AccountService {
         
         if (accountOpt.isPresent()) {
             Account account = accountOpt.get();
-            return password.equals(account.getPassWord());
-        }
+            return passwordEncoder.matches(password, account.getPassWord());
+            }
         
-        return false;
+            return false;
     }
 
     @Transactional
     public Account saveAccount(Account account) {
+        if (account.getPassWord() != null && !account.getPassWord().startsWith("$2a$")) {
+            account.setPassWord(passwordEncoder.encode(account.getPassWord()));
+        }
         return accountRepository.save(account);
     }
 
@@ -65,16 +72,18 @@ public class AccountService {
             existingAccount.setUserName(accountDetails.getUserName());
             existingAccount.setFullName(accountDetails.getFullName());
             
-            // Only update password if provided
             if (accountDetails.getPassWord() != null && !accountDetails.getPassWord().isEmpty()) {
-                existingAccount.setPassWord(accountDetails.getPassWord());
+                if (!accountDetails.getPassWord().startsWith("$2a$")) {
+                    existingAccount.setPassWord(passwordEncoder.encode(accountDetails.getPassWord()));
+                } else {
+                    existingAccount.setPassWord(accountDetails.getPassWord());
+                }
             }
             
             existingAccount.setPhone(accountDetails.getPhone());
             existingAccount.setAddress(accountDetails.getAddress());
             existingAccount.setRole(accountDetails.getRole());
             
-            // Only update image if provided
             if (accountDetails.getImage() != null) {
                 existingAccount.setImage(accountDetails.getImage());
             }
@@ -93,7 +102,13 @@ public class AccountService {
             Account account = accountOpt.get();
             if (userName != null) account.setUserName(userName);
             if (fullName != null) account.setFullName(fullName);
-            if (password != null && !password.isEmpty()) account.setPassWord(password);
+            if (password != null && !password.isEmpty()) {
+                if (!password.startsWith("$2a$")) {
+                    account.setPassWord(passwordEncoder.encode(password));
+                } else {
+                    account.setPassWord(password);
+                }
+            }
             if (phone != null) account.setPhone(phone);
             if (address != null) account.setAddress(address);
             if (role != null) account.setRole(role);
@@ -138,7 +153,7 @@ public class AccountService {
     @Transactional
     public void addRewardPoints(Integer accountId, Integer points) {
         if (points <= 0) {
-            return; // Không thêm điểm nếu số điểm <= 0
+            return;
         }
         
         Optional<Account> accountOpt = getAccountById(accountId);
@@ -153,7 +168,7 @@ public class AccountService {
     @Transactional
     public void updateRewardPoints(Integer accountId, Integer newPoints) {
         if (newPoints < 0) {
-            newPoints = 0; // Đảm bảo điểm không âm
+            newPoints = 0;
         }
         
         Optional<Account> accountOpt = getAccountById(accountId);

@@ -1,5 +1,3 @@
-
-
 document.addEventListener('DOMContentLoaded', function() {
     
     checkAdminAuthentication();
@@ -42,13 +40,16 @@ function checkAdminAuthentication() {
 async function checkApiConnection() {
     try {
         const API_BASE_URL = 'http://localhost:8081';
+        const token = localStorage.getItem('token');
         
         console.log('Đang kiểm tra kết nối đến API...');
         
         const response = await fetch(`${API_BASE_URL}/api/system/health`, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': token ? `Bearer ${token}` : ''
             }
         });
         
@@ -211,9 +212,8 @@ async function loadSummaryData(token) {
         const response = await fetch(`${API_BASE_URL}/api/dashboard/summary`, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json'
-                // Không sử dụng token để dễ test
-                // 'Authorization': `Bearer ${token}`
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             }
         });
         
@@ -370,9 +370,8 @@ async function loadRecentActivity(token) {
         const response = await fetch(`${API_BASE_URL}/api/activities/recent`, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json'
-                // Không sử dụng token để dễ test
-                // 'Authorization': `Bearer ${token}`
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             }
         });
         
@@ -465,9 +464,8 @@ async function loadCategories(token) {
         const response = await fetch(`${API_BASE_URL}/api/categories`, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json'
-                // Không sử dụng token để dễ test
-                // 'Authorization': `Bearer ${token}`
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             }
         });
         
@@ -553,107 +551,94 @@ async function loadCategories(token) {
     }
 }
 
-// Nạp dữ liệu biểu đồ từ API
+// Nạp dữ liệu biểu đồ
 async function loadChartData(token) {
     try {
         const API_BASE_URL = 'http://localhost:8081';
         
-        // Lấy khoảng thời gian được chọn cho biểu đồ doanh thu
-        const revenueChartPeriod = document.getElementById('revenueChartPeriod').value || 'week';
-        
-        // Gọi API để lấy dữ liệu doanh thu theo thời gian
-        const revenueResponse = await fetch(`${API_BASE_URL}/api/dashboard/revenue-chart?period=${revenueChartPeriod}`, {
+        // Gọi API để lấy dữ liệu biểu đồ
+        const response = await fetch(`${API_BASE_URL}/api/dashboard/chart?period=week`, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json'
-                // Không sử dụng token để dễ test
-                // 'Authorization': `Bearer ${token}`
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             }
         });
         
-        // Gọi API để lấy dữ liệu sản phẩm bán chạy
-        const productsResponse = await fetch(`${API_BASE_URL}/api/dashboard/top-products`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-                // Không sử dụng token để dễ test
-                // 'Authorization': `Bearer ${token}`
-            }
-        });
+        // Ghi log để debug
+        console.log('API Chart Data - Status:', response.status);
         
-        // Xử lý dữ liệu biểu đồ doanh thu
-        if (revenueResponse.ok) {
-            const revenueData = await revenueResponse.json();
-            console.log('API Revenue Chart - Data:', revenueData);
+        if (response.ok) {
+            const data = await response.json();
+            console.log('API Chart Data - Data:', data);
             
             // Cập nhật biểu đồ doanh thu
-            updateRevenueChart(revenueData);
+            updateRevenueChart(data.revenue);
+            
+            // Cập nhật biểu đồ sản phẩm bán chạy
+            loadTopProducts(token);
         } else {
-            console.warn('Không thể tải dữ liệu biểu đồ doanh thu từ API');
-            console.warn('Status code:', revenueResponse.status);
+            console.warn('Không thể tải dữ liệu biểu đồ từ API');
+            console.warn('Status code:', response.status);
             
             try {
-                const errorText = await revenueResponse.text();
-                console.error('API Revenue Chart - Error:', errorText);
+                const errorText = await response.text();
+                console.error('API Chart Data - Error:', errorText);
             } catch (e) {
                 console.error('Cannot read error response');
             }
             
-            // Hiển thị biểu đồ trống thay vì dữ liệu mẫu
-            const emptyRevenueData = {
-                labels: [],
-                data: []
-            };
-            
-            updateRevenueChart(emptyRevenueData);
-            showMessage('Không thể tải dữ liệu biểu đồ doanh thu', 'error');
+            // Hiển thị thông báo lỗi
+            showMessage('Không thể tải dữ liệu biểu đồ từ máy chủ', 'error');
         }
+    } catch (error) {
+        console.error('Lỗi khi nạp dữ liệu biểu đồ:', error);
+        showMessage('Lỗi khi tải dữ liệu biểu đồ', 'error');
+        throw error;
+    }
+}
+
+// Nạp dữ liệu top sản phẩm bán chạy
+async function loadTopProducts(token) {
+    try {
+        const API_BASE_URL = 'http://localhost:8081';
         
-        // Xử lý dữ liệu biểu đồ sản phẩm
-        if (productsResponse.ok) {
-            const productsData = await productsResponse.json();
-            console.log('API Top Products - Data:', productsData);
+        // Gọi API để lấy dữ liệu top sản phẩm
+        const response = await fetch(`${API_BASE_URL}/api/dashboard/top-products`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        // Ghi log để debug
+        console.log('API Top Products - Status:', response.status);
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('API Top Products - Data:', data);
             
-            // Cập nhật biểu đồ sản phẩm
-            updateProductChart(productsData);
+            // Cập nhật biểu đồ sản phẩm bán chạy
+            updateProductChart(data);
         } else {
-            console.warn('Không thể tải dữ liệu sản phẩm bán chạy từ API');
-            console.warn('Status code:', productsResponse.status);
+            console.warn('Không thể tải dữ liệu top sản phẩm từ API');
+            console.warn('Status code:', response.status);
             
             try {
-                const errorText = await productsResponse.text();
+                const errorText = await response.text();
                 console.error('API Top Products - Error:', errorText);
             } catch (e) {
                 console.error('Cannot read error response');
             }
             
-            // Hiển thị biểu đồ trống thay vì dữ liệu mẫu
-            const emptyProductsData = {
-                labels: ['Chưa có dữ liệu'],
-                data: [1]
-            };
-            
-            updateProductChart(emptyProductsData);
-            showMessage('Không thể tải dữ liệu sản phẩm bán chạy', 'error');
+            // Hiển thị thông báo lỗi
+            showMessage('Không thể tải dữ liệu top sản phẩm từ máy chủ', 'error');
         }
     } catch (error) {
-        console.error('Lỗi khi nạp dữ liệu biểu đồ:', error);
-        
-        // Hiển thị biểu đồ trống
-        const emptyRevenueData = {
-            labels: [],
-            data: []
-        };
-        
-        const emptyProductsData = {
-            labels: ['Chưa có dữ liệu'],
-            data: [1]
-        };
-        
-        updateRevenueChart(emptyRevenueData);
-        updateProductChart(emptyProductsData);
-        
-        showMessage('Lỗi khi tải dữ liệu biểu đồ', 'error');
+        console.error('Lỗi khi nạp dữ liệu top sản phẩm:', error);
+        showMessage('Lỗi khi tải dữ liệu top sản phẩm', 'error');
+        throw error;
     }
 }
 
@@ -895,8 +880,7 @@ async function handleAddStaff() {
         const response = await fetch(`${API_BASE_URL}/api/accounts/with-image`, {
             method: 'POST',
             headers: {
-                // Tạm thời bỏ token để debug
-                // 'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}`
             },
             body: formData
         });
@@ -1016,8 +1000,7 @@ async function handleAddProduct() {
         const response = await fetch(`${API_BASE_URL}/api/products/with-image`, {
             method: 'POST',
             headers: {
-                // Tạm thời bỏ token để debug
-                // 'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}`
             },
             body: formData
         });
@@ -1080,97 +1063,76 @@ function showLoader(show) {
 
 // Hiển thị thông báo
 function showMessage(message, type = 'info') {
-    // Tìm hoặc tạo container thông báo
+    // Tạo container nếu chưa tồn tại
     let messageContainer = document.getElementById('messageContainer');
-    
     if (!messageContainer) {
         messageContainer = document.createElement('div');
         messageContainer.id = 'messageContainer';
-        messageContainer.style.position = 'fixed';
-        messageContainer.style.top = '20px';
-        messageContainer.style.right = '20px';
-        messageContainer.style.zIndex = '9999';
+        messageContainer.className = 'message-container';
         document.body.appendChild(messageContainer);
     }
     
-    // Tạo thông báo
+    // Tạo message box
     const messageBox = document.createElement('div');
-    messageBox.className = `message-box ${type}`;
+    messageBox.className = `message ${type}`;
     messageBox.innerHTML = `
-        <div class="message-content">
-            <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
-            <span>${message}</span>
-        </div>
-        <button class="close-message"><i class="fas fa-times"></i></button>
+        <span class="message-icon">${getIconForType(type)}</span>
+        <span class="message-text">${message}</span>
+        <button class="message-close">&times;</button>
     `;
-    
-    // Style cho thông báo
-    messageBox.style.backgroundColor = type === 'success' ? '#4CAF50' : type === 'error' ? '#F44336' : '#2196F3';
-    messageBox.style.color = 'white';
-    messageBox.style.padding = '12px 16px';
-    messageBox.style.margin = '8px 0';
-    messageBox.style.borderRadius = '4px';
-    messageBox.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
-    messageBox.style.display = 'flex';
-    messageBox.style.justifyContent = 'space-between';
-    messageBox.style.alignItems = 'center';
-    messageBox.style.minWidth = '300px';
-    messageBox.style.animation = 'slideInRight 0.3s forwards';
-    
-    // Thêm CSS animation
-    if (!document.getElementById('message-animations')) {
-        const style = document.createElement('style');
-        style.id = 'message-animations';
-        style.innerHTML = `
-            @keyframes slideInRight {
-                from { transform: translateX(100%); }
-                to { transform: translateX(0); }
-            }
-            @keyframes slideOutRight {
-                from { transform: translateX(0); }
-                to { transform: translateX(100%); }
-            }
-            .message-box.hide {
-                animation: slideOutRight 0.3s forwards;
-            }
-            .message-content {
-                display: flex;
-                align-items: center;
-            }
-            .message-content i {
-                margin-right: 8px;
-            }
-            .close-message {
-                background: none;
-                border: none;
-                color: white;
-                cursor: pointer;
-            }
-        `;
-        document.head.appendChild(style);
-    }
-    
-    // Thêm sự kiện đóng
-    const closeBtn = messageBox.querySelector('.close-message');
-    closeBtn.addEventListener('click', () => {
-        messageBox.classList.add('hide');
-        setTimeout(() => {
-            messageContainer.removeChild(messageBox);
-        }, 300);
-    });
     
     // Thêm vào container
     messageContainer.appendChild(messageBox);
     
-    // Tự động ẩn sau 5 giây
+    // Hiệu ứng hiện message
     setTimeout(() => {
-        if (messageBox.parentElement) {
+        messageBox.classList.add('show');
+    }, 10);
+    
+    // Xử lý nút đóng
+    const closeButton = messageBox.querySelector('.message-close');
+    if (closeButton) {
+        closeButton.addEventListener('click', () => {
+            messageBox.classList.remove('show');
             messageBox.classList.add('hide');
             setTimeout(() => {
-                if (messageBox.parentElement) {
+                if (messageBox.parentElement && messageContainer.contains(messageBox)) {
+                    messageContainer.removeChild(messageBox);
+                }
+            }, 300);
+        });
+    }
+    
+    // Tự động ẩn sau 5 giây
+    setTimeout(() => {
+        if (messageBox && document.body.contains(messageContainer)) {
+            messageBox.classList.remove('show');
+            messageBox.classList.add('hide');
+            setTimeout(() => {
+                if (messageBox.parentElement && messageContainer.contains(messageBox)) {
                     messageContainer.removeChild(messageBox);
                 }
             }, 300);
         }
     }, 5000);
+}
+
+// Hàm trợ giúp để lấy token từ localStorage
+function getAuthToken() {
+    return localStorage.getItem('token');
+}
+
+// Hàm trợ giúp để tạo headers với token xác thực
+function getAuthHeaders() {
+    const token = getAuthToken();
+    const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    };
+    
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return headers;
 } 

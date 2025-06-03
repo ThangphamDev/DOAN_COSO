@@ -12,6 +12,26 @@ const ENDPOINTS = {
     ORDERS: `${API_BASE_URL}/orders`
 };
 
+// Hàm trợ giúp để lấy token từ localStorage
+function getAuthToken() {
+    return localStorage.getItem('token');
+}
+
+// Hàm trợ giúp để tạo headers với token xác thực
+function getAuthHeaders() {
+    const token = getAuthToken();
+    const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    };
+    
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return headers;
+}
+
 // State
 let menuItems = [];
 let categories = [];
@@ -40,11 +60,32 @@ let submitOrderBtn;
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
-    initializeDOMElements();
-    setupEventListeners();
-    loadInitialData();
-    loadSavedOrder();
+    // Kiểm tra xác thực trước khi tải trang
+    if (checkAuthentication()) {
+        initializeDOMElements();
+        setupEventListeners();
+        loadInitialData();
+        loadSavedOrder();
+    }
 });
+
+// Kiểm tra xác thực
+function checkAuthentication() {
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    
+    if (!token || !role || !(role.toLowerCase().includes('staff') || role.toLowerCase().includes('admin'))) {
+        // Chuyển hướng về trang đăng nhập nếu không phải nhân viên hoặc admin
+        window.location.href = '../auth/login.html';
+        return false;
+    }
+    
+    // Debug thông tin token
+    console.log("Token hiện tại:", token);
+    console.log("Role hiện tại:", role);
+    
+    return true;
+}
 
 // Initialize DOM element references
 function initializeDOMElements() {
@@ -82,7 +123,11 @@ async function loadInitialData() {
 // Load categories from API
 async function loadCategories() {
     try {
-        const response = await fetch(ENDPOINTS.CATEGORIES);
+        const response = await fetch(ENDPOINTS.CATEGORIES, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+        
         if (!response.ok) throw new Error('Failed to load categories');
         
         categories = await response.json();
@@ -120,7 +165,11 @@ async function loadCategories() {
 // Load tables from API
 async function loadTables() {
     try {
-        const response = await fetch(ENDPOINTS.TABLES);
+        const response = await fetch(ENDPOINTS.TABLES, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+        
         if (!response.ok) throw new Error('Failed to load tables');
         
         tables = await response.json();
@@ -353,44 +402,46 @@ function clearOrder() {
 // Submit order
 async function submitOrder() {
     if (currentOrder.items.length === 0) {
-        showNotification('Vui lòng chọn ít nhất một món trước khi thanh toán', 'error');
+        showNotification('Vui lòng thêm sản phẩm vào đơn hàng', 'warning');
         return;
     }
 
-    // Update table information before opening payment modal
-    currentOrder.tableId = tableSelect.value || null;
-    if (currentOrder.tableId) {
-        const selectedTable = tables.find(t => t.idTable === parseInt(currentOrder.tableId));
-        if (selectedTable) {
-            currentOrder.tableInfo = {
-                tableNumber: selectedTable.tableNumber,
-                location: selectedTable.location
-            };
+    try {
+        // Lưu thông tin bàn vào currentOrder nếu có chọn bàn
+        if (tableSelect.value) {
+            const selectedTable = tables.find(t => t.idTable == tableSelect.value);
+            if (selectedTable) {
+                currentOrder.tableId = tableSelect.value;
+                currentOrder.tableInfo = {
+                    tableNumber: selectedTable.tableNumber,
+                    location: selectedTable.location
+                };
+            }
+        } else {
+            currentOrder.tableId = null;
+            currentOrder.tableInfo = null;
         }
-    }
 
-    // Get note from textarea and update both note and notes fields
-    const noteTextarea = document.getElementById('orderNote');
-    if (noteTextarea) {
-        const noteValue = noteTextarea.value.trim();
-        currentOrder.note = noteValue;
-        currentOrder.notes = noteValue;
+        // Lưu ghi chú vào currentOrder
+        currentOrder.notes = document.getElementById('orderNote').value || '';
+        
+        // Lưu đơn hàng hiện tại vào localStorage
+        saveOrderToStorage();
+        
+        // Mở modal thanh toán
+        const paymentWindow = window.open('payment-modal.html', 'PaymentWindow', 'width=800,height=700');
+        
+        // Kiểm tra nếu cửa sổ bị chặn popup
+        if (!paymentWindow || paymentWindow.closed || typeof paymentWindow.closed === 'undefined') {
+            showNotification('Vui lòng cho phép popup để mở cửa sổ thanh toán', 'error');
+        } else {
+            showNotification('Đang mở cửa sổ thanh toán...', 'info');
+        }
+        
+    } catch (error) {
+        console.error('Error opening payment modal:', error);
+        showNotification('Không thể mở cửa sổ thanh toán: ' + error.message, 'error');
     }
-    
-    // Save updated order to localStorage
-    saveOrderToStorage();
-    
-    // Open payment modal in a new window
-    const width = 600;
-    const height = 800;
-    const left = (window.screen.width - width) / 2;
-    const top = (window.screen.height - height) / 2;
-    
-    window.open(
-        'payment-modal.html',
-        'PaymentModal',
-        `width=${width},height=${height},left=${left},top=${top}`
-    );
 }
 
 // Add item to order

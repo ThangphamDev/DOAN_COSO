@@ -1,4 +1,3 @@
-
 const API_BASE_URL = 'http://localhost:8081/api';
 const ORDERS_ENDPOINT = `${API_BASE_URL}/orders`;
 
@@ -15,6 +14,26 @@ const STATUS_CLASSES = {
     'cancelled': 'cancelled',
     'pending': 'pending'
 };
+
+// Hàm trợ giúp để lấy token từ localStorage
+function getAuthToken() {
+    return localStorage.getItem('token');
+}
+
+// Hàm trợ giúp để tạo headers với token xác thực
+function getAuthHeaders() {
+    const token = getAuthToken();
+    const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    };
+    
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return headers;
+}
 
 let ordersTable;
 let orderTableBody;
@@ -120,7 +139,10 @@ function addEventListeners() {
 async function loadOrders() {
     try {
         showLoader(true);
-        const response = await fetch(ORDERS_ENDPOINT);
+        const response = await fetch(ORDERS_ENDPOINT, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
         
         if (!response.ok) {
             throw new Error(`Lỗi HTTP: ${response.status}`);
@@ -336,7 +358,7 @@ function displayOrders() {
                     showLoader(true, 'Đang cập nhật trạng thái...');
                     const res = await fetch(`${ORDERS_ENDPOINT}/${orderId}/status`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: getAuthHeaders(),
                         body: JSON.stringify({ status: 'completed' })
                     });
                     if (!res.ok) throw new Error('Cập nhật trạng thái thất bại');
@@ -659,7 +681,10 @@ async function openAddProductModal(orderItems, orderItemsTable) {
     
     try {
         showLoader(true);
-        const response = await fetch(`${API_BASE_URL}/products`);
+        const response = await fetch(`${API_BASE_URL}/products`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
         
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
@@ -718,7 +743,10 @@ async function openAddProductModal(orderItems, orderItemsTable) {
             
             try {
                 showLoader(true);
-                const response = await fetch(`${API_BASE_URL}/products/${productId}`);
+                const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
+                    method: 'GET',
+                    headers: getAuthHeaders()
+                });
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
@@ -784,9 +812,7 @@ async function saveOrderChanges(orderId, orderItems) {
         
         const response = await fetch(`${ORDERS_ENDPOINT}/${orderId}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify(payload)
         });
         
@@ -852,7 +878,8 @@ async function deleteOrder(orderId) {
     
     try {
         const response = await fetch(`${ORDERS_ENDPOINT}/${orderId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: getAuthHeaders()
         });
         
         if (!response.ok) {
@@ -1144,92 +1171,55 @@ function showLoader(show) {
     }
 }
 
-function showNotification(message, type = 'info') {
+function showNotification(message, type = 'info', duration = 5000) {
     let notificationContainer = document.getElementById('notificationContainer');
     
     if (!notificationContainer) {
         notificationContainer = document.createElement('div');
         notificationContainer.id = 'notificationContainer';
-        notificationContainer.style.position = 'fixed';
-        notificationContainer.style.top = '20px';
-        notificationContainer.style.right = '20px';
-        notificationContainer.style.zIndex = '9999';
+        notificationContainer.className = 'notification-container';
         document.body.appendChild(notificationContainer);
     }
     
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
-    notification.style.backgroundColor = '#fff';
-    notification.style.borderRadius = '5px';
-    notification.style.boxShadow = '0 3px 10px rgba(0,0,0,0.2)';
-    notification.style.padding = '15px 20px';
-    notification.style.marginBottom = '10px';
-    notification.style.display = 'flex';
-    notification.style.alignItems = 'center';
-    notification.style.position = 'relative';
-    notification.style.transform = 'translateX(120%)';
-    notification.style.transition = 'transform 0.3s ease';
-    
-    let iconClass;
-    let iconColor;
-    
-    switch (type) {
-        case 'success':
-            iconClass = 'fas fa-check-circle';
-            iconColor = '#4CAF50';
-            notification.style.borderLeft = '4px solid #4CAF50';
-            break;
-        case 'error':
-            iconClass = 'fas fa-times-circle';
-            iconColor = '#F44336';
-            notification.style.borderLeft = '4px solid #F44336';
-            break;
-        case 'warning':
-            iconClass = 'fas fa-exclamation-triangle';
-            iconColor = '#FF9800';
-            notification.style.borderLeft = '4px solid #FF9800';
-            break;
-        default:
-            iconClass = 'fas fa-info-circle';
-            iconColor = '#2196F3';
-            notification.style.borderLeft = '4px solid #2196F3';
-    }
-    
     notification.innerHTML = `
-        <i class="${iconClass}" style="color: ${iconColor}; font-size: 20px; margin-right: 10px;"></i>
-        <div style="flex: 1;">
-            <div style="font-weight: bold; color: #333; margin-bottom: 3px;">${type.charAt(0).toUpperCase() + type.slice(1)}</div>
-            <div style="color: #666;">${message}</div>
+        <div class="notification-content">
+            <span class="notification-message">${message}</span>
         </div>
-        <button style="background: none; border: none; cursor: pointer; font-size: 16px; color: #999;">
-            <i class="fas fa-times"></i>
-        </button>
+        <button class="notification-close">&times;</button>
     `;
     
     notificationContainer.appendChild(notification);
     
     setTimeout(() => {
-        notification.style.transform = 'translateX(0)';
+        notification.classList.add('show');
     }, 10);
     
-    const closeButton = notification.querySelector('button');
+    const closeButton = notification.querySelector('.notification-close');
     closeButton.addEventListener('click', () => {
-        notification.style.transform = 'translateX(120%)';
+        notification.classList.remove('show');
+        notification.classList.add('hide');
         setTimeout(() => {
-            notificationContainer.removeChild(notification);
+            if (notification.parentElement && notificationContainer.contains(notification)) {
+                notificationContainer.removeChild(notification);
+            }
         }, 300);
     });
     
-    setTimeout(() => {
-        if (notification.parentNode === notificationContainer) {
-            notification.style.transform = 'translateX(120%)';
-            setTimeout(() => {
-                if (notification.parentNode === notificationContainer) {
-                    notificationContainer.removeChild(notification);
-                }
-            }, 300);
-        }
-    }, 5000);
+    if (duration > 0) {
+        setTimeout(() => {
+            if (notification && document.body.contains(notificationContainer)) {
+                notification.classList.remove('show');
+                notification.classList.add('hide');
+                setTimeout(() => {
+                    if (notification.parentElement && notificationContainer.contains(notification)) {
+                        notificationContainer.removeChild(notification);
+                    }
+                }, 300);
+            }
+        }, duration);
+    }
 }
 
 function printOrderInvoice(orderId) {

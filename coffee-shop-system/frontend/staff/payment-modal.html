@@ -206,11 +206,33 @@
             currentOrder.total = total - discount;
         }
 
+        // Hàm trợ giúp để lấy token từ localStorage
+        function getAuthToken() {
+            return localStorage.getItem('token');
+        }
+
+        // Hàm trợ giúp để tạo headers với token xác thực
+        function getAuthHeaders() {
+            const token = getAuthToken();
+            const headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
+            return headers;
+        }
+
         // Toggle payment method
         document.querySelectorAll('input[name="paymentMethod"]').forEach(input => {
             input.addEventListener('change', (e) => {
                 const transferInfo = document.getElementById('transferInfo');
-                transferInfo.style.display = e.target.value === 'transfer' ? 'block' : 'none';
+                if (transferInfo) {
+                    transferInfo.style.display = e.target.value === 'transfer' ? 'block' : 'none';
+                }
             });
         });
 
@@ -229,7 +251,10 @@
             }
 
             // Validate promotion code
-            fetch(`http://localhost:8081/api/promotions/validate/${code}`)
+            fetch(`http://localhost:8081/api/promotions/validate/${code}`, {
+                method: 'GET',
+                headers: getAuthHeaders()
+            })
                 .then(response => response.json())
                 .then(data => {
                     if (data.valid) {
@@ -262,7 +287,10 @@
         }
 
         function calculateDiscount(code, totalAmount) {
-            fetch(`http://localhost:8081/api/promotions/calculate-discount?code=${code}&orderTotal=${totalAmount}`)
+            fetch(`http://localhost:8081/api/promotions/calculate-discount?code=${code}&orderTotal=${totalAmount}`, {
+                method: 'GET',
+                headers: getAuthHeaders()
+            })
                 .then(response => response.json())
                 .then(data => {
                     if (data.valid) {
@@ -296,12 +324,9 @@
 
                 // Update table status to Occupied first if table was selected
                 if (currentOrder.tableId) {
-                    const tableResponse = await fetch(`http://localhost:8081/api/tables/${currentOrder.tableId}/status?status=Occupied`, {
+                    const tableResponse = await fetch(`http://localhost:8081/api/cafe-tables/${currentOrder.tableId}/status?status=Occupied`, {
                         method: 'PATCH',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        }
+                        headers: getAuthHeaders()
                     });
 
                     if (!tableResponse.ok) {
@@ -351,10 +376,7 @@
                 // Submit order
                 const response = await fetch('http://localhost:8081/api/orders', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
+                    headers: getAuthHeaders(),
                     body: JSON.stringify(orderData)
                 });
 

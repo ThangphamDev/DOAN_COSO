@@ -1,4 +1,3 @@
-
 const TABLE_API_URL = 'http://localhost:8081/api/tables';
 const STATUS_CLASSES = {
     'Available': 'status-available',
@@ -11,8 +10,8 @@ const STATUS_TRANSLATIONS = {
     'Occupied': 'Đang phục vụ',
     'Reserved': 'Đặt trước',
     'Cleaning': 'Đang dọn dẹp'
-};
-
+    };
+    
 // State variables
 let tables = [];
 let filteredTables = [];
@@ -32,6 +31,26 @@ let paginationElements = {};
 let tableModal;
 let deleteModal;
 let tableForm;
+
+// Hàm trợ giúp để lấy token từ localStorage
+function getAuthToken() {
+    return localStorage.getItem('token');
+}
+
+// Hàm trợ giúp để tạo headers với token xác thực
+function getAuthHeaders() {
+    const token = getAuthToken();
+    const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    };
+    
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return headers;
+}
 
 // Khởi tạo module khi trang đã tải xong
 document.addEventListener('DOMContentLoaded', function() {
@@ -187,7 +206,10 @@ async function loadTables() {
         }
 
         // Gọi API tables
-        const response = await fetch(TABLE_API_URL);
+        const response = await fetch(TABLE_API_URL, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
         
         // Kiểm tra phản hồi
         if (!response.ok) {
@@ -320,9 +342,7 @@ function createTableRow(table) {
                 };
                 const response = await fetch(`${TABLE_API_URL}/${table.id}`, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: getAuthHeaders(),
                     body: JSON.stringify(tableData)
                 });
                 if (!response.ok) {
@@ -504,57 +524,47 @@ function confirmDeleteTable(table) {
     openModal(deleteModal);
 }
 
-// Lưu bàn (thêm mới hoặc cập nhật)
+// Lưu bàn mới hoặc cập nhật bàn hiện có
 async function saveTable() {
     try {
         // Hiển thị loader
         if (window.AdminCore && window.AdminCore.showLoader) {
-            window.AdminCore.showLoader(true);
+            window.AdminCore.showLoader(true, 'Đang lưu thông tin bàn...');
         }
         
         // Lấy dữ liệu từ form
-        const tableId = document.getElementById('tableId').value;
-        const tableName = document.getElementById('tableName').value;
-        const tableNumber = parseInt(document.getElementById('tableNumber').value);
-        const tableCapacity = parseInt(document.getElementById('tableCapacity').value);
-        const tableArea = document.getElementById('tableArea').value;
-        const tableStatus = document.getElementById('tableStatus').value;
-        const tableNotes = document.getElementById('tableNotes').value;
-        
-        // Tạo đối tượng dữ liệu để gửi lên API
         const tableData = {
-            tableNumber: tableNumber,
-            capacity: tableCapacity,
-            location: tableArea,
-            status: tableStatus,
-            description: tableNotes
+            tableNumber: document.getElementById('tableNumber').value,
+            capacity: parseInt(document.getElementById('tableCapacity').value),
+            location: document.getElementById('tableArea').value,
+            status: document.getElementById('tableStatus').value,
+            description: document.getElementById('tableNotes').value
         };
         
-        let response;
-        let successMessage;
+        // Kiểm tra dữ liệu đầu vào
+        if (!tableData.tableNumber || isNaN(tableData.capacity) || !tableData.location) {
+            throw new Error('Vui lòng điền đầy đủ thông tin bàn');
+        }
         
-        // Xác định nếu là thêm mới hay cập nhật
+        // Kiểm tra xem là thêm mới hay cập nhật
+        const currentTableId = document.getElementById('tableId').value;
+        
+        let response;
         if (currentTableId) {
             // Cập nhật bàn hiện có
-            tableData.idTable = parseInt(currentTableId);
+            tableData.idTable = currentTableId;
             response = await fetch(`${TABLE_API_URL}/${currentTableId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(tableData)
             });
-            successMessage = `Cập nhật bàn ${tableName} thành công`;
         } else {
             // Thêm bàn mới
             response = await fetch(TABLE_API_URL, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(tableData)
             });
-            successMessage = `Thêm bàn mới ${tableName} thành công`;
         }
         
         // Kiểm tra phản hồi
@@ -562,22 +572,23 @@ async function saveTable() {
             throw new Error(`Lỗi: ${response.status} - ${response.statusText}`);
         }
         
-        // Đóng modal
+        // Đóng modal và làm mới dữ liệu
         closeModal(tableModal);
-        
-        // Tải lại dữ liệu
         await loadTables();
         
-        // Thông báo thành công
+        // Hiển thị thông báo thành công
         if (window.AdminCore && window.AdminCore.showNotification) {
-            window.AdminCore.showNotification(successMessage, 'success');
+            window.AdminCore.showNotification(
+                currentTableId ? 'Cập nhật bàn thành công' : 'Thêm bàn mới thành công', 
+                'success'
+            );
         }
     } catch (error) {
         console.error('Lỗi khi lưu bàn:', error);
         
-        // Thông báo lỗi
+        // Hiển thị thông báo lỗi
         if (window.AdminCore && window.AdminCore.showNotification) {
-            window.AdminCore.showNotification(`Không thể lưu bàn: ${error.message}`, 'error');
+            window.AdminCore.showNotification(`Lỗi: ${error.message}`, 'error');
         }
     } finally {
         // Ẩn loader
@@ -592,12 +603,13 @@ async function deleteTable(tableId) {
     try {
         // Hiển thị loader
         if (window.AdminCore && window.AdminCore.showLoader) {
-            window.AdminCore.showLoader(true);
+            window.AdminCore.showLoader(true, 'Đang xóa bàn...');
         }
         
         // Gọi API xóa bàn
         const response = await fetch(`${TABLE_API_URL}/${tableId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: getAuthHeaders()
         });
         
         // Kiểm tra phản hồi
@@ -605,24 +617,19 @@ async function deleteTable(tableId) {
             throw new Error(`Lỗi: ${response.status} - ${response.statusText}`);
         }
         
-        // Xóa bàn khỏi danh sách
-        tables = tables.filter(table => table.id != tableId);
-        filteredTables = filteredTables.filter(table => table.id != tableId);
+        // Làm mới dữ liệu
+        await loadTables();
         
-        // Cập nhật giao diện
-        updateTableStatistics();
-        renderTables();
-        
-        // Thông báo thành công
+        // Hiển thị thông báo thành công
         if (window.AdminCore && window.AdminCore.showNotification) {
-            window.AdminCore.showNotification('Đã xóa bàn thành công', 'success');
+            window.AdminCore.showNotification('Xóa bàn thành công', 'success');
         }
     } catch (error) {
         console.error('Lỗi khi xóa bàn:', error);
         
-        // Thông báo lỗi
+        // Hiển thị thông báo lỗi
         if (window.AdminCore && window.AdminCore.showNotification) {
-            window.AdminCore.showNotification(`Không thể xóa bàn: ${error.message}`, 'error');
+            window.AdminCore.showNotification(`Lỗi: ${error.message}`, 'error');
         }
     } finally {
         // Ẩn loader

@@ -8,56 +8,57 @@ const AdminUI = {
      * @param {number} duration - Thời gian hiển thị (ms)
      */
     showToast: function(message, type = 'info', duration = 3000) {
+        // Tạo container nếu chưa tồn tại
+        let toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toast-container';
+            document.body.appendChild(toastContainer);
+        }
+        
+        // Tạo toast
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
+        toast.innerHTML = `
+            <div class="toast-content">
+                <i class="toast-icon ${getIconClass(type)}"></i>
+                <div class="toast-message">${message}</div>
+            </div>
+            <button class="toast-close">&times;</button>
+        `;
         
-        const toastContent = document.createElement('div');
-        toastContent.className = 'toast-content';
+        // Thêm vào container
+        toastContainer.appendChild(toast);
         
-        const icon = document.createElement('i');
-        icon.className = 'toast-icon fas ';
-        switch(type) {
-            case 'success':
-                icon.classList.add('fa-check-circle');
-                break;
-            case 'error':
-                icon.classList.add('fa-times-circle');
-                break;
-            case 'warning':
-                icon.classList.add('fa-exclamation-triangle');
-                break;
-            default:
-                icon.classList.add('fa-info-circle');
-        }
-        
-        const messageElement = document.createElement('div');
-        messageElement.className = 'toast-message';
-        messageElement.textContent = message;
-        
-        const closeButton = document.createElement('button');
-        closeButton.className = 'toast-close';
-        closeButton.innerHTML = '&times;';
-        closeButton.addEventListener('click', () => this.removeToast(toast));
-        
-        toastContent.appendChild(icon);
-        toastContent.appendChild(messageElement);
-        toast.appendChild(toastContent);
-        toast.appendChild(closeButton);
-        
-        document.body.appendChild(toast);
-        
-        this.toasts.push(toast);
-        if (this.toasts.length > this.maxToasts) {
-            this.removeToast(this.toasts[0]);
-        }
-        
+        // Hiệu ứng hiện toast
         setTimeout(() => {
             toast.classList.add('show');
         }, 10);
         
+        // Xử lý nút đóng
+        const closeBtn = toast.querySelector('.toast-close');
+        closeBtn.addEventListener('click', () => {
+            toast.classList.remove('show');
+            toast.classList.add('hide');
+            setTimeout(() => {
+                if (toast.parentNode && toastContainer.contains(toast)) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        });
+        
+        // Tự động ẩn sau 5 giây
         setTimeout(() => {
-            this.removeToast(toast);
-        }, duration);
+            if (toast && document.body.contains(toastContainer)) {
+                toast.classList.remove('show');
+                toast.classList.add('hide');
+                setTimeout(() => {
+                    if (toast.parentNode && toastContainer.contains(toast)) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }
+        }, 5000);
     },
     
     /**

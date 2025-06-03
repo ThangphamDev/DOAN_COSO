@@ -67,20 +67,9 @@ async function loadDashboardData() {
 
 async function loadStatistics() {
     try {
-        const ordersResponse = await fetch(`${API_URL}/orders/recent?limit=100`);
-        if (!ordersResponse.ok) {
-            const errorText = await ordersResponse.text();
-            throw new Error(`API Error (orders/recent) ${ordersResponse.status}: ${errorText}`);
-        }
-        const recentOrders = await ordersResponse.json();
-        const paymentsResponse = await fetch(`${API_URL}/payments`);
-        if (!paymentsResponse.ok) {
-            const errorText = await paymentsResponse.text();
-            throw new Error(`API Error (payments) ${paymentsResponse.status}: ${errorText}`);
-        }
-        const payments = await paymentsResponse.json();
+        const { orders, payments } = await fetchOrdersAndPayments();
         const today = new Date();
-        const todaysOrders = recentOrders.filter(order => {
+        const todaysOrders = orders.filter(order => {
             const orderDate = new Date(order.orderTime || order.createAt);
             return orderDate.getFullYear() === today.getFullYear() &&
                    orderDate.getMonth() === today.getMonth() &&
@@ -126,43 +115,38 @@ async function loadStatistics() {
 }
 
 function updateStatistics(stats) {
-    if (stats.hasOwnProperty('totalOrders') && todayOrdersElement) {
-        todayOrdersElement.textContent = stats.totalOrders || 0;
-    }
-    if (stats.hasOwnProperty('pendingOrders') && pendingOrdersElement) {
-        pendingOrdersElement.textContent = `${stats.pendingOrders || 0} chờ xử lý`;
-    }
-    if (stats.hasOwnProperty('completedOrders') && completedOrdersElement) {
-        completedOrdersElement.textContent = `${stats.completedOrders || 0} hoàn thành`;
-    }
-    if (stats.hasOwnProperty('totalRevenue') && todayRevenueElement) {
-        todayRevenueElement.textContent = formatCurrency(stats.totalRevenue || 0);
-    }
-    if (stats.hasOwnProperty('cashRevenue') && cashRevenueElement) {
-        cashRevenueElement.textContent = `Tiền mặt: ${formatCurrency(stats.cashRevenue || 0)}`;
-    }
-    if (stats.hasOwnProperty('transferRevenue') && transferRevenueElement) {
-        transferRevenueElement.textContent = `Chuyển khoản: ${formatCurrency(stats.transferRevenue || 0)}`;
-    }
-    if (stats.hasOwnProperty('totalTables') && totalTablesElement) {
-        totalTablesElement.textContent = stats.totalTables || 0;
-    }
-    if (stats.hasOwnProperty('availableTables') && availableTablesElement) {
-        availableTablesElement.textContent = `${stats.availableTables || 0} bàn trống`;
-    }
-    if (stats.hasOwnProperty('occupiedTables') && occupiedTablesElement) {
-        occupiedTablesElement.textContent = `${stats.occupiedTables || 0} đang phục vụ`;
-    }
+        if (stats.hasOwnProperty('totalOrders') && todayOrdersElement) {
+            todayOrdersElement.textContent = stats.totalOrders || 0;
+        }
+        if (stats.hasOwnProperty('pendingOrders') && pendingOrdersElement) {
+            pendingOrdersElement.textContent = `${stats.pendingOrders || 0} chờ xử lý`;
+        }
+        if (stats.hasOwnProperty('completedOrders') && completedOrdersElement) {
+            completedOrdersElement.textContent = `${stats.completedOrders || 0} hoàn thành`;
+        }
+        if (stats.hasOwnProperty('totalRevenue') && todayRevenueElement) {
+            todayRevenueElement.textContent = formatCurrency(stats.totalRevenue || 0);
+        }
+        if (stats.hasOwnProperty('cashRevenue') && cashRevenueElement) {
+            cashRevenueElement.textContent = `Tiền mặt: ${formatCurrency(stats.cashRevenue || 0)}`;
+        }
+        if (stats.hasOwnProperty('transferRevenue') && transferRevenueElement) {
+            transferRevenueElement.textContent = `Chuyển khoản: ${formatCurrency(stats.transferRevenue || 0)}`;
+        }
+        if (stats.hasOwnProperty('totalTables') && totalTablesElement) {
+            totalTablesElement.textContent = stats.totalTables || 0;
+        }
+        if (stats.hasOwnProperty('availableTables') && availableTablesElement) {
+            availableTablesElement.textContent = `${stats.availableTables || 0} bàn trống`;
+        }
+        if (stats.hasOwnProperty('occupiedTables') && occupiedTablesElement) {
+            occupiedTablesElement.textContent = `${stats.occupiedTables || 0} đang phục vụ`;
+        }
 }
 
 async function loadTables() {
     try {
-        const response = await fetch(`${API_URL}/tables`);
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`API Error ${response.status}: ${errorText}`);
-        }
-        const tables = await response.json();
+        const tables = await fetchTables();
         activeTables = tables.filter(table => 
             table.status?.toLowerCase() === 'occupied' || 
             table.status?.toLowerCase() === 'đang phục vụ'
@@ -194,27 +178,26 @@ async function loadTables() {
 
 function renderActiveTables() {
     if (!activeTablesListElement) return;
-    activeTablesListElement.innerHTML = '';
-    if (activeTables.length === 0) {
-        activeTablesListElement.innerHTML = '<div class="no-data">Không có bàn đang phục vụ</div>';
-        return;
-    }
-    activeTables.forEach(table => {
-        const tableElement = document.createElement('div');
-        tableElement.className = 'table-item';
-        tableElement.innerHTML = `
-            <div class="table-number">Bàn ${table.tableNumber}</div>
-            <div class="table-status">${table.location}</div>
-        `;
-        activeTablesListElement.appendChild(tableElement);
-    });
+        activeTablesListElement.innerHTML = '';
+        if (activeTables.length === 0) {
+            activeTablesListElement.innerHTML = '<div class="no-data">Không có bàn đang phục vụ</div>';
+            return;
+        }
+        activeTables.forEach(table => {
+            const tableElement = document.createElement('div');
+            tableElement.className = 'table-item';
+            tableElement.innerHTML = `
+                <div class="table-number">Bàn ${table.tableNumber}</div>
+                <div class="table-status">${table.location}</div>
+            `;
+            activeTablesListElement.appendChild(tableElement);
+        });
 }
 
 async function loadRecentOrders() {
     try {
-        const response = await fetch(`${API_URL}/orders/recent?limit=5`);
-        if (!response.ok) throw new Error('Failed to load recent orders');
-        recentOrders = await response.json();
+        const orders = await fetchRecentOrders();
+        recentOrders = orders;
         renderRecentOrders();
     } catch (error) {
         showNotification('Không thể tải đơn hàng gần đây', 'error');
@@ -223,33 +206,33 @@ async function loadRecentOrders() {
 
 function renderRecentOrders() {
     if (!recentOrdersListElement) return;
-    recentOrdersListElement.innerHTML = '';
-    if (recentOrders.length === 0) {
+        recentOrdersListElement.innerHTML = '';
+        if (recentOrders.length === 0) {
         recentOrdersListElement.innerHTML = '<div class="no-data">Không có đơn hàng nào</div>';
-        return;
-    }
-    recentOrders.forEach(order => {
-        const orderElement = document.createElement('div');
+            return;
+        }
+        recentOrders.forEach(order => {
+            const orderElement = document.createElement('div');
         orderElement.className = `order-item ${order.status?.toLowerCase()}`;
         orderElement.onclick = () => handleOrderClick(order);
         const paymentMethod = order.payment?.paymentMethod 
             ? `<span class="payment-method ${order.payment.paymentMethod.toLowerCase()}">${getPaymentMethodText(order.payment.paymentMethod)}</span>`
             : '';
-        orderElement.innerHTML = `
-            <div class="order-info">
+            orderElement.innerHTML = `
+                <div class="order-info">
                 <div class="order-header">
                     <div class="order-id">#${order.idOrder}</div>
                     <div class="order-status ${order.status?.toLowerCase()}">${getStatusText(order.status)}</div>
                 </div>
-                <div class="order-details">
+                    <div class="order-details">
                     ${order.table ? `Bàn ${order.table.tableNumber} - ${order.table.location}` : 'Mang về'}
                     ${paymentMethod}
+                    </div>
                 </div>
-            </div>
-            <div class="order-amount">${formatCurrency(order.totalAmount)}</div>
-        `;
-        recentOrdersListElement.appendChild(orderElement);
-    });
+                <div class="order-amount">${formatCurrency(order.totalAmount)}</div>
+            `;
+            recentOrdersListElement.appendChild(orderElement);
+        });
 }
 
 function handleOrderClick(order) {
@@ -262,40 +245,8 @@ function handleOrderClick(order) {
 
 async function loadNotifications() {
     try {
-        const response = await fetch(`${API_URL}/orders/recent`);
-        if (!response.ok) throw new Error('Failed to load recent orders');
-        const recentOrders = await response.json();
-        notifications = recentOrders.map(order => {
-            let message = '';
-            let isRead = order.status === 'completed';
-            switch (order.status?.toLowerCase()) {
-                case 'processing':
-                    message = `Đơn hàng mới #${order.idOrder} ${order.table ? `tại bàn ${order.table.tableNumber}` : 'mang về'}`;
-                    break;
-                case 'completed':
-                    message = `Đơn hàng #${order.idOrder} đã hoàn thành - ${formatCurrency(order.totalAmount)}`;
-                    break;
-                case 'cancelled':
-                    message = `Đơn hàng #${order.idOrder} đã bị hủy`;
-                    break;
-                default:
-                    message = `Cập nhật đơn hàng #${order.idOrder}`;
-            }
-            const orderDetails = order.orderDetails || [];
-            if (orderDetails.length > 0) {
-                const itemCount = orderDetails.reduce((sum, detail) => sum + detail.quantity, 0);
-                message += ` (${itemCount} món)`;
-            }
-            return {
-                id: order.idOrder,
-                message: message,
-                time: new Date(order.orderTime || order.createAt),
-                isRead: isRead,
-                type: order.status?.toLowerCase(),
-                amount: order.totalAmount
-            };
-        });
-        notifications.sort((a, b) => b.time - a.time);
+        const notifications = await fetchNotifications();
+        this.notifications = notifications;
         renderNotifications();
     } catch (error) {
         showNotification('Không thể tải thông báo', 'error');
@@ -307,47 +258,48 @@ function renderNotifications() {
     const unreadCount = notifications.filter(n => !n.isRead).length;
     notificationCountElement.textContent = unreadCount;
     notificationCountElement.style.display = unreadCount > 0 ? 'block' : 'none';
-    notificationsListElement.innerHTML = '';
-    if (notifications.length === 0) {
+        notificationsListElement.innerHTML = '';
+        if (notifications.length === 0) {
         notificationsListElement.innerHTML = '<div class="no-data">Không có thông báo nào</div>';
-        return;
-    }
-    notifications.forEach(notification => {
-        const notificationElement = document.createElement('div');
+            return;
+        }
+        notifications.forEach(notification => {
+            const notificationElement = document.createElement('div');
         notificationElement.className = `notification-item ${notification.type}${notification.isRead ? '' : ' unread'}`;
-        notificationElement.innerHTML = `
-            <div class="notification-content">
+            notificationElement.innerHTML = `
+                <div class="notification-content">
                 <div class="notification-message">${notification.message}</div>
                 ${notification.amount ? `
                     <div class="notification-amount">${formatCurrency(notification.amount)}</div>
                 ` : ''}
                 <div class="notification-time">${formatTime(notification.time)}</div>
-            </div>
+                    </div>
             <div class="notification-actions">
                 <button class="mark-read-btn" onclick="markNotificationAsRead(${notification.id})" 
                     ${notification.isRead ? 'style="display: none;"' : ''}>
                     <i class="fas fa-check"></i>
                 </button>
             </div>
-        `;
-        notificationsListElement.appendChild(notificationElement);
-    });
+            `;
+            notificationsListElement.appendChild(notificationElement);
+        });
 }
 
 async function markNotificationAsRead(notificationId) {
     try {
-        const notification = notifications.find(n => n.id === notificationId);
+        await fetch(`${API_URL}/orders/${notificationId}/read`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ isRead: true })
+        });
+        
+        // Cập nhật UI
+        const notification = document.querySelector(`.notification-item[data-id="${notificationId}"]`);
         if (notification) {
-            notification.isRead = true;
-            renderNotifications();
-            await fetch(`${API_URL}/orders/${notificationId}/read`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
+            notification.classList.add('read');
         }
     } catch (error) {
+        console.error('Error marking notification as read:', error);
     }
 }
 
@@ -427,113 +379,35 @@ document.head.appendChild(style);
 
 async function showOrderDetails(orderId) {
     try {
-        // Load order details
-        const response = await fetch(`${API_URL}/orders/${orderId}`);
-        if (!response.ok) throw new Error('Failed to load order details');
+        showLoader(true);
+        
+        // Lấy thông tin đơn hàng
+        const response = await fetch(`${API_URL}/orders/${orderId}`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+        
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        
         const order = await response.json();
         
-        // Load payment information
-        let paymentInfo = null;
-        try {
-            const paymentResponse = await fetch(`${API_URL}/payments/order/${orderId}`);
-            if (paymentResponse.ok) {
-                const payments = await paymentResponse.json();
-                if (payments && payments.length > 0) {
-                    paymentInfo = payments[0]; // Lấy payment đầu tiên
-                }
-            }
-        } catch (error) {
-            console.warn('Could not load payment info:', error);
+        // Lấy thông tin thanh toán
+        const paymentResponse = await fetch(`${API_URL}/payments/order/${orderId}`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+        
+        let payment = null;
+        if (paymentResponse.ok) {
+            payment = await paymentResponse.json();
         }
         
-        let modal = document.getElementById('orderDetailsModal');
-        if (!modal) {
-            modal = document.createElement('div');
-            modal.id = 'orderDetailsModal';
-            modal.className = 'modal';
-            document.body.appendChild(modal);
-        }
-        
-        // Determine payment method display
-        let paymentMethodDisplay = 'Chưa thanh toán';
-        if (paymentInfo) {
-            paymentMethodDisplay = getPaymentMethodText(paymentInfo.paymentMethod);
-            if (paymentInfo.paymentStatus) {
-                const statusText = paymentInfo.paymentStatus === 'completed' ? 'Đã thanh toán' : 'Chưa thanh toán';
-                paymentMethodDisplay += ` (${statusText})`;
-            }
-        } else if (order.payment?.paymentMethod) {
-            // Fallback to order payment info if available
-            paymentMethodDisplay = getPaymentMethodText(order.payment.paymentMethod);
-        }
-        
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Chi tiết đơn hàng #${order.idOrder}</h2>
-                    <button class="close-btn" onclick="closeOrderDetails()">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="order-info-row">
-                        <span class="label">Thời gian:</span>
-                        <span>${formatDateTime(order.orderTime || order.createAt)}</span>
-                    </div>
-                    <div class="order-info-row">
-                        <span class="label">Bàn:</span>
-                        <span>${order.table ? `Bàn ${order.table.tableNumber} - ${order.table.location}` : 'Mang về'}</span>
-                    </div>
-                    <div class="order-info-row">
-                        <span class="label">Trạng thái:</span>
-                        <span class="status ${order.status?.toLowerCase()}">${getStatusText(order.status)}</span>
-                    </div>
-                    
-                    <div class="order-info-row">
-                        <span class="label">Thanh toán:</span>
-                        <span class="payment-method ${paymentInfo?.paymentMethod?.toLowerCase() || order.payment?.paymentMethod?.toLowerCase()}">${paymentMethodDisplay}</span>
-                    </div>
-                    <div class="order-info-row">
-                        <span class="label">Ghi chú:</span>
-                        <span class="order-notes">${order.note || 'Không có ghi chú'}</span>
-                    </div>
-                    <div class="order-items">
-                        <h3>Danh sách món</h3>
-                        ${order.orderDetails?.map(item => `
-                            <div class="order-item-row">
-                                <div class="item-info">
-                                    <span class="item-name">${item.product?.productName}</span>
-                                    <span class="item-quantity">x${item.quantity}</span>
-                                </div>
-                                <span class="item-price">${formatCurrency(item.unitPrice * item.quantity)}</span>
-                            </div>
-                        `).join('') || '<div class="no-data">Không có món nào</div>'}
-                    </div>
-                    ${order.discountAmount ? `
-                        <div class="order-info-row discount">
-                            <span class="label">Giảm giá:</span>
-                            <span class="discount-amount">-${formatCurrency(order.discountAmount)}</span>
-                        </div>
-                    ` : ''}
-                    <div class="order-info-row total">
-                        <span class="label">Tổng cộng:</span>
-                        <span class="total-amount">${formatCurrency(order.totalAmount)}</span>
-                    </div>
-                </div>
-            </div>
-        `;
-        modal.style.display = 'flex';
-        const closeBtn = modal.querySelector('.close-btn');
-        closeBtn.onclick = closeOrderDetails;
-        window.onclick = function(event) {
-            if (event.target === modal) {
-                closeOrderDetails();
-            }
-        };
-        const notification = notifications.find(n => n.id === orderId);
-        if (notification && !notification.isRead) {
-            markNotificationAsRead(orderId);
-        }
+        displayOrderDetails(order, payment);
     } catch (error) {
+        console.error('Error loading order details:', error);
         showNotification('Không thể tải chi tiết đơn hàng', 'error');
+    } finally {
+        showLoader(false);
     }
 }
 
@@ -568,5 +442,216 @@ function logout() {
     if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
         localStorage.clear();
         window.location.href = '../index.html';
+    }
+}
+
+// Hàm trợ giúp để lấy token từ localStorage
+function getAuthToken() {
+    return localStorage.getItem('token');
+}
+
+// Hàm trợ giúp để tạo headers với token xác thực
+function getAuthHeaders() {
+    const token = getAuthToken();
+    const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    };
+    
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return headers;
+}
+
+// Lấy dữ liệu đơn hàng và thanh toán
+async function fetchOrdersAndPayments() {
+    try {
+        showLoader(true);
+        
+        // Lấy dữ liệu đơn hàng
+        const ordersResponse = await fetch(`${API_URL}/orders/recent?limit=100`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+        
+        if (!ordersResponse.ok) throw new Error(`HTTP error! Status: ${ordersResponse.status}`);
+        
+        // Lấy dữ liệu thanh toán
+        const paymentsResponse = await fetch(`${API_URL}/payments`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+        
+        if (!paymentsResponse.ok) throw new Error(`HTTP error! Status: ${paymentsResponse.status}`);
+        
+        const orders = await ordersResponse.json();
+        const payments = await paymentsResponse.json();
+        
+        return { orders, payments };
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        showNotification('Không thể tải dữ liệu từ máy chủ', 'error');
+        return { orders: [], payments: [] };
+    } finally {
+        showLoader(false);
+    }
+}
+
+// Lấy dữ liệu bàn
+async function fetchTables() {
+    try {
+        const response = await fetch(`${API_URL}/tables`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+        
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching tables:', error);
+        showNotification('Không thể tải thông tin bàn', 'error');
+        return [];
+    }
+}
+
+// Lấy đơn hàng gần đây
+async function fetchRecentOrders() {
+    try {
+        const response = await fetch(`${API_URL}/orders/recent?limit=5`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+        
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching recent orders:', error);
+        return [];
+    }
+}
+
+// Lấy thông báo mới
+async function fetchNotifications() {
+    try {
+        const response = await fetch(`${API_URL}/orders/recent`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+        
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        
+        const orders = await response.json();
+        
+        // Lọc các đơn hàng chưa đọc và mới tạo trong 24h qua
+        const oneDayAgo = new Date();
+        oneDayAgo.setHours(oneDayAgo.getHours() - 24);
+        
+        return orders.filter(order => {
+            const orderDate = new Date(order.orderTime);
+            return !order.isRead && orderDate > oneDayAgo;
+        });
+    } catch (error) {
+        console.error('Error fetching notifications:', error);
+        return [];
+    }
+}
+
+function displayOrderDetails(order, payment) {
+    let modal = document.getElementById('orderDetailsModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'orderDetailsModal';
+        modal.className = 'modal';
+        document.body.appendChild(modal);
+    }
+    
+    let paymentMethodDisplay = 'Chưa thanh toán';
+    if (payment) {
+        paymentMethodDisplay = getPaymentMethodText(payment.paymentMethod);
+        if (payment.paymentStatus) {
+            const statusText = payment.paymentStatus === 'completed' ? 'Đã thanh toán' : 'Chưa thanh toán';
+            paymentMethodDisplay += ` (${statusText})`;
+        }
+    } else if (order.payment?.paymentMethod) {
+        paymentMethodDisplay = getPaymentMethodText(order.payment.paymentMethod);
+    }
+    
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Chi tiết đơn hàng #${order.idOrder}</h2>
+                <button class="close-btn" onclick="closeOrderDetails()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="order-info-row">
+                    <span class="label">Thời gian:</span>
+                    <span>${formatDateTime(order.orderTime || order.createAt)}</span>
+                </div>
+                <div class="order-info-row">
+                    <span class="label">Bàn:</span>
+                    <span>${order.table ? `Bàn ${order.table.tableNumber} - ${order.table.location}` : 'Mang về'}</span>
+                </div>
+                <div class="order-info-row">
+                    <span class="label">Trạng thái:</span>
+                    <span class="status ${order.status?.toLowerCase()}">${getStatusText(order.status)}</span>
+                </div>
+                
+                <div class="order-info-row">
+                    <span class="label">Thanh toán:</span>
+                    <span class="payment-method ${payment?.paymentMethod?.toLowerCase() || order.payment?.paymentMethod?.toLowerCase()}">${paymentMethodDisplay}</span>
+                </div>
+                <div class="order-info-row">
+                    <span class="label">Ghi chú:</span>
+                    <span class="order-notes">${order.note || 'Không có ghi chú'}</span>
+                </div>
+                <div class="order-items">
+                    <h3>Danh sách món</h3>
+                    ${order.orderDetails?.map(item => `
+                        <div class="order-item-row">
+                            <div class="item-info">
+                                <span class="item-name">${item.product?.productName}</span>
+                                <span class="item-quantity">x${item.quantity}</span>
+                            </div>
+                            <span class="item-price">${formatCurrency(item.unitPrice * item.quantity)}</span>
+                        </div>
+                    `).join('') || '<div class="no-data">Không có món nào</div>'}
+                </div>
+                ${order.discountAmount ? `
+                    <div class="order-info-row discount">
+                        <span class="label">Giảm giá:</span>
+                        <span class="discount-amount">-${formatCurrency(order.discountAmount)}</span>
+                    </div>
+                ` : ''}
+                <div class="order-info-row total">
+                    <span class="label">Tổng cộng:</span>
+                    <span class="total-amount">${formatCurrency(order.totalAmount)}</span>
+                </div>
+            </div>
+        </div>
+    `;
+    modal.style.display = 'flex';
+    const closeBtn = modal.querySelector('.close-btn');
+    closeBtn.onclick = closeOrderDetails;
+    window.onclick = function(event) {
+        if (event.target === modal) {
+            closeOrderDetails();
+        }
+    };
+    const notification = notifications.find(n => n.id === order.idOrder);
+    if (notification && !notification.isRead) {
+        markNotificationAsRead(order.idOrder);
+    }
+}
+
+function showLoader(show) {
+    const loader = document.getElementById('loader');
+    if (show) {
+        loader.style.display = 'block';
+    } else {
+        loader.style.display = 'none';
     }
 }

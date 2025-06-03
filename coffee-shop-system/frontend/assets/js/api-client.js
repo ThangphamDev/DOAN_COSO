@@ -1,81 +1,105 @@
 const API_BASE_URL = 'http://localhost:8081/api';
 
-// Token JWT cho authentication
+
 let authToken = localStorage.getItem('token') || null;
 
-// Bộ đếm cache-breaking
+
 let apiCallCount = 0;
 
-// Cache đơn giản để lưu trữ response từ API
 const apiCache = new Map();
-const CACHE_DURATION = 30000; // 30 giây
+const CACHE_DURATION = 30000; 
 
-// Hàm trợ giúp để gọi API
-async function fetchApi(endpoint, options = {}) {
-  try {
-    // Kiểm tra phương thức, nếu không phải GET thì không sử dụng cache
-    const method = options.method || 'GET';
-    const cacheKey = `${endpoint}-${method}`;
-    
-    // Chỉ sử dụng cache cho các requests GET
-    if (method === 'GET') {
-      const cachedData = apiCache.get(cacheKey);
-      if (cachedData && Date.now() - cachedData.timestamp < CACHE_DURATION) {
-        console.log(`Sử dụng dữ liệu cache cho: ${endpoint}`);
-        return cachedData.data;
-      }
-    }
-    
-    // Thiết lập các options mặc định
-    const defaultOptions = {
-      headers: {
-        'Content-Type': 'application/json',
+// Hàm trợ giúp để lấy token từ localStorage
+function getAuthToken() {
+    return localStorage.getItem('token');
+}
+
+// Hàm trợ giúp để tạo headers với token xác thực
+function getAuthHeaders() {
+    const token = getAuthToken();
+    const headers = {
         'Accept': 'application/json'
-      },
-      mode: 'cors' // Thêm chế độ CORS
     };
-
-    // Kết hợp options mặc định với options được cung cấp
-    const fetchOptions = { ...defaultOptions, ...options };
     
-    // Nếu có token trong localStorage, thêm vào header
-    const token = localStorage.getItem('token');
     if (token) {
-      fetchOptions.headers.Authorization = `Bearer ${token}`;
+        headers['Authorization'] = `Bearer ${token}`;
     }
+    
+    return headers;
+}
 
-    console.log(`Gọi API: ${API_BASE_URL}${endpoint}`, fetchOptions);
+// Hàm trợ giúp để tạo headers với token xác thực cho FormData
+function getAuthHeadersForFormData() {
+    const token = getAuthToken();
+    const headers = {};
     
-    // Gọi API
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
-    
-    // Xử lý lỗi HTTP
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
     }
+    
+    return headers;
+}
 
-    // Kiểm tra nếu response rỗng
-    const contentType = response.headers.get('content-type');
-    let data;
-    if (contentType && contentType.includes('application/json')) {
-      data = await response.json();
-    } else {
-      data = await response.text();
+async function fetchApi(endpoint, options = {}) {
+    try {
+        const cacheKey = `${endpoint}_${JSON.stringify(options)}`;
+        
+        // Kiểm tra cache nếu là GET request
+        if (options.method === 'GET' || !options.method) {
+            const cachedData = apiCache.get(cacheKey);
+            if (cachedData && Date.now() - cachedData.timestamp < CACHE_DURATION) {
+                console.log(`[API] Using cached data for ${endpoint}`);
+                return cachedData.data;
+            }
+        }
+        
+        // Merge headers
+        const headers = {
+            ...getAuthHeaders(),
+            ...(options.headers || {})
+        };
+        
+        const fetchOptions = {
+            ...options,
+            headers
+        };
+        
+        console.log(`[API] Fetching ${endpoint}`, fetchOptions);
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
+        
+        if (!response.ok) {
+            let errorMessage = `API Error: ${response.status} ${response.statusText}`;
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+            } catch (e) {
+                // Không phải JSON, sử dụng message mặc định
+            }
+            throw new Error(errorMessage);
+        }
+        
+        // Phân tích phản hồi
+        let data;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            data = await response.text();
+        }
+        
+        // Lưu vào cache nếu là GET request
+        if (options.method === 'GET' || !options.method) {
+            apiCache.set(cacheKey, {
+                data,
+                timestamp: Date.now()
+            });
+        }
+        
+        return data;
+    } catch (error) {
+        console.error(`[API] Error fetching ${endpoint}:`, error);
+        throw error;
     }
-    
-    // Lưu vào cache nếu là request GET
-    if (method === 'GET') {
-      apiCache.set(cacheKey, {
-        data,
-        timestamp: Date.now()
-      });
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('API request error:', error);
-    throw error;
-  }
 }
 
 // Hàm để xóa cache
@@ -306,9 +330,7 @@ const ProductApi = {
       const response = await fetch(`${API_BASE_URL}/products/with-image`, {
         method: 'POST',
         body: formData,
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+        headers: getAuthHeadersForFormData()
       });
       
       if (!response.ok) {
@@ -355,9 +377,7 @@ const ProductApi = {
         method: 'POST',
         body: formData,
         // Không đặt Content-Type, để trình duyệt tự xác định boundary cho multipart/form-data
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+        headers: getAuthHeadersForFormData()
       });
       
       if (!response.ok) {
@@ -379,6 +399,87 @@ const ProductApi = {
     return await fetchApi(`/products/${id}/availability?isAvailable=${isAvailable}`, {
       method: 'PATCH'
     });
+  },
+
+  // Thêm sản phẩm mới với ảnh
+  addProductWithImage: async (productData, imageFile) => {
+    try {
+        const formData = new FormData();
+        
+        // Thêm thông tin sản phẩm
+        formData.append('productName', productData.name);
+        formData.append('categoryId', productData.categoryId);
+        formData.append('price', productData.price);
+        formData.append('description', productData.description || '');
+        formData.append('isAvailable', productData.isAvailable === undefined ? true : productData.isAvailable);
+        
+        // Thêm file ảnh nếu có
+        if (imageFile) {
+            formData.append('image', imageFile);
+        }
+        
+        // Gọi API để thêm sản phẩm với ảnh
+        const response = await fetch(`${API_BASE_URL}/products/with-image`, {
+            method: 'POST',
+            headers: getAuthHeadersForFormData(),
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error adding product with image:', error);
+        throw error;
+    }
+  },
+
+  // Cập nhật ảnh sản phẩm
+  updateProductImage: async (id, imageFile) => {
+    try {
+        const formData = new FormData();
+        formData.append('image', imageFile);
+        
+        const response = await fetch(`${API_BASE_URL}/products/${id}/image`, {
+            method: 'PUT',
+            headers: getAuthHeadersForFormData(),
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error updating product image:', error);
+        throw error;
+    }
+  },
+
+  // Tải lên avatar nhân viên
+  uploadStaffAvatar: async (id, avatarFile) => {
+    try {
+        const formData = new FormData();
+        formData.append('avatar', avatarFile);
+        
+        const response = await fetch(`${API_BASE_URL}/accounts/${id}/avatar`, {
+            method: 'POST',
+            headers: getAuthHeadersForFormData(),
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error uploading staff avatar:', error);
+        throw error;
+    }
   }
 };
 

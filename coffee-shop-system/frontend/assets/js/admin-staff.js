@@ -1,3 +1,34 @@
+// Hàm trợ giúp để lấy token từ localStorage
+function getAuthToken() {
+    return localStorage.getItem('token');
+}
+
+// Hàm trợ giúp để tạo headers với token xác thực
+function getAuthHeaders() {
+    const token = getAuthToken();
+    const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    };
+    
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return headers;
+}
+
+// Hàm trợ giúp để tạo headers với token xác thực cho FormData
+function getAuthHeadersForFormData() {
+    const token = getAuthToken();
+    const headers = {};
+    
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return headers;
+}
 
 const DEFAULT_AVATAR = '../assets/images/default-avatar.png';
 
@@ -6,6 +37,8 @@ let originalList = [];
 let currentPage = 1;       
 let itemsPerPage = 10;     
 let totalPages = 1;        
+let isEditMode = false;
+let currentStaffId = null;
 
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -686,6 +719,7 @@ async function handleStaffFormSubmit(event) {
                 formData.append('avatar', imageInput.files[0]);
                 const uploadRes = await fetch(`http://localhost:8081/api/accounts/${staffId}/avatar`, {
                     method: 'POST',
+                    headers: getAuthHeadersForFormData(),
                     body: formData
                 });
                 const uploadData = await uploadRes.json();
@@ -708,6 +742,7 @@ async function handleStaffFormSubmit(event) {
                     formData.append('avatar', imageInput.files[0]);
                     const uploadRes = await fetch(`http://localhost:8081/api/accounts/${result.idAccount}/avatar`, {
                         method: 'POST',
+                        headers: getAuthHeadersForFormData(),
                         body: formData
                     });
                     const uploadData = await uploadRes.json();

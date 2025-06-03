@@ -6,7 +6,29 @@
 class PromotionManager {
     constructor() {
         this.apiUrl = 'http://localhost:8081/api/promotions';
+        this.promotions = [];
+        this.activePromotions = [];
         this.init();
+    }
+
+    // Hàm trợ giúp để lấy token từ localStorage
+    getAuthToken() {
+        return localStorage.getItem('token');
+    }
+
+    // Hàm trợ giúp để tạo headers với token xác thực
+    getAuthHeaders() {
+        const token = this.getAuthToken();
+        const headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        };
+        
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        return headers;
     }
 
     /**
@@ -407,7 +429,10 @@ class PromotionManager {
      */
     async fetchAllPromotions() {
         try {
-            const response = await fetch(this.apiUrl);
+            const response = await fetch(this.apiUrl, {
+                method: 'GET',
+                headers: this.getAuthHeaders()
+            });
             if (!response.ok) {
                 throw new Error('Failed to fetch promotions');
             }
@@ -423,7 +448,10 @@ class PromotionManager {
      */
     async fetchActivePromotions() {
         try {
-            const response = await fetch(`${this.apiUrl}/active`);
+            const response = await fetch(`${this.apiUrl}/active`, {
+                method: 'GET',
+                headers: this.getAuthHeaders()
+            });
             if (!response.ok) {
                 throw new Error('Failed to fetch active promotions');
             }
@@ -439,7 +467,10 @@ class PromotionManager {
      */
     async getPromotionById(id) {
         try {
-            const response = await fetch(`${this.apiUrl}/${id}`);
+            const response = await fetch(`${this.apiUrl}/${id}`, {
+                method: 'GET',
+                headers: this.getAuthHeaders()
+            });
             if (!response.ok) {
                 throw new Error('Failed to fetch promotion');
             }
@@ -459,9 +490,7 @@ class PromotionManager {
             this.showLoader();
             const response = await fetch(this.apiUrl, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify(promotionData)
             });
             
@@ -491,9 +520,7 @@ class PromotionManager {
             this.showLoader();
             const response = await fetch(`${this.apiUrl}/${promotionData.idPromotion}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify(promotionData)
             });
             
@@ -526,7 +553,8 @@ class PromotionManager {
         try {
             this.showLoader();
             const response = await fetch(`${this.apiUrl}/${id}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: this.getAuthHeaders()
             });
             
             if (!response.ok) {
@@ -550,7 +578,8 @@ class PromotionManager {
         try {
             this.showLoader();
             const response = await fetch(`${this.apiUrl}/${id}/status?isActive=${isActive}`, {
-                method: 'PATCH'
+                method: 'PATCH',
+                headers: this.getAuthHeaders()
             });
             
             if (!response.ok) {
