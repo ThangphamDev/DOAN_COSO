@@ -324,7 +324,7 @@
 
                 // Update table status to Occupied first if table was selected
                 if (currentOrder.tableId) {
-                    const tableResponse = await fetch(`http://localhost:8081/api/cafe-tables/${currentOrder.tableId}/status?status=Occupied`, {
+                    const tableResponse = await fetch(`http://localhost:8081/api/tables/${currentOrder.tableId}/status?status=Occupied`, {
                         method: 'PATCH',
                         headers: getAuthHeaders()
                     });

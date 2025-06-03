@@ -235,13 +235,7 @@ public class CafeOrderService {
             
             CafeOrder updatedOrder = cafeOrderRepository.save(order);
             
-            // Nếu đơn hàng chuyển sang trạng thái hoàn thành, tích điểm thưởng cho khách hàng
-            if (("completed".equals(status) || "finished".equals(status)) && 
-                !status.equals(oldStatus) && 
-                updatedOrder.getAccount() != null && 
-                updatedOrder.getTotalAmount() != null) {
-                addRewardPointsForOrder(updatedOrder);
-            }
+            
             
             return updatedOrder;
         }

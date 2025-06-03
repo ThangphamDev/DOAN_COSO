@@ -401,7 +401,7 @@ function addToOrder() {
     
     // Chuyển về trang order sau 1 giây
     setTimeout(() => {
-        window.location.href = '../order.html';
+        window.location.href = '../staff/order.html';
     }, 1000);
 }
 

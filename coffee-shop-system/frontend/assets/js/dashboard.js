@@ -27,24 +27,72 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function initializeDOMElements() {
     todayOrdersElement = document.getElementById('todayOrders');
+    if (!todayOrdersElement) console.debug('Không tìm thấy phần tử todayOrders');
+    
     pendingOrdersElement = document.getElementById('pendingOrders');
+    if (!pendingOrdersElement) console.debug('Không tìm thấy phần tử pendingOrders');
+    
     completedOrdersElement = document.getElementById('completedOrders');
+    if (!completedOrdersElement) console.debug('Không tìm thấy phần tử completedOrders');
+    
     todayRevenueElement = document.getElementById('todayRevenue');
+    if (!todayRevenueElement) console.debug('Không tìm thấy phần tử todayRevenue');
+    
     cashRevenueElement = document.getElementById('cashRevenue');
+    if (!cashRevenueElement) console.debug('Không tìm thấy phần tử cashRevenue');
+    
     transferRevenueElement = document.getElementById('transferRevenue');
+    if (!transferRevenueElement) console.debug('Không tìm thấy phần tử transferRevenue');
+    
     totalTablesElement = document.getElementById('totalTables');
+    if (!totalTablesElement) console.debug('Không tìm thấy phần tử totalTables');
+    
     availableTablesElement = document.getElementById('availableTables');
+    if (!availableTablesElement) console.debug('Không tìm thấy phần tử availableTables');
+    
     occupiedTablesElement = document.getElementById('occupiedTables');
+    if (!occupiedTablesElement) console.debug('Không tìm thấy phần tử occupiedTables');
+    
     activeTablesListElement = document.getElementById('activeTablesList');
+    if (!activeTablesListElement) console.debug('Không tìm thấy phần tử activeTablesList');
+    
     recentOrdersListElement = document.getElementById('recentOrdersList');
+    if (!recentOrdersListElement) console.debug('Không tìm thấy phần tử recentOrdersList');
+    
     notificationsListElement = document.getElementById('notificationsList');
+    if (!notificationsListElement) console.debug('Không tìm thấy phần tử notificationsList');
+    
     notificationCountElement = document.getElementById('notificationCount');
+    if (!notificationCountElement) console.debug('Không tìm thấy phần tử notificationCount');
+    
+    const notificationDropdown = document.getElementById('notificationDropdown');
+    if (notificationDropdown) {
+        notificationsListElement = notificationDropdown;
+    }
 }
 
 function setupEventListeners() {
     const refreshBtn = document.getElementById('refreshBtn');
     if (refreshBtn) {
         refreshBtn.addEventListener('click', loadDashboardData);
+    }
+    
+    // Thêm sự kiện khi click vào chuông thông báo để di chuyển đến khu vực thông báo
+    const bellIcon = document.querySelector('.notifications i.fa-bell');
+    if (bellIcon) {
+        bellIcon.addEventListener('click', () => {
+            // Tìm phần tử thông báo trong trang
+            const notificationsPanel = document.querySelector('.notifications-panel');
+            if (notificationsPanel) {
+                // Cuộn đến vị trí của phần tử thông báo
+                notificationsPanel.scrollIntoView({ behavior: 'smooth' });
+                // Thêm hiệu ứng highlight cho phần thông báo
+                notificationsPanel.classList.add('highlight');
+                setTimeout(() => {
+                    notificationsPanel.classList.remove('highlight');
+                }, 1500);
+            }
+        });
     }
 }
 
@@ -54,14 +102,18 @@ function startAutoRefresh() {
 
 async function loadDashboardData() {
     try {
+        showLoader(true);
         await loadStatistics(); 
         await Promise.all([
             loadTables(),
             loadRecentOrders(),
             loadNotifications()
         ]);
+        showLoader(false);
     } catch (error) {
+        console.error('Lỗi tải dữ liệu dashboard:', error);
         showNotification('Không thể tải toàn bộ dữ liệu tổng quan.', 'error');
+        showLoader(false);
     }
 }
 
@@ -84,13 +136,14 @@ async function loadStatistics() {
             transferRevenue: 0
         };
         const todaysPayments = payments.filter(payment => {
+            if (!payment || !payment.createAt) return false;
             const paymentDate = new Date(payment.createAt);
             return paymentDate.getFullYear() === today.getFullYear() &&
                    paymentDate.getMonth() === today.getMonth() &&
                    paymentDate.getDate() === today.getDate();
         });
         todaysPayments.forEach(payment => {
-            if (payment.order && payment.order.status?.toLowerCase() === 'completed') {
+            if (payment && payment.order && payment.order.status?.toLowerCase() === 'completed') {
                 const amount = payment.order.totalAmount || 0;
                 calculatedStats.totalRevenue += amount;
                 if (payment.paymentMethod?.toLowerCase() === 'cash') {
@@ -101,8 +154,9 @@ async function loadStatistics() {
             }
         });
         updateStatistics(calculatedStats);
+        return calculatedStats;
     } catch (error) {
-        showNotification(`Lỗi tính thống kê đơn hàng/doanh thu: ${error.message}`, 'error');
+        console.error(`Lỗi tính thống kê đơn hàng/doanh thu:`, error);
         updateStatistics({
             totalOrders: 0,
             pendingOrders: 0,
@@ -111,37 +165,47 @@ async function loadStatistics() {
             cashRevenue: 0,
             transferRevenue: 0
         });
+        throw error;
     }
 }
 
 function updateStatistics(stats) {
-        if (stats.hasOwnProperty('totalOrders') && todayOrdersElement) {
-            todayOrdersElement.textContent = stats.totalOrders || 0;
-        }
-        if (stats.hasOwnProperty('pendingOrders') && pendingOrdersElement) {
-            pendingOrdersElement.textContent = `${stats.pendingOrders || 0} chờ xử lý`;
-        }
-        if (stats.hasOwnProperty('completedOrders') && completedOrdersElement) {
-            completedOrdersElement.textContent = `${stats.completedOrders || 0} hoàn thành`;
-        }
-        if (stats.hasOwnProperty('totalRevenue') && todayRevenueElement) {
-            todayRevenueElement.textContent = formatCurrency(stats.totalRevenue || 0);
-        }
-        if (stats.hasOwnProperty('cashRevenue') && cashRevenueElement) {
-            cashRevenueElement.textContent = `Tiền mặt: ${formatCurrency(stats.cashRevenue || 0)}`;
-        }
-        if (stats.hasOwnProperty('transferRevenue') && transferRevenueElement) {
-            transferRevenueElement.textContent = `Chuyển khoản: ${formatCurrency(stats.transferRevenue || 0)}`;
-        }
-        if (stats.hasOwnProperty('totalTables') && totalTablesElement) {
-            totalTablesElement.textContent = stats.totalTables || 0;
-        }
-        if (stats.hasOwnProperty('availableTables') && availableTablesElement) {
-            availableTablesElement.textContent = `${stats.availableTables || 0} bàn trống`;
-        }
-        if (stats.hasOwnProperty('occupiedTables') && occupiedTablesElement) {
-            occupiedTablesElement.textContent = `${stats.occupiedTables || 0} đang phục vụ`;
-        }
+    // Kiểm tra từng phần tử DOM trước khi cập nhật
+    if (stats.hasOwnProperty('totalOrders') && todayOrdersElement) {
+        todayOrdersElement.textContent = stats.totalOrders || 0;
+    }
+    
+    if (stats.hasOwnProperty('pendingOrders') && pendingOrdersElement) {
+        pendingOrdersElement.textContent = `${stats.pendingOrders || 0} chờ xử lý`;
+    }
+    
+    if (stats.hasOwnProperty('completedOrders') && completedOrdersElement) {
+        completedOrdersElement.textContent = `${stats.completedOrders || 0} hoàn thành`;
+    }
+    
+    if (stats.hasOwnProperty('totalRevenue') && todayRevenueElement) {
+        todayRevenueElement.textContent = formatCurrency(stats.totalRevenue || 0);
+    }
+    
+    if (stats.hasOwnProperty('cashRevenue') && cashRevenueElement) {
+        cashRevenueElement.textContent = `Tiền mặt: ${formatCurrency(stats.cashRevenue || 0)}`;
+    }
+    
+    if (stats.hasOwnProperty('transferRevenue') && transferRevenueElement) {
+        transferRevenueElement.textContent = `Chuyển khoản: ${formatCurrency(stats.transferRevenue || 0)}`;
+    }
+    
+    if (stats.hasOwnProperty('totalTables') && totalTablesElement) {
+        totalTablesElement.textContent = stats.totalTables || 0;
+    }
+    
+    if (stats.hasOwnProperty('availableTables') && availableTablesElement) {
+        availableTablesElement.textContent = `${stats.availableTables || 0} bàn trống`;
+    }
+    
+    if (stats.hasOwnProperty('occupiedTables') && occupiedTablesElement) {
+        occupiedTablesElement.textContent = `${stats.occupiedTables || 0} đang phục vụ`;
+    }
 }
 
 async function loadTables() {
@@ -200,7 +264,11 @@ async function loadRecentOrders() {
         recentOrders = orders;
         renderRecentOrders();
     } catch (error) {
+        console.error('Lỗi tải đơn hàng gần đây:', error);
         showNotification('Không thể tải đơn hàng gần đây', 'error');
+        if (recentOrdersListElement) {
+            recentOrdersListElement.innerHTML = '<div class="no-data">Không thể tải đơn hàng gần đây</div>';
+        }
     }
 }
 
@@ -245,44 +313,110 @@ function handleOrderClick(order) {
 
 async function loadNotifications() {
     try {
-        const notifications = await fetchNotifications();
-        this.notifications = notifications;
+        const notificationData = await fetchNotifications();
+        notifications = notificationData;
         renderNotifications();
     } catch (error) {
+        console.error('Lỗi tải thông báo:', error);
         showNotification('Không thể tải thông báo', 'error');
+        if (notificationsListElement) {
+            notificationsListElement.innerHTML = '<div class="no-data">Không thể tải thông báo</div>';
+        }
     }
 }
 
+// Lấy thông báo mới
+async function fetchNotifications() {
+    try {
+        const response = await fetch(`${API_URL}/orders/recent?limit=10`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+        
+        if (response.ok) {
+            const orders = await response.json();
+            
+            // Chỉ lấy các đơn hàng đang xử lý (processing)
+            return orders
+                .filter(order => order.status === 'processing')
+                .map(order => {
+                    const orderDate = new Date(order.orderTime || order.createAt);
+                    return {
+                        id: order.idOrder,
+                        message: `Đơn hàng mới #${order.idOrder} ${order.table ? `- Bàn ${order.table.tableNumber}` : '- Mang về'}`,
+                        amount: order.totalAmount,
+                        time: orderDate,
+                        type: order.status,
+                        isRead: false
+                    };
+                });
+        } else {
+            console.error(`Lỗi khi lấy thông báo: ${response.status} - ${response.statusText}`);
+            if (response.status === 401) {
+                showNotification('Không có quyền truy cập API đơn hàng. Vui lòng đăng nhập lại.', 'error');
+            }
+            return [];
+        }
+    } catch (error) {
+        console.error('Lỗi khi lấy thông báo:', error);
+        return [];
+    }
+}
+
+// Cập nhật thông báo
 function renderNotifications() {
     if (!notificationsListElement || !notificationCountElement) return;
-    const unreadCount = notifications.filter(n => !n.isRead).length;
+    
+    // Cập nhật đếm thông báo trên icon chuông
+    const unreadCount = notifications.length;
     notificationCountElement.textContent = unreadCount;
     notificationCountElement.style.display = unreadCount > 0 ? 'block' : 'none';
-        notificationsListElement.innerHTML = '';
-        if (notifications.length === 0) {
+    
+    // Xử lý hiển thị trong phần thông báo
+    if (!notificationsListElement) return;
+    
+    // Giữ lại các thông báo hệ thống đã hiển thị
+    const systemNotifications = Array.from(
+        notificationsListElement.querySelectorAll('.notification-item.system')
+    );
+    
+    // Xóa nội dung cũ
+    notificationsListElement.innerHTML = '';
+    
+    // Thêm lại các thông báo hệ thống
+    systemNotifications.forEach(notification => {
+        notificationsListElement.appendChild(notification);
+    });
+    
+    // Kiểm tra và hiển thị "Không có thông báo nào" nếu không có thông báo
+    if (notifications.length === 0 && systemNotifications.length === 0) {
         notificationsListElement.innerHTML = '<div class="no-data">Không có thông báo nào</div>';
-            return;
-        }
-        notifications.forEach(notification => {
-            const notificationElement = document.createElement('div');
-        notificationElement.className = `notification-item ${notification.type}${notification.isRead ? '' : ' unread'}`;
-            notificationElement.innerHTML = `
-                <div class="notification-content">
-                <div class="notification-message">${notification.message}</div>
+        return;
+    }
+    
+    // Thêm thông báo đơn hàng
+    notifications.forEach(notification => {
+        if (!notification) return;
+        
+        const notificationElement = document.createElement('div');
+        notificationElement.className = `notification-item ${notification.type || ''}${notification.isRead ? '' : ' unread'}`;
+        notificationElement.dataset.id = notification.id; // Thêm data-id để dễ dàng tìm kiếm sau này
+        notificationElement.innerHTML = `
+            <div class="notification-content">
+                <div class="notification-message">${notification.message || 'Thông báo mới'}</div>
                 ${notification.amount ? `
                     <div class="notification-amount">${formatCurrency(notification.amount)}</div>
                 ` : ''}
-                <div class="notification-time">${formatTime(notification.time)}</div>
-                    </div>
+                <div class="notification-time">${formatTime(notification.time || new Date())}</div>
+            </div>
             <div class="notification-actions">
-                <button class="mark-read-btn" onclick="markNotificationAsRead(${notification.id})" 
-                    ${notification.isRead ? 'style="display: none;"' : ''}>
-                    <i class="fas fa-check"></i>
+                <button class="mark-read-btn" onclick="showOrderDetails(${notification.id})">
+                    <i class="fas fa-eye"></i> Xem
                 </button>
             </div>
-            `;
-            notificationsListElement.appendChild(notificationElement);
-        });
+        `;
+        notificationsListElement.appendChild(notificationElement);
+    });
 }
 
 async function markNotificationAsRead(notificationId) {
@@ -304,9 +438,19 @@ async function markNotificationAsRead(notificationId) {
 }
 
 function clearAllNotifications() {
+    if (notificationsListElement) {
+        // Xóa tất cả thông báo khỏi DOM
+        notificationsListElement.innerHTML = '<div class="no-data">Không có thông báo nào</div>';
+        
+        // Cập nhật đếm thông báo
+        if (notificationCountElement) {
+            notificationCountElement.textContent = '0';
+            notificationCountElement.style.display = 'none';
+        }
+    }
+    
+    // Xóa danh sách thông báo từ API
     notifications = [];
-    renderNotifications();
-    showNotification('Đã xóa tất cả thông báo', 'success');
 }
 
 function formatCurrency(amount) {
@@ -338,44 +482,139 @@ function getPaymentMethodText(method) {
     return methodMap[method?.toLowerCase()] || method;
 }
 
+// Hiển thị thông báo
 function showNotification(message, type = 'info') {
+    // Kiểm tra xem phần tử notificationsListElement đã được khởi tạo chưa
+    if (!notificationsListElement) {
+        // Tìm lại phần tử nếu chưa được khởi tạo
+        notificationsListElement = document.getElementById('notificationsList');
+        if (!notificationsListElement) {
+            // Nếu không tìm thấy, ghi log lỗi và không làm gì cả
+            console.error('Không tìm thấy phần tử hiển thị thông báo!');
+            return;
+        }
+    }
+    
+    // Tạo phần tử thông báo mới trong khu vực thông báo
     const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
-    notification.style.position = 'fixed';
-    notification.style.top = '20px';
-    notification.style.right = '20px';
-    notification.style.padding = '15px 25px';
-    notification.style.borderRadius = '5px';
-    notification.style.backgroundColor = type === 'error' ? '#f44336' : '#1abc9c';
-    notification.style.color = 'white';
-    notification.style.zIndex = '1000';
-    notification.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
-    notification.style.animation = 'slideIn 0.5s ease';
-    document.body.appendChild(notification);
-    setTimeout(() => {
-        notification.style.animation = 'slideOut 0.5s ease';
-        setTimeout(() => notification.remove(), 500);
-    }, 3000);
+    notification.className = `notification-item system ${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <div class="notification-message">${message}</div>
+            <div class="notification-time">${formatTime(new Date())}</div>
+        </div>
+        <div class="notification-actions">
+            <button class="mark-read-btn" onclick="this.closest('.notification-item').remove()">
+                <i class="fas fa-times"></i> Đóng
+            </button>
+        </div>
+    `;
+    
+    // Thêm vào danh sách thông báo
+    notificationsListElement.insertBefore(notification, notificationsListElement.firstChild);
+    
+    // Nếu đây là thông báo đầu tiên, thêm nút "Xóa tất cả"
+    if (!document.querySelector('.clear-all-notifications')) {
+        const clearAllBtn = document.createElement('div');
+        clearAllBtn.className = 'clear-all-notifications';
+        clearAllBtn.innerHTML = `
+            <button class="clear-all-btn" onclick="clearAllNotifications()">
+                <i class="fas fa-trash"></i> Xóa tất cả
+            </button>
+        `;
+        notificationsListElement.parentElement.insertBefore(clearAllBtn, notificationsListElement);
+    }
+    
+    // Cập nhật đếm thông báo
+    const notificationCount = document.getElementById('notificationCount');
+    if (notificationCount) {
+        const count = notificationsListElement.querySelectorAll('.notification-item').length;
+        notificationCount.textContent = count;
+        notificationCount.style.display = count > 0 ? 'block' : 'none';
+    }
 }
 
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
+// Xóa các hàm không cần thiết vì không còn sử dụng popup thông báo
+function closeNotification(notification) {
+    // Chỉ xóa phần tử thông báo khỏi DOM
+    if (notification && notification.parentElement) {
+        notification.parentElement.removeChild(notification);
     }
-    @keyframes slideOut {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(100%); opacity: 0; }
-    }
-    .no-data {
-        text-align: center;
-        padding: 20px;
-        color: #666;
-    }
-`;
-document.head.appendChild(style);
+}
+
+// Thêm CSS cho thông báo hệ thống
+function addNotificationStyles() {
+    if (document.getElementById('notification-styles')) return;
+    
+    const style = document.createElement('style');
+    style.id = 'notification-styles';
+    style.textContent = `
+        .notification-item.system {
+            border-left: 4px solid #3498db;
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        .notification-item.system.error {
+            border-left: 4px solid #e74c3c;
+            background-color: rgba(231, 76, 60, 0.05);
+        }
+        
+        .notification-item.system.warning {
+            border-left: 4px solid #f39c12;
+            background-color: rgba(243, 156, 18, 0.05);
+        }
+        
+        .notification-item.system.success {
+            border-left: 4px solid #2ecc71;
+            background-color: rgba(46, 204, 113, 0.05);
+        }
+        
+        .clear-all-notifications {
+            display: flex;
+            justify-content: flex-end;
+            padding: 8px 16px;
+            background-color: #f5f5f5;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .clear-all-btn {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .clear-all-btn:hover {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+        
+        .clear-all-btn i {
+            margin-right: 5px;
+            font-size: 12px;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 20px;
+            color: #95a5a6;
+            font-style: italic;
+        }
+    `;
+    
+    document.head.appendChild(style);
+}
+
+// Khởi tạo styles cho thông báo
+document.addEventListener('DOMContentLoaded', () => {
+    addNotificationStyles();
+});
 
 async function showOrderDetails(orderId) {
     try {
@@ -445,19 +684,14 @@ function logout() {
     }
 }
 
-// Hàm trợ giúp để lấy token từ localStorage
-function getAuthToken() {
-    return localStorage.getItem('token');
-}
-
-// Hàm trợ giúp để tạo headers với token xác thực
+// Lấy headers xác thực
 function getAuthHeaders() {
-    const token = getAuthToken();
     const headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     };
     
+    const token = localStorage.getItem('token');
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
     }
@@ -471,28 +705,48 @@ async function fetchOrdersAndPayments() {
         showLoader(true);
         
         // Lấy dữ liệu đơn hàng
-        const ordersResponse = await fetch(`${API_URL}/orders/recent?limit=100`, {
-            method: 'GET',
-            headers: getAuthHeaders()
-        });
-        
-        if (!ordersResponse.ok) throw new Error(`HTTP error! Status: ${ordersResponse.status}`);
+        let orders = [];
+        try {
+            const ordersResponse = await fetch(`${API_URL}/orders/recent?limit=100`, {
+                method: 'GET',
+                headers: getAuthHeaders()
+            });
+            
+            if (ordersResponse.ok) {
+                orders = await ordersResponse.json();
+            } else {
+                console.error(`Lỗi khi lấy dữ liệu đơn hàng: ${ordersResponse.status} - ${ordersResponse.statusText}`);
+                if (ordersResponse.status === 401) {
+                    showNotification('Không có quyền truy cập API đơn hàng. Vui lòng đăng nhập lại.', 'error');
+                }
+            }
+        } catch (error) {
+            console.error('Lỗi khi lấy dữ liệu đơn hàng:', error);
+        }
         
         // Lấy dữ liệu thanh toán
-        const paymentsResponse = await fetch(`${API_URL}/payments`, {
-            method: 'GET',
-            headers: getAuthHeaders()
-        });
-        
-        if (!paymentsResponse.ok) throw new Error(`HTTP error! Status: ${paymentsResponse.status}`);
-        
-        const orders = await ordersResponse.json();
-        const payments = await paymentsResponse.json();
+        let payments = [];
+        try {
+            const paymentsResponse = await fetch(`${API_URL}/payments`, {
+                method: 'GET',
+                headers: getAuthHeaders()
+            });
+            
+            if (paymentsResponse.ok) {
+                payments = await paymentsResponse.json();
+            } else {
+                console.error(`Lỗi khi lấy dữ liệu thanh toán: ${paymentsResponse.status} - ${paymentsResponse.statusText}`);
+                if (paymentsResponse.status === 401) {
+                    showNotification('Không có quyền truy cập API thanh toán. Vui lòng đăng nhập lại.', 'error');
+                }
+            }
+        } catch (error) {
+            console.error('Lỗi khi lấy dữ liệu thanh toán:', error);
+        }
         
         return { orders, payments };
     } catch (error) {
-        console.error('Error fetching data:', error);
-        showNotification('Không thể tải dữ liệu từ máy chủ', 'error');
+        console.error('Lỗi khi lấy dữ liệu:', error);
         return { orders: [], payments: [] };
     } finally {
         showLoader(false);
@@ -507,11 +761,17 @@ async function fetchTables() {
             headers: getAuthHeaders()
         });
         
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-        
-        return await response.json();
+        if (response.ok) {
+            return await response.json();
+        } else {
+            console.error(`Lỗi khi lấy thông tin bàn: ${response.status} - ${response.statusText}`);
+            if (response.status === 401) {
+                showNotification('Không có quyền truy cập API bàn. Vui lòng đăng nhập lại.', 'error');
+            }
+            return [];
+        }
     } catch (error) {
-        console.error('Error fetching tables:', error);
+        console.error('Lỗi khi lấy thông tin bàn:', error);
         showNotification('Không thể tải thông tin bàn', 'error');
         return [];
     }
@@ -525,37 +785,17 @@ async function fetchRecentOrders() {
             headers: getAuthHeaders()
         });
         
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-        
-        return await response.json();
+        if (response.ok) {
+            return await response.json();
+        } else {
+            console.error(`Lỗi khi lấy đơn hàng gần đây: ${response.status} - ${response.statusText}`);
+            if (response.status === 401) {
+                showNotification('Không có quyền truy cập API đơn hàng. Vui lòng đăng nhập lại.', 'error');
+            }
+            return [];
+        }
     } catch (error) {
-        console.error('Error fetching recent orders:', error);
-        return [];
-    }
-}
-
-// Lấy thông báo mới
-async function fetchNotifications() {
-    try {
-        const response = await fetch(`${API_URL}/orders/recent`, {
-            method: 'GET',
-            headers: getAuthHeaders()
-        });
-        
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-        
-        const orders = await response.json();
-        
-        // Lọc các đơn hàng chưa đọc và mới tạo trong 24h qua
-        const oneDayAgo = new Date();
-        oneDayAgo.setHours(oneDayAgo.getHours() - 24);
-        
-        return orders.filter(order => {
-            const orderDate = new Date(order.orderTime);
-            return !order.isRead && orderDate > oneDayAgo;
-        });
-    } catch (error) {
-        console.error('Error fetching notifications:', error);
+        console.error('Lỗi khi lấy đơn hàng gần đây:', error);
         return [];
     }
 }
@@ -648,10 +888,43 @@ function displayOrderDetails(order, payment) {
 }
 
 function showLoader(show) {
-    const loader = document.getElementById('loader');
-    if (show) {
-        loader.style.display = 'block';
-    } else {
-        loader.style.display = 'none';
+    let loader = document.getElementById('loader');
+    if (!loader) {
+        loader = document.createElement('div');
+        loader.id = 'loader';
+        loader.style.position = 'fixed';
+        loader.style.top = '0';
+        loader.style.left = '0';
+        loader.style.width = '100%';
+        loader.style.height = '100%';
+        loader.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+        loader.style.display = 'flex';
+        loader.style.justifyContent = 'center';
+        loader.style.alignItems = 'center';
+        loader.style.zIndex = '9999';
+        
+        const spinner = document.createElement('div');
+        spinner.className = 'spinner';
+        spinner.style.border = '5px solid #f3f3f3';
+        spinner.style.borderTop = '5px solid #3498db';
+        spinner.style.borderRadius = '50%';
+        spinner.style.width = '50px';
+        spinner.style.height = '50px';
+        spinner.style.animation = 'spin 1s linear infinite';
+        
+        loader.appendChild(spinner);
+        document.body.appendChild(loader);
+        
+        // Add animation style
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
     }
+    
+    loader.style.display = show ? 'flex' : 'none';
 }

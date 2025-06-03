@@ -652,6 +652,35 @@ body {
     background: #a0aec0;
 }
 
+/* Thêm hiệu ứng khi click vào chuông thông báo */
+.notifications i.fa-bell {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.notifications i.fa-bell:hover {
+    transform: scale(1.1);
+}
+
+.notifications-panel.highlight {
+    animation: highlight-pulse 1.5s ease;
+}
+
+.notification-item.highlight {
+    animation: highlight-item 1.5s ease;
+}
+
+@keyframes highlight-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(52, 152, 219, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(52, 152, 219, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(52, 152, 219, 0); }
+}
+
+@keyframes highlight-item {
+    0% { background-color: rgba(52, 152, 219, 0.2); }
+    100% { background-color: rgba(52, 152, 219, 0.05); }
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
     .dashboard-grid {

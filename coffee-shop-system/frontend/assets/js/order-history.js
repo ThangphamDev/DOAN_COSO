@@ -54,9 +54,9 @@ let deleteModal;
 document.addEventListener('DOMContentLoaded', function() {
     // Kiểm tra xác thực trước khi tải trang
     if (checkAuthentication()) {
-        initializeDOMElements();
-        setupEventListeners();
-        loadPayments();
+    initializeDOMElements();
+    setupEventListeners();
+    loadPayments();
     }
 });
 
