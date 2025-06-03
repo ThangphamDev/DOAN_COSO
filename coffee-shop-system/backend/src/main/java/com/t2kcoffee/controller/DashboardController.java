@@ -413,4 +413,25 @@ public class DashboardController {
         
         return ResponseEntity.ok(chartData);
     }
+
+    // Thêm endpoint /chart để fix lỗi 404
+    @GetMapping("/chart")
+    public ResponseEntity<Map<String, Object>> getChartData(@RequestParam(defaultValue = "week") String period) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            // Lấy dữ liệu biểu đồ doanh thu
+            ResponseEntity<Map<String, Object>> revenueChartResponse = getRevenueChart(period);
+            Map<String, Object> revenueChartData = revenueChartResponse.getBody();
+            
+            // Đóng gói dữ liệu vào response
+            response.put("revenue", revenueChartData);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("Lỗi khi lấy dữ liệu biểu đồ: " + e.getMessage());
+            response.put("error", "Có lỗi xảy ra khi lấy dữ liệu biểu đồ");
+            return ResponseEntity.ok(response);
+        }
+    }
 } 

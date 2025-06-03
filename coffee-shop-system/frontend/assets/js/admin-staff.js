@@ -31,6 +31,8 @@ function getAuthHeadersForFormData() {
 }
 
 const DEFAULT_AVATAR = '../assets/images/default-avatar.png';
+// Lưu trữ các URL blob cho ảnh đã tải
+const staffImageCache = {};
 
 let staffList = [];        
 let originalList = [];     
@@ -250,27 +252,27 @@ async function loadStaffData() {
         
         console.log('Đang gọi API để lấy dữ liệu tài khoản...');
         
-        // Gọi API để lấy dữ liệu
-        const data = await window.ApiClient.Staff.getAllStaff();
-        console.log('Dữ liệu nhận được từ API:', data);
-        
-        // Kiểm tra và xử lý dữ liệu
-        if (Array.isArray(data)) {
-            staffList = [...data]; // Tạo bản sao để tránh tham chiếu
-            originalList = [...data]; // Lưu bản sao dữ liệu gốc
+            // Gọi API để lấy dữ liệu
+            const data = await window.ApiClient.Staff.getAllStaff();
+            console.log('Dữ liệu nhận được từ API:', data);
             
-            console.log(`Đã tải ${staffList.length} tài khoản từ API`);
-            
-            // In log kiểm tra hình ảnh
-            staffList.forEach(staff => {
-                console.log(`Staff ${staff.idAccount || staff.id}: ${staff.fullName || staff.userName} - Role: ${staff.role || 'N/A'} - Image: ${staff.image ? 'Yes' : 'No'}`);
-            });
-        } else if (data && typeof data === 'object') {
-            // Nếu API trả về 1 đối tượng thay vì mảng
-            staffList = [data];
-            originalList = [data];
-            console.log(`Đã tải 1 tài khoản từ API: ${data.fullName || data.userName}`);
-        } else {
+            // Kiểm tra và xử lý dữ liệu
+            if (Array.isArray(data)) {
+                staffList = [...data]; // Tạo bản sao để tránh tham chiếu
+                originalList = [...data]; // Lưu bản sao dữ liệu gốc
+                
+                console.log(`Đã tải ${staffList.length} tài khoản từ API`);
+                
+                // In log kiểm tra hình ảnh
+                staffList.forEach(staff => {
+                    console.log(`Staff ${staff.idAccount || staff.id}: ${staff.fullName || staff.userName} - Role: ${staff.role || 'N/A'} - Image: ${staff.image ? 'Yes' : 'No'}`);
+                });
+            } else if (data && typeof data === 'object') {
+                // Nếu API trả về 1 đối tượng thay vì mảng
+                staffList = [data];
+                originalList = [data];
+                console.log(`Đã tải 1 tài khoản từ API: ${data.fullName || data.userName}`);
+            } else {
             staffList = [];
             originalList = [];
             console.warn('Không có dữ liệu tài khoản hoặc định dạng không đúng');
@@ -326,33 +328,14 @@ function updateStaffTable() {
         return;
     }
     
-    // Tải ảnh từ localStorage
-    let staffImages = {};
-    try {
-        staffImages = JSON.parse(localStorage.getItem('staffImages') || '{}');
-    } catch (e) {
-        console.warn('Không thể đọc ảnh từ localStorage:', e);
-    }
-    
     // Hiển thị dữ liệu nhân viên
     for (let i = start; i < end; i++) {
         const staff = staffList[i];
         const staffId = staff.idAccount || staff.id;
         const isActive = staff.isActive !== false; // Default to true if not specified
         
-        // Xác định ảnh đại diện
-        let avatarSrc = DEFAULT_AVATAR;
-        if (staff.image) {
-            if (staff.image.startsWith('data:') || staff.image.startsWith('http')) {
-                avatarSrc = staff.image;
-            } else if (staff.image.startsWith('/uploads/')) {
-                avatarSrc = `http://localhost:8081${staff.image}`;
-            } else {
-                avatarSrc = DEFAULT_AVATAR;
-            }
-        }
-        
-        console.log(`Staff ${staffId} image source: ${avatarSrc.substring(0, 30)}...`);
+        // Xác định ảnh đại diện sử dụng hàm mới
+        const avatarSrc = getSafeImageUrl(staff);
         
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -360,7 +343,8 @@ function updateStaffTable() {
             <td>
                 <div class="staff-info">
                     <div class="staff-avatar">
-                        <img src="${avatarSrc}" 
+                        <img id="staff-avatar-${staffId}" 
+                             src="${avatarSrc}" 
                              alt="${staff.fullName || 'Nhân viên'}" 
                              onerror="this.onerror=null;this.src='${DEFAULT_AVATAR}';">
                     </div>
@@ -556,35 +540,14 @@ async function editStaff(staffId) {
         if (imagePreview) {
             let imageSrc = DEFAULT_AVATAR;
             
-            // Tải ảnh từ localStorage
-            try {
-                const staffImages = JSON.parse(localStorage.getItem('staffImages') || '{}');
-                if (staffImages[staffId]) {
-                    imageSrc = staffImages[staffId];
-                    console.log(`Sử dụng ảnh từ localStorage cho form chỉnh sửa, ID: ${staffId}`);
+            if (staff.image) {
+                if (staff.image.startsWith('data:')) {
+                    imageSrc = staff.image;
+                } else if (staff.image.startsWith('/uploads/')) {
+                    // Sử dụng hàm tải ảnh an toàn
+                    imageSrc = await loadStaffImage(staff.image, staffId);
                 }
-                // Nếu không có trong localStorage, thử sử dụng từ dữ liệu nhân viên
-                else if (staff.image) {
-                    if (typeof staff.image === 'string') {
-                        if (staff.image.startsWith('data:image')) {
-                            imageSrc = staff.image;
-                        } else if (staff.image.startsWith('http')) {
-                            imageSrc = staff.image;
-                        } else {
-                            // Thử chuyển đổi thành base64
-                            try {
-                                imageSrc = `data:image/jpeg;base64,${staff.image}`;
-                            } catch (e) {
-                                console.warn('Không thể chuyển đổi dữ liệu ảnh:', e);
-                            }
-                        }
-                    }
-                }
-            } catch (e) {
-                console.warn('Lỗi khi đọc ảnh từ localStorage:', e);
             }
-            
-            console.log(`Hiển thị ảnh cho form chỉnh sửa, ID: ${staffId}`);
             
             // Tạo thẻ img với xử lý lỗi để hiển thị ảnh mặc định nếu ảnh không tải được
             imagePreview.innerHTML = `
@@ -1055,5 +1018,117 @@ function updatePaginationControls() {
     
     if (currentPageSpan) {
         currentPageSpan.textContent = `Trang ${currentPage} / ${totalPages || 1}`;
+    }
+}
+
+// Hàm để tải ảnh nhân viên thông qua API với token xác thực
+async function loadStaffImage(imagePath, staffId) {
+    // Nếu đã có trong cache, trả về ngay
+    if (staffImageCache[imagePath]) {
+        return staffImageCache[imagePath];
+    }
+    
+    try {
+        // Thực hiện fetch với token xác thực
+        const response = await fetch(`http://localhost:8081${imagePath}`, {
+            headers: getAuthHeadersForFormData()
+        });
+        
+        if (!response.ok) {
+            console.error(`Không thể tải ảnh: ${response.status} ${response.statusText}`);
+            return DEFAULT_AVATAR;
+        }
+        
+        // Chuyển response thành blob
+        const blob = await response.blob();
+        
+        // Tạo URL blob
+        const blobUrl = URL.createObjectURL(blob);
+        
+        // Lưu vào cache
+        staffImageCache[imagePath] = blobUrl;
+        
+        return blobUrl;
+    } catch (error) {
+        console.error(`Lỗi khi tải ảnh: ${error.message}`);
+        return DEFAULT_AVATAR;
+    }
+}
+
+// Hàm để lấy URL ảnh an toàn
+function getSafeImageUrl(staff) {
+    const staffId = staff.idAccount || staff.id;
+    
+    if (!staff.image) {
+        return DEFAULT_AVATAR;
+    }
+    
+    if (staff.image.startsWith('data:')) {
+        return staff.image;
+    }
+    
+    if (staff.image.startsWith('blob:')) {
+        return staff.image;
+    }
+    
+    if (staff.image.startsWith('http') && !staff.image.includes('/uploads/')) {
+        return staff.image;
+    }
+    
+    // Trường hợp đường dẫn /uploads/, sử dụng ảnh mặc định trước
+    // và cập nhật sau khi tải xong
+    if (staff.image.startsWith('/uploads/')) {
+        // Tải ảnh bằng fetch và cập nhật sau
+        const imagePath = staff.image;
+        loadStaffImage(imagePath, staffId).then(blobUrl => {
+            // Tìm và cập nhật ảnh sau khi tải
+            const imgElement = document.querySelector(`#staff-avatar-${staffId}`);
+            if (imgElement) {
+                imgElement.src = blobUrl;
+            }
+        });
+    }
+    
+    return DEFAULT_AVATAR;
+}
+
+// Hiển thị thông báo lỗi kết nối API
+function showApiError(message) {
+    // Không hiển thị thông báo nếu là lỗi 401 (Unauthorized)
+    if (message.includes('401')) {
+        console.log('Bỏ qua thông báo lỗi 401 Unauthorized');
+        return;
+    }
+    
+    // Hiển thị thông báo qua AdminCore nếu có
+    if (window.AdminCore && window.AdminCore.showNotification) {
+        window.AdminCore.showNotification(message, 'warning');
+    }
+    
+    // Hiển thị thông báo ở đầu bảng
+    const tableBody = document.getElementById('staffTableBody');
+    if (tableBody) {
+        // Xóa thông báo cũ nếu đã có
+        const existingWarning = document.querySelector('.api-warning');
+        if (existingWarning) {
+            existingWarning.remove();
+        }
+        
+        // Tạo thông báo mới
+        const apiWarning = document.createElement('div');
+        apiWarning.className = 'api-warning';
+        apiWarning.innerHTML = `
+            <div class="alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Cảnh báo:</strong> ${message}
+                <p>Hệ thống sẽ sử dụng dữ liệu mẫu để hiển thị.</p>
+            </div>
+        `;
+        
+        // Chèn thông báo trước bảng
+        const staffTable = tableBody.closest('.data-table');
+        if (staffTable && staffTable.parentNode) {
+            staffTable.parentNode.insertBefore(apiWarning, staffTable);
+        }
     }
 } 

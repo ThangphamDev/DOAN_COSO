@@ -556,8 +556,12 @@ async function loadChartData(token) {
     try {
         const API_BASE_URL = 'http://localhost:8081';
         
+        // Lấy period từ dropdown nếu có
+        const periodSelect = document.getElementById('revenueChartPeriod');
+        const period = periodSelect ? periodSelect.value : 'week';
+        
         // Gọi API để lấy dữ liệu biểu đồ
-        const response = await fetch(`${API_BASE_URL}/api/dashboard/chart?period=week`, {
+        const response = await fetch(`${API_BASE_URL}/api/dashboard/chart?period=${period}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -572,11 +576,17 @@ async function loadChartData(token) {
             const data = await response.json();
             console.log('API Chart Data - Data:', data);
             
-            // Cập nhật biểu đồ doanh thu
-            updateRevenueChart(data.revenue);
-            
-            // Cập nhật biểu đồ sản phẩm bán chạy
-            loadTopProducts(token);
+            // Kiểm tra nếu dữ liệu có revenue
+            if (data && data.revenue) {
+                // Cập nhật biểu đồ doanh thu
+                updateRevenueChart(data.revenue);
+                
+                // Cập nhật biểu đồ sản phẩm bán chạy
+                loadTopProducts(token);
+            } else {
+                console.warn('Dữ liệu biểu đồ không hợp lệ:', data);
+                showMessage('Dữ liệu biểu đồ không hợp lệ', 'warning');
+            }
         } else {
             console.warn('Không thể tải dữ liệu biểu đồ từ API');
             console.warn('Status code:', response.status);
@@ -738,10 +748,25 @@ function initializeCharts() {
 
 // Cập nhật biểu đồ doanh thu
 function updateRevenueChart(data) {
-    if (revenueChart && data) {
+    if (revenueChart) {
+        // Kiểm tra dữ liệu đầu vào
+        if (!data || !data.labels || !data.data) {
+            console.warn('Dữ liệu biểu đồ doanh thu không hợp lệ:', data);
+            // Đặt dữ liệu mặc định nếu không có dữ liệu
+            revenueChart.data.labels = [];
+            revenueChart.data.datasets[0].data = [];
+            revenueChart.update();
+            return;
+        }
+        
+        console.log('Cập nhật biểu đồ doanh thu với:', data);
+        
+        // Cập nhật dữ liệu cho biểu đồ
         revenueChart.data.labels = data.labels;
         revenueChart.data.datasets[0].data = data.data;
         revenueChart.update();
+    } else {
+        console.warn('Biểu đồ doanh thu chưa được khởi tạo');
     }
 }
 

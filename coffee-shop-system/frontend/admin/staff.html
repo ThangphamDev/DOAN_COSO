@@ -5,13 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý nhân viên - T2K Coffee Admin</title>
-    <!-- Font Awesome CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="../assets/css/admin.css">
     <link rel="stylesheet" href="../assets/css/admin-modules.css">
     <style>
-        /* Custom styles for form error messages */
         .form-error-container {
             background-color: #ffebee;
             border-left: 4px solid #f44336;
@@ -285,7 +282,9 @@
                         }
                     } else {
                         console.warn('API trả về lỗi:', response.status);
-                        showApiError('API trả về mã lỗi: ' + response.status);
+                        if (response.status !== 401) {
+                            showApiError('API trả về mã lỗi: ' + response.status);
+                        }
                     }
                 })
                 .catch(error => {
@@ -294,16 +293,23 @@
                 });
         }
 
-        // Hiển thị thông báo lỗi kết nối API
         function showApiError(message) {
-            // Hiển thị thông báo qua AdminCore nếu có
+            if (message.includes('401')) {
+                console.log('');
+                return;
+            }
+            
             if (window.AdminCore && window.AdminCore.showNotification) {
                 window.AdminCore.showNotification(message, 'warning');
             }
             
-            // Hiển thị thông báo ở đầu bảng
             const tableBody = document.getElementById('staffTableBody');
             if (tableBody) {
+                const existingWarning = document.querySelector('.api-warning');
+                if (existingWarning) {
+                    existingWarning.remove();
+                }
+                
                 const apiWarning = document.createElement('div');
                 apiWarning.className = 'api-warning';
                 apiWarning.innerHTML = `
@@ -314,14 +320,12 @@
                     </div>
                 `;
                 
-                // Chèn thông báo trước bảng
                 const staffTable = tableBody.closest('.data-table');
                 if (staffTable && staffTable.parentNode) {
                     staffTable.parentNode.insertBefore(apiWarning, staffTable);
                 }
             }
 
-            // Thêm style cho thông báo
             const style = document.createElement('style');
             style.innerHTML = `
                 .api-warning {

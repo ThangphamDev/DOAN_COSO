@@ -42,11 +42,14 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/payments/**").hasAnyAuthority("CUSTOMER", "STAFF", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/payments/**", "/api/accounts/*/reward-points", "/api/accounts/login", "/api/accounts", "/api/accounts/register").permitAll()
                 .requestMatchers(HttpMethod.PUT, "/api/accounts/*/reward-points").permitAll()
+                // Cho phép ADMIN truy cập tất cả các endpoint dashboard
+                .requestMatchers("/api/dashboard/**").hasAuthority("ADMIN")
+                .requestMatchers("/api/system/**").hasAuthority("ADMIN")
                 // Staff: GET/POST/PUT cho các API cho phép - đặt trước quy tắc ADMIN
                 .requestMatchers(HttpMethod.GET, "/api/**").hasAnyAuthority("STAFF", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/**").hasAnyAuthority("STAFF", "ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/**").hasAnyAuthority("STAFF", "ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/**").hasAnyAuthority("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/**").hasAuthority("ADMIN")
                 // Admin: full quyền cho các request còn lại
                 .requestMatchers("/api/**").hasAuthority("ADMIN")
                 // Các request còn lại phải xác thực
