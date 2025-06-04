@@ -1075,13 +1075,10 @@ function getSafeImageUrl(staff) {
         return staff.image;
     }
     
-    // Trường hợp đường dẫn /uploads/, sử dụng ảnh mặc định trước
-    // và cập nhật sau khi tải xong
     if (staff.image.startsWith('/uploads/')) {
-        // Tải ảnh bằng fetch và cập nhật sau
+
         const imagePath = staff.image;
         loadStaffImage(imagePath, staffId).then(blobUrl => {
-            // Tìm và cập nhật ảnh sau khi tải
             const imgElement = document.querySelector(`#staff-avatar-${staffId}`);
             if (imgElement) {
                 imgElement.src = blobUrl;
@@ -1092,29 +1089,24 @@ function getSafeImageUrl(staff) {
     return DEFAULT_AVATAR;
 }
 
-// Hiển thị thông báo lỗi kết nối API
 function showApiError(message) {
-    // Không hiển thị thông báo nếu là lỗi 401 (Unauthorized)
     if (message.includes('401')) {
-        console.log('Bỏ qua thông báo lỗi 401 Unauthorized');
+        console.log('');
         return;
     }
     
-    // Hiển thị thông báo qua AdminCore nếu có
     if (window.AdminCore && window.AdminCore.showNotification) {
         window.AdminCore.showNotification(message, 'warning');
     }
     
-    // Hiển thị thông báo ở đầu bảng
+
     const tableBody = document.getElementById('staffTableBody');
     if (tableBody) {
-        // Xóa thông báo cũ nếu đã có
         const existingWarning = document.querySelector('.api-warning');
         if (existingWarning) {
             existingWarning.remove();
         }
         
-        // Tạo thông báo mới
         const apiWarning = document.createElement('div');
         apiWarning.className = 'api-warning';
         apiWarning.innerHTML = `
@@ -1125,7 +1117,6 @@ function showApiError(message) {
             </div>
         `;
         
-        // Chèn thông báo trước bảng
         const staffTable = tableBody.closest('.data-table');
         if (staffTable && staffTable.parentNode) {
             staffTable.parentNode.insertBefore(apiWarning, staffTable);

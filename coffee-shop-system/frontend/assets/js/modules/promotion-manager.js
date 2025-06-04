@@ -170,17 +170,13 @@ class PromotionManager {
         this.handlePromotionTypeChange();
     }
 
-    /**
-     * Chuyển đổi định dạng ngày thành chuỗi YYYY-MM-DD cho input
-     */
+   
     formatDateForInput(dateString) {
         const date = new Date(dateString);
         return date.toISOString().split('T')[0];
     }
 
-    /**
-     * Xử lý thay đổi loại khuyến mãi
-     */
+    
     handlePromotionTypeChange() {
         const type = document.getElementById('promotionType').value;
         const valueGroup = document.getElementById('valueGroup');
@@ -201,9 +197,7 @@ class PromotionManager {
         }
     }
 
-    /**
-     * Xử lý submit form khuyến mãi
-     */
+    
     handlePromotionSubmit(event) {
         event.preventDefault();
         const formData = this.getPromotionFormData();
@@ -217,9 +211,7 @@ class PromotionManager {
         }
     }
 
-    /**
-     * Lấy dữ liệu từ form khuyến mãi
-     */
+    
     getPromotionFormData() {
         const promotionId = document.getElementById('promotionId').value;
         const code = document.getElementById('promotionCode').value;
