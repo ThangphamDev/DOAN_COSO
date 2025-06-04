@@ -1,15 +1,11 @@
-// load-components.js - Utility for loading header and footer components
-
 document.addEventListener('DOMContentLoaded', function() {
-    // Load header and footer components
     loadComponent('../components/header.html', 'header-container');
     loadComponent('../components/footer.html', 'footer-container');
 });
 
 /**
- * Load a component into a target container
- * @param {string} url - The URL of the component to load
- * @param {string} targetId - The ID of the container element
+ * @param {string} url 
+ * @param {string} targetId 
  */
 function loadComponent(url, targetId) {
     fetch(url)
@@ -28,7 +24,6 @@ function loadComponent(url, targetId) {
             
             targetElement.innerHTML = data;
             
-            // Execute scripts in the loaded HTML
             const scripts = targetElement.querySelectorAll('script');
             scripts.forEach(script => {
                 const newScript = document.createElement('script');
@@ -40,7 +35,6 @@ function loadComponent(url, targetId) {
                 document.body.appendChild(newScript);
             });
             
-            // If this is the header, highlight the active menu item
             if (url.includes('header.html')) {
                 setTimeout(highlightActiveMenuItem, 100);
             }
@@ -55,9 +49,7 @@ function loadComponent(url, targetId) {
         });
 }
 
-/**
- * Highlight the active menu item based on the current page
- */
+
 function highlightActiveMenuItem() {
     const currentPath = window.location.pathname;
     const navLinks = document.querySelectorAll('.main-nav a');

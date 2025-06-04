@@ -285,15 +285,12 @@ async function getOrdersByStatus(status) {
 // Tạo đơn hàng mới
     async function createOrder(order) {
     try {
-        // Chuyển đổi dữ liệu nếu cần
         let orderData = order;
         
-        // Kiểm tra xem order đã theo định dạng server chưa
          if (!order.hasOwnProperty('productItems') && !order.hasOwnProperty('orderDetails')) {
             orderData = convertOrderToServer(order);
         }
         
-        // Kiểm tra nếu đơn hàng có khuyến mãi
         const appliedPromotion = JSON.parse(localStorage.getItem('appliedPromotion'));
         if (appliedPromotion && !orderData.promotion) {
             orderData.promotion = {
@@ -313,14 +310,12 @@ async function getOrdersByStatus(status) {
             body: JSON.stringify(orderData)
         });
         
-        // Xử lý phản hồi
         if (!response.ok) {
             const errorData = await response.text();
             console.error(`API Error (${response.status}): ${errorData}`);
             throw new Error(`API Error: ${response.status} - ${errorData}`);
         }
         
-        // Phân tích phản hồi
             const data = await response.json();
         return data;
     } catch (error) {
@@ -375,7 +370,6 @@ async function updateOrderStatus(orderId, status) {
 // Cập nhật thông tin thanh toán
 async function updatePaymentInfo(orderId, paymentMethod, isCompleted = true) {
         try {
-        // Chuyển đổi orderId sang số nếu cần
         const numericOrderId = typeof orderId === 'string' && orderId.startsWith('HD') 
             ? orderId.substring(2) 
             : orderId;
@@ -402,7 +396,6 @@ async function updatePaymentInfo(orderId, paymentMethod, isCompleted = true) {
         
     const updatedOrder = await response.json();
         
-        // Cập nhật localStorage
         if (isCompleted) {
             localStorage.setItem("paymentCompleted", "true");
             localStorage.setItem("paymentMethod", paymentMethod);
@@ -411,7 +404,6 @@ async function updatePaymentInfo(orderId, paymentMethod, isCompleted = true) {
         return updatedOrder;
     } catch (error) {
         console.error(`Lỗi khi cập nhật thông tin thanh toán đơn hàng ID: ${orderId}`, error);
-        // Vẫn cập nhật localStorage ngay cả khi API gặp lỗi
         if (isCompleted) {
             localStorage.setItem("paymentCompleted", "true");
             localStorage.setItem("paymentMethod", paymentMethod);
@@ -497,7 +489,6 @@ async function getTablesByStatus(status) {
     }
 }
 
-// API cho các sản phẩm
 // Lấy tất cả sản phẩm
 async function getAllProducts() {
     try {

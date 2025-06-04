@@ -1,13 +1,9 @@
-// entities-user.js
-// Toàn bộ logic quản lý người dùng, chỉ dùng API thật, không có dữ liệu mẫu
-
 import { showLoadingMessage, showSuccessMessage, showErrorMessage, hideLoadingMessage, initializeModal, setupSearchFilter, formatRole } from './entities-utils.js';
 
 export async function loadUserData() {
     showLoadingMessage('Đang tải dữ liệu người dùng...');
     
     try {
-        // Gọi API để lấy danh sách người dùng
         const users = await ApiClient.User.getAllUsers();
         displayUsers(users);
         
@@ -29,7 +25,6 @@ export function displayUsers(users) {
     users.forEach(user => {
         const row = document.createElement('tr');
         
-        // Tạo các cột dữ liệu
         row.innerHTML = `
             <td>${user.id}</td>
             <td>${user.username}</td>
@@ -48,7 +43,6 @@ export function displayUsers(users) {
 }
 
 function setupUserActions() {
-    // Xử lý nút chỉnh sửa
     const editButtons = document.querySelectorAll('.edit-user');
     editButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -57,7 +51,6 @@ function setupUserActions() {
         });
     });
     
-    // Xử lý nút xóa
     const deleteButtons = document.querySelectorAll('.delete-user');
     deleteButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -73,17 +66,14 @@ async function editUser(userId) {
     try {
         showLoadingMessage('Đang tải thông tin người dùng...');
         
-        // Gọi API để lấy thông tin người dùng
         const user = await ApiClient.User.getUserById(userId);
         
-        // Điền dữ liệu vào form
         document.getElementById('userId').value = user.id;
         document.getElementById('username').value = user.username;
         document.getElementById('fullName').value = user.fullName;
         document.getElementById('password').value = '';
         document.getElementById('role').value = user.role;
         
-        // Điền thông tin khác nếu có
         if (document.getElementById('phone')) {
             document.getElementById('phone').value = user.phone || '';
         }
@@ -92,13 +82,11 @@ async function editUser(userId) {
             document.getElementById('address').value = user.address || '';
         }
         
-        // Cập nhật tiêu đề
         const title = document.querySelector('#userModal h2');
         if (title) {
             title.textContent = 'Chỉnh sửa người dùng';
         }
         
-        // Mở modal
         document.getElementById('userModal').style.display = 'flex';
         setTimeout(() => {
             document.getElementById('userModal').classList.add('show');
@@ -115,10 +103,8 @@ async function deleteUser(userId) {
     try {
         showLoadingMessage('Đang xóa người dùng...');
         
-        // Gọi API để xóa người dùng
         await ApiClient.User.deleteUser(userId);
         
-        // Tải lại danh sách người dùng
         loadUserData();
         
         showSuccessMessage('Xóa người dùng thành công');
@@ -135,12 +121,10 @@ export function setupUserFormSubmission() {
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        // Kiểm tra dữ liệu
         if (!validateUserForm()) {
             return;
         }
         
-        // Thu thập dữ liệu từ form
         const userData = {
             id: document.getElementById('userId').value,
             username: document.getElementById('username').value,
@@ -151,27 +135,22 @@ export function setupUserFormSubmission() {
             address: document.getElementById('address').value
         };
         
-        // Xác định thêm mới hay cập nhật
         const isUpdate = userData.id !== '';
         
         try {
             showLoadingMessage(`Đang ${isUpdate ? 'cập nhật' : 'thêm'} người dùng...`);
             
             if (isUpdate) {
-                // Cập nhật người dùng hiện có
                 await ApiClient.User.updateUser(userData.id, userData);
             } else {
-                // Thêm người dùng mới
                 await ApiClient.User.createUser(userData);
             }
             
-            // Đóng modal
             document.getElementById('userModal').classList.remove('show');
             setTimeout(() => {
                 document.getElementById('userModal').style.display = 'none';
             }, 300);
             
-            // Tải lại danh sách người dùng
             loadUserData();
             
             showSuccessMessage(`Đã ${isUpdate ? 'cập nhật' : 'thêm'} người dùng thành công`);
@@ -230,16 +209,11 @@ export function filterUsers(searchTerm) {
 export function initializeUserManagement() {
     console.log('Khởi tạo chức năng quản lý người dùng');
     
-    // Tải dữ liệu người dùng
     loadUserData();
     
-    // Khởi tạo modal thêm/sửa người dùng
     initializeModal('userModal', 'addUserBtn');
     
-    // Xử lý form thêm/sửa người dùng
     setupUserFormSubmission();
     
-    // Xử lý tìm kiếm người dùng
     setupSearchFilter('searchUser', filterUsers);
 }
-// ... các hàm khác liên quan đến người dùng ... 

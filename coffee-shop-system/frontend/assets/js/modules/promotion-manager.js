@@ -1,8 +1,3 @@
-/**
- * PromotionManager - Module quản lý khuyến mãi
- * Xử lý tương tác với API và hiển thị dữ liệu khuyến mãi
- */
-
 class PromotionManager {
     constructor() {
         this.apiUrl = 'http://localhost:8081/api/promotions';
@@ -11,12 +6,10 @@ class PromotionManager {
         this.init();
     }
 
-    // Hàm trợ giúp để lấy token từ localStorage
     getAuthToken() {
         return localStorage.getItem('token');
     }
 
-    // Hàm trợ giúp để tạo headers với token xác thực
     getAuthHeaders() {
         const token = this.getAuthToken();
         const headers = {
@@ -31,82 +24,61 @@ class PromotionManager {
         return headers;
     }
 
-    /**
-     * Khởi tạo các event listener và load dữ liệu ban đầu
-     */
     init() {
-        // Các tab khuyến mãi
         const tabButtons = document.querySelectorAll('.tab-btn');
         tabButtons.forEach(button => {
             button.addEventListener('click', () => this.switchTab(button));
         });
 
-        // Nút thêm khuyến mãi
         const addPromotionBtn = document.getElementById('addPromotionBtn');
         if (addPromotionBtn) {
             addPromotionBtn.addEventListener('click', () => this.openPromotionModal());
         }
 
-        // Form khuyến mãi
         const promotionForm = document.getElementById('promotionForm');
         if (promotionForm) {
             promotionForm.addEventListener('submit', (e) => this.handlePromotionSubmit(e));
         }
 
-        // Xử lý loại khuyến mãi
         const promotionType = document.getElementById('promotionType');
         if (promotionType) {
             promotionType.addEventListener('change', () => this.handlePromotionTypeChange());
         }
 
-        // Tìm kiếm khuyến mãi
         const searchPromotion = document.getElementById('searchPromotion');
         if (searchPromotion) {
             searchPromotion.addEventListener('input', (e) => this.handleSearch(e.target.value));
         }
 
-        // Modal close button
         const closeBtn = document.querySelector('.modal .close-btn');
         if (closeBtn) {
             closeBtn.addEventListener('click', () => this.closePromotionModal());
         }
 
-        // Load dữ liệu khuyến mãi ban đầu
         this.loadPromotions();
     }
 
-    /**
-     * Chuyển đổi giữa các tab khuyến mãi
-     */
     switchTab(selectedTab) {
-        // Xóa active class từ tất cả tab buttons
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.remove('active');
         });
 
-        // Thêm active class cho tab được chọn
         selectedTab.classList.add('active');
 
-        // Ẩn tất cả tab panes
         document.querySelectorAll('.tab-pane').forEach(pane => {
             pane.classList.remove('active');
         });
 
-        // Hiển thị tab pane tương ứng
         const tabId = selectedTab.getAttribute('data-tab');
         document.getElementById(tabId).classList.add('active');
     }
 
-    /**
-     * Mở modal thêm/sửa khuyến mãi
-     */
     openPromotionModal(promotionId = null) {
         const modal = document.getElementById('promotionModal');
         const modalTitle = document.getElementById('modalPromotionTitle');
         const form = document.getElementById('promotionForm');
 
         if (promotionId) {
-            // Chế độ sửa khuyến mãi
             modalTitle.textContent = 'Chỉnh sửa khuyến mãi';
             this.getPromotionById(promotionId).then(promotion => {
                 if (promotion) {
@@ -114,7 +86,6 @@ class PromotionManager {
                 }
             });
         } else {
-            // Chế độ thêm khuyến mãi mới
             modalTitle.textContent = 'Thêm khuyến mãi mới';
             form.reset();
             document.getElementById('promotionId').value = '';
@@ -123,23 +94,16 @@ class PromotionManager {
         modal.style.display = 'flex';
     }
 
-    /**
-     * Đóng modal khuyến mãi
-     */
     closePromotionModal() {
         const modal = document.getElementById('promotionModal');
         modal.style.display = 'none';
     }
 
-    /**
-     * Điền thông tin khuyến mãi vào form
-     */
     fillPromotionForm(promotion) {
         document.getElementById('promotionId').value = promotion.idPromotion;
         document.getElementById('promotionCode').value = promotion.code;
         document.getElementById('promotionName').value = promotion.namePromotion;
         
-        // Set discount type
         const typeSelect = document.getElementById('promotionType');
         if (promotion.discountType === 'PERCENT') {
             typeSelect.value = 'percentage';
@@ -147,17 +111,14 @@ class PromotionManager {
             typeSelect.value = 'fixed';
         }
         
-        // Set value
         if (promotion.discountValue) {
             document.getElementById('promotionValue').value = promotion.discountValue;
         }
         
-        // Set min order amount
         if (promotion.minimumOrderAmount) {
             document.getElementById('minimumOrder').value = promotion.minimumOrderAmount;
         }
         
-        // Set dates
         if (promotion.startDate) {
             document.getElementById('startDate').value = this.formatDateForInput(promotion.startDate);
         }
@@ -166,7 +127,6 @@ class PromotionManager {
             document.getElementById('endDate').value = this.formatDateForInput(promotion.endDate);
         }
         
-        // Update the form based on promotion type
         this.handlePromotionTypeChange();
     }
 
@@ -203,10 +163,8 @@ class PromotionManager {
         const formData = this.getPromotionFormData();
         
         if (formData.idPromotion) {
-            // Cập nhật khuyến mãi
             this.updatePromotion(formData);
         } else {
-            // Thêm khuyến mãi mới
             this.createPromotion(formData);
         }
     }
@@ -222,7 +180,6 @@ class PromotionManager {
         const startDate = document.getElementById('startDate').value;
         const endDate = document.getElementById('endDate').value;
         
-        // Chuyển đổi loại khuyến mãi
         let discountType = 'FIXED';
         if (typeSelect === 'percentage') {
             discountType = 'PERCENT';
@@ -241,18 +198,13 @@ class PromotionManager {
         };
     }
 
-    /**
-     * Tải danh sách khuyến mãi từ API
-     */
     async loadPromotions() {
         try {
             this.showLoader();
             
-            // Lấy tất cả khuyến mãi cho tab chính (hiển thị cả enable/disable)
             const allPromotions = await this.fetchAllPromotions();
             this.renderPromotionTable(allPromotions, 'activePromotionTableBody');
             
-            // Lấy khuyến mãi sắp diễn ra
             const currentDate = new Date();
             const upcomingPromotions = allPromotions.filter(promo => {
                 const startDate = new Date(promo.startDate);
@@ -260,7 +212,6 @@ class PromotionManager {
             });
             this.renderPromotionTable(upcomingPromotions, 'upcomingPromotionTableBody');
             
-            // Lấy khuyến mãi đã kết thúc
             const expiredPromotions = allPromotions.filter(promo => {
                 const endDate = new Date(promo.endDate);
                 return endDate < currentDate;
@@ -275,26 +226,17 @@ class PromotionManager {
         }
     }
 
-    /**
-     * Hiển thị thông báo
-     */
     showNotification(message, type = 'success') {
         showPromoToast(message, type);
     }
 
-    /**
-     * Hiển thị loader
-     */
     showLoader() {
         const loader = document.getElementById('loader');
         if (loader) {
             loader.style.display = 'flex';
         }
     }
-
-    /**
-     * Ẩn loader
-     */
+    
     hideLoader() {
         const loader = document.getElementById('loader');
         if (loader) {
@@ -302,9 +244,6 @@ class PromotionManager {
         }
     }
 
-    /**
-     * Render bảng khuyến mãi
-     */
     renderPromotionTable(promotions, tableBodyId) {
         const tableBody = document.getElementById(tableBodyId);
         if (!tableBody) return;
@@ -320,16 +259,13 @@ class PromotionManager {
 
         promotions.forEach(promotion => {
             const row = document.createElement('tr');
-            // Nếu khuyến mãi bị vô hiệu hóa, thêm class promo-disabled
             if (!promotion.isActive) {
                 row.classList.add('promo-disabled');
             }
             
-            // Format dates
             const startDate = new Date(promotion.startDate).toLocaleDateString('vi-VN');
             const endDate = new Date(promotion.endDate).toLocaleDateString('vi-VN');
             
-            // Format discount value
             let discountValue = '';
             if (promotion.discountType === 'PERCENT') {
                 discountValue = `${promotion.discountValue}%`;
@@ -361,7 +297,6 @@ class PromotionManager {
             
             tableBody.appendChild(row);
             
-            // Thêm event listeners cho các nút
             const editBtn = row.querySelector('.edit-btn');
             const deleteBtn = row.querySelector('.delete-btn');
             const statusBtn = row.querySelector('.status-btn');
@@ -374,7 +309,6 @@ class PromotionManager {
             ));
         });
 
-        // Thêm CSS cho class promo-disabled
         if (!document.getElementById('promo-disabled-style')) {
             const style = document.createElement('style');
             style.id = 'promo-disabled-style';
@@ -383,9 +317,7 @@ class PromotionManager {
         }
     }
 
-    /**
-     * Tìm kiếm khuyến mãi
-     */
+
     async handleSearch(searchText) {
         if (!searchText || searchText.trim() === '') {
             this.loadPromotions();
@@ -396,14 +328,12 @@ class PromotionManager {
             this.showLoader();
             const allPromotions = await this.fetchAllPromotions();
             
-            // Lọc khuyến mãi theo từ khóa tìm kiếm
             const filtered = allPromotions.filter(promo => {
                 const nameMatch = promo.namePromotion.toLowerCase().includes(searchText.toLowerCase());
                 const codeMatch = promo.code.toLowerCase().includes(searchText.toLowerCase());
                 return nameMatch || codeMatch;
             });
             
-            // Render kết quả tìm kiếm vào cả 3 tab
             this.renderPromotionTable(filtered, 'activePromotionTableBody');
             this.renderPromotionTable([], 'upcomingPromotionTableBody');
             this.renderPromotionTable([], 'expiredPromotionTableBody');
@@ -416,9 +346,7 @@ class PromotionManager {
         }
     }
 
-    /**
-     * Gọi API lấy tất cả khuyến mãi
-     */
+    
     async fetchAllPromotions() {
         try {
             const response = await fetch(this.apiUrl, {
@@ -435,9 +363,7 @@ class PromotionManager {
         }
     }
 
-    /**
-     * Gọi API lấy khuyến mãi đang hoạt động
-     */
+    
     async fetchActivePromotions() {
         try {
             const response = await fetch(`${this.apiUrl}/active`, {
@@ -454,9 +380,7 @@ class PromotionManager {
         }
     }
 
-    /**
-     * Gọi API lấy khuyến mãi theo ID
-     */
+    
     async getPromotionById(id) {
         try {
             const response = await fetch(`${this.apiUrl}/${id}`, {
@@ -474,9 +398,7 @@ class PromotionManager {
         }
     }
 
-    /**
-     * Gọi API tạo khuyến mãi mới
-     */
+    
     async createPromotion(promotionData) {
         try {
             this.showLoader();
@@ -504,9 +426,7 @@ class PromotionManager {
         }
     }
 
-    /**
-     * Gọi API cập nhật khuyến mãi
-     */
+    
     async updatePromotion(promotionData) {
         try {
             this.showLoader();
@@ -534,9 +454,7 @@ class PromotionManager {
         }
     }
 
-    /**
-     * Gọi API xóa khuyến mãi
-     */
+    
     async deletePromotion(id) {
         if (!confirm('Bạn có chắc chắn muốn xóa khuyến mãi này?')) {
             return;
@@ -563,9 +481,7 @@ class PromotionManager {
         }
     }
 
-    /**
-     * Gọi API thay đổi trạng thái khuyến mãi
-     */
+    
     async togglePromotionStatus(id, isActive) {
         try {
             this.showLoader();
@@ -589,21 +505,17 @@ class PromotionManager {
     }
 }
 
-// Khởi tạo manager khi trang được load
 document.addEventListener('DOMContentLoaded', () => {
-    // Chỉ khởi tạo nếu đang ở trang quản lý khuyến mãi
     if (document.querySelector('.promotion-management')) {
         window.promotionManager = new PromotionManager();
     }
 });
 
-// Thêm hàm showPromoToast vào cuối file
+
 function showPromoToast(message, type = 'success') {
-    // Xóa toast cũ nếu có
     const oldToast = document.querySelector('.promo-toast');
     if (oldToast) oldToast.remove();
 
-    // Tạo toast mới
     const toast = document.createElement('div');
     toast.className = `promo-toast show ${type}`;
     toast.innerHTML = `
@@ -612,17 +524,15 @@ function showPromoToast(message, type = 'success') {
     `;
     document.body.appendChild(toast);
 
-    // Đóng khi click nút
     toast.querySelector('.toast-close').onclick = () => toast.remove();
 
-    // Tự động ẩn sau 3s
     setTimeout(() => {
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 300);
     }, 3000);
 }
 
-// Thêm CSS toast nếu chưa có
+
 if (!document.getElementById('promo-toast-style')) {
     const style = document.createElement('style');
     style.id = 'promo-toast-style';

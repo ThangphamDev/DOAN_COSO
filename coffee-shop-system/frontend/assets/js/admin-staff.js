@@ -1,9 +1,7 @@
-// Hàm trợ giúp để lấy token từ localStorage
 function getAuthToken() {
     return localStorage.getItem('token');
 }
 
-// Hàm trợ giúp để tạo headers với token xác thực
 function getAuthHeaders() {
     const token = getAuthToken();
     const headers = {
@@ -18,7 +16,6 @@ function getAuthHeaders() {
     return headers;
 }
 
-// Hàm trợ giúp để tạo headers với token xác thực cho FormData
 function getAuthHeadersForFormData() {
     const token = getAuthToken();
     const headers = {};
@@ -31,7 +28,6 @@ function getAuthHeadersForFormData() {
 }
 
 const DEFAULT_AVATAR = '../assets/images/default-avatar.png';
-// Lưu trữ các URL blob cho ảnh đã tải
 const staffImageCache = {};
 
 let staffList = [];        
@@ -44,17 +40,13 @@ let currentStaffId = null;
 
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Tải dữ liệu nhân viên
     loadStaffData();
     
-    // Khởi tạo sự kiện cho các nút
     attachEventListeners();
     
-    // Khởi tạo hiển thị ảnh cho form
     initImagePreview();
 });
 
-// Hàm khởi tạo hiển thị ảnh trước
 function initImagePreview() {
     const imageInput = document.getElementById('staffImage');
     const previewElement = document.getElementById('staffImagePreview');
@@ -63,18 +55,16 @@ function initImagePreview() {
         imageInput.addEventListener('change', function() {
             const file = this.files[0];
             if (file) {
-                // Kiểm tra kích thước tệp (giới hạn 2MB)
                 if (file.size > 2 * 1024 * 1024) {
-                    showNotification('Kích thước ảnh quá lớn. Vui lòng chọn ảnh dưới 2MB.', 'warning');
-                    this.value = ''; // Xóa file đã chọn
+                    showNotification('Kích thước ảnh quá lớn.', 'warning');
+                    this.value = ''; 
                     return;
                 }
                 
-                // Kiểm tra loại tệp
                 const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg'];
                 if (!validTypes.includes(file.type)) {
                     showNotification('Loại tệp không hợp lệ. Vui lòng chọn ảnh JPEG, PNG hoặc GIF.', 'warning');
-                    this.value = ''; // Xóa file đã chọn
+                    this.value = '';
                     return;
                 }
                 
@@ -90,73 +80,60 @@ function initImagePreview() {
     }
 }
 
-// Gắn các sự kiện cho các phần tử trong trang
 function attachEventListeners() {
-    // Nút thêm nhân viên
     const addStaffBtn = document.getElementById('addStaffBtn');
     if (addStaffBtn) {
         addStaffBtn.addEventListener('click', openAddStaffModal);
     }
     
-    // Nút đóng modal
     const closeButtons = document.querySelectorAll('.close-btn, .btn-cancel[data-close-modal]');
     closeButtons.forEach(button => {
         button.addEventListener('click', closeModal);
     });
     
-    // Form thêm/sửa nhân viên
     const staffForm = document.getElementById('staffForm');
     if (staffForm) {
         staffForm.addEventListener('submit', handleStaffFormSubmit);
     }
     
-    // Nút xác nhận xóa
     const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
     if (confirmDeleteBtn) {
         confirmDeleteBtn.addEventListener('click', confirmDeleteStaff);
     }
     
-    // Nút phân trang
     const prevPageBtn = document.getElementById('prevPage');
     const nextPageBtn = document.getElementById('nextPage');
     if (prevPageBtn) prevPageBtn.addEventListener('click', goToPrevPage);
     if (nextPageBtn) nextPageBtn.addEventListener('click', goToNextPage);
     
-    // Thay đổi số lượng hiển thị
     const itemsPerPageSelect = document.getElementById('itemsPerPage');
     if (itemsPerPageSelect) {
         itemsPerPageSelect.addEventListener('change', changeItemsPerPage);
     }
     
-    // Ô tìm kiếm
     const searchInput = document.getElementById('staffSearchInput');
     if (searchInput) {
         searchInput.addEventListener('input', debounce(handleSearch, 300));
     }
     
-    // Bộ lọc vai trò
     const roleFilter = document.getElementById('staffRoleFilter');
     if (roleFilter) {
         roleFilter.addEventListener('change', filterStaffByRole);
     }
     
-    // Nút làm mới
     const refreshBtn = document.getElementById('refreshStaffBtn');
     if (refreshBtn) {
         refreshBtn.addEventListener('click', refreshStaffData);
     }
 }
 
-// Gắn sự kiện cho các nút trong bảng nhân viên
 function attachStaffButtonEvents() {
-    // Nút sửa
     const editButtons = document.querySelectorAll('.edit-product-btn');
     editButtons.forEach(button => {
         button.removeEventListener('click', editButtonHandler);
         button.addEventListener('click', editButtonHandler);
     });
     
-    // Nút xóa
     const deleteButtons = document.querySelectorAll('.delete-product-btn');
     deleteButtons.forEach(button => {
         button.removeEventListener('click', deleteButtonHandler);
@@ -164,7 +141,6 @@ function attachStaffButtonEvents() {
     });
 }
 
-// Handler cho nút sửa
 function editButtonHandler() {
     const staffId = this.getAttribute('data-id');
     if (staffId) {
@@ -174,7 +150,6 @@ function editButtonHandler() {
     }
 }
 
-// Handler cho nút xóa
 function deleteButtonHandler() {
     const staffId = this.getAttribute('data-id');
     const staffName = this.getAttribute('data-name');
@@ -185,51 +160,42 @@ function deleteButtonHandler() {
     }
 }
 
-// Mở modal thêm nhân viên
 function openAddStaffModal() {
-    // Reset form
     resetStaffForm();
     
-    // Cập nhật tiêu đề modal
     const modalTitle = document.getElementById('staffModalTitle');
     if (modalTitle) {
         modalTitle.innerHTML = '<i class="fas fa-user-plus"></i> Thêm nhân viên mới';
     }
     
-    // Đặt mật khẩu là bắt buộc (khi thêm mới)
     const passwordRequired = document.getElementById('passwordRequired');
     if (passwordRequired) {
         passwordRequired.style.display = 'inline';
     }
     
-    // Mở modal
     const modal = document.getElementById('staffModal');
     if (modal) {
         modal.style.display = 'block';
     }
 }
 
-// Hàm reset form nhân viên
 function resetStaffForm() {
     const form = document.getElementById('staffForm');
     if (form) {
         form.reset();
     }
     
-    // Xóa ID (để biết là thêm mới)
     const staffIdInput = document.getElementById('staffId');
     if (staffIdInput) {
         staffIdInput.value = '';
     }
     
-    // Reset preview ảnh
     const previewElement = document.getElementById('staffImagePreview');
     if (previewElement) {
         previewElement.innerHTML = `<span id="previewPlaceholder">Chọn ảnh để xem trước</span>`;
     }
 }
 
-// Đóng modal
 function closeModal() {
     const modals = document.querySelectorAll('.modal');
     modals.forEach(modal => {
@@ -237,12 +203,10 @@ function closeModal() {
     });
 }
 
-// Tải dữ liệu nhân viên
 async function loadStaffData() {
     showLoader(true, 'Đang tải dữ liệu tài khoản...');
     
     try {
-        // Kiểm tra API client đã sẵn sàng chưa
         if (!window.ApiClient || !window.ApiClient.Staff) {
             console.error('API Client chưa được khởi tạo!');
             showNotification('Lỗi kết nối API. Vui lòng tải lại trang.', 'error');
@@ -256,19 +220,16 @@ async function loadStaffData() {
             const data = await window.ApiClient.Staff.getAllStaff();
             console.log('Dữ liệu nhận được từ API:', data);
             
-            // Kiểm tra và xử lý dữ liệu
             if (Array.isArray(data)) {
-                staffList = [...data]; // Tạo bản sao để tránh tham chiếu
-                originalList = [...data]; // Lưu bản sao dữ liệu gốc
+                staffList = [...data]; 
+                originalList = [...data]; 
                 
                 console.log(`Đã tải ${staffList.length} tài khoản từ API`);
                 
-                // In log kiểm tra hình ảnh
                 staffList.forEach(staff => {
                     console.log(`Staff ${staff.idAccount || staff.id}: ${staff.fullName || staff.userName} - Role: ${staff.role || 'N/A'} - Image: ${staff.image ? 'Yes' : 'No'}`);
                 });
             } else if (data && typeof data === 'object') {
-                // Nếu API trả về 1 đối tượng thay vì mảng
                 staffList = [data];
                 originalList = [data];
                 console.log(`Đã tải 1 tài khoản từ API: ${data.fullName || data.userName}`);
@@ -278,11 +239,9 @@ async function loadStaffData() {
             console.warn('Không có dữ liệu tài khoản hoặc định dạng không đúng');
         }
         
-        // Cập nhật giao diện 
         updateStaffTable();
         updatePaginationControls();
         
-        // Hiển thị thông báo thành công
         if (staffList.length > 0) {
             showNotification(`Đã tải ${staffList.length} tài khoản`, 'success');
         } else {
@@ -293,11 +252,9 @@ async function loadStaffData() {
         console.error('Lỗi khi tải dữ liệu tài khoản:', error);
         showNotification('Không thể tải dữ liệu: ' + error.message, 'error');
         
-        // Đảm bảo các mảng dữ liệu trống để tránh hiển thị dữ liệu cũ
         staffList = [];
         originalList = [];
         
-        // Cập nhật giao diện để hiển thị trạng thái trống
         updateStaffTable();
         updatePaginationControls();
     } finally {
@@ -305,20 +262,16 @@ async function loadStaffData() {
     }
 }
 
-// Cập nhật bảng nhân viên
 function updateStaffTable() {
     const tableBody = document.getElementById('staffTableBody');
     if (!tableBody) return;
     
-    // Xóa dữ liệu cũ
     tableBody.innerHTML = '';
     
-    // Tính toán phân trang
     const start = (currentPage - 1) * itemsPerPage;
     const end = Math.min(start + itemsPerPage, staffList.length);
     totalPages = Math.ceil(staffList.length / itemsPerPage);
     
-    // Kiểm tra nếu không có dữ liệu
     if (staffList.length === 0) {
         tableBody.innerHTML = `
             <tr>
@@ -328,13 +281,11 @@ function updateStaffTable() {
         return;
     }
     
-    // Hiển thị dữ liệu nhân viên
     for (let i = start; i < end; i++) {
         const staff = staffList[i];
         const staffId = staff.idAccount || staff.id;
-        const isActive = staff.isActive !== false; // Default to true if not specified
+        const isActive = staff.isActive !== false; 
         
-        // Xác định ảnh đại diện sử dụng hàm mới
         const avatarSrc = getSafeImageUrl(staff);
         
         const row = document.createElement('tr');
@@ -381,17 +332,14 @@ function updateStaffTable() {
         tableBody.appendChild(row);
     }
     
-    // Cập nhật số lượng hiển thị
     const countElement = document.getElementById('currentShowing');
     if (countElement) {
         countElement.textContent = `${start + 1}-${end} / ${staffList.length}`;
     }
     
-    // Gắn sự kiện cho các nút
     attachStaffButtonEvents();
 }
 
-// Lấy class cho badge vai trò
 function getRoleBadgeClass(role) {
     if (!role) return 'role-customer';
     
@@ -401,7 +349,6 @@ function getRoleBadgeClass(role) {
     return 'role-customer';
 }
 
-// Cập nhật điều khiển phân trang
 function updatePaginationControls() {
     const currentPageElem = document.getElementById('currentPage');
     const prevPageBtn = document.getElementById('prevPage');
@@ -420,57 +367,45 @@ function updatePaginationControls() {
     }
 }
 
-// Mở modal xác nhận xóa nhân viên
 function openDeleteStaffConfirmation(staffId, staffName) {
-    // Kiểm tra xem có modal không
     const modal = document.getElementById('deleteConfirmModal');
     if (!modal) {
-        // Nếu không có modal, sử dụng confirm mặc định của trình duyệt
         if (confirm(`Bạn có chắc chắn muốn xóa nhân viên "${staffName}"?`)) {
             deleteStaff(staffId);
         }
         return;
     }
     
-    // Cập nhật nội dung modal
     const nameElement = document.getElementById('deleteStaffName');
     if (nameElement) {
         nameElement.textContent = staffName;
     }
     
-    // Xử lý nút xác nhận
     const confirmButton = document.getElementById('confirmDeleteBtn');
     if (confirmButton) {
-        // Xóa các sự kiện cũ
         const newButton = confirmButton.cloneNode(true);
         confirmButton.parentNode.replaceChild(newButton, confirmButton);
         
-        // Thêm sự kiện mới
         newButton.addEventListener('click', function() {
             deleteStaff(staffId);
             modal.style.display = 'none';
         });
     }
     
-    // Hiển thị modal
     modal.style.display = 'block';
 }
 
-// Xóa nhân viên
 async function deleteStaff(staffId) {
     showLoader(true, 'Đang xóa nhân viên...');
     
     try {
-        // Gọi API xóa nhân viên
         await window.ApiClient.Staff.deleteStaff(staffId);
         
-        // Xóa nhân viên khỏi danh sách
         staffList = staffList.filter(staff => 
             staff.id !== staffId && 
             staff.idAccount !== staffId
         );
         
-        // Cập nhật giao diện
         updateStaffTable();
         updatePaginationControls();
         
@@ -488,17 +423,14 @@ async function editStaff(staffId) {
     showLoader(true, 'Đang tải thông tin nhân viên...');
     
     try {
-        // Lấy thông tin nhân viên từ API
         const staff = await window.ApiClient.Staff.getStaffById(staffId);
         console.log('Thông tin nhân viên:', staff);
         
-        // Cập nhật tiêu đề modal
         const modalTitle = document.getElementById('staffModalTitle');
         if (modalTitle) {
             modalTitle.innerHTML = '<i class="fas fa-user-edit"></i> Chỉnh sửa nhân viên';
         }
         
-        // Điền dữ liệu vào form
         document.getElementById('staffId').value = staff.idAccount || staff.id;
         document.getElementById('userName').value = staff.userName || '';
         document.getElementById('fullName').value = staff.fullName || '';
@@ -506,36 +438,29 @@ async function editStaff(staffId) {
         document.getElementById('address').value = staff.address || '';
         document.getElementById('email').value = staff.email || '';
         
-        // Đặt trạng thái
         const statusElement = document.getElementById('staffStatus');
         if (statusElement) {
             statusElement.value = (staff.isActive || staff.status === 'active') ? 'active' : 'inactive';
         }
         
-        // Đặt vai trò
         const roleElement = document.getElementById('role');
         if (roleElement) {
             const staffRole = (staff.role || '').toLowerCase();
-            // Đảm bảo có một vai trò hợp lệ được chọn
             if (['admin', 'staff', 'customer'].includes(staffRole)) {
                 roleElement.value = staffRole;
             } else {
-                // Nếu vai trò không hợp lệ hoặc không có, mặc định là 'staff'
                 roleElement.value = 'staff';
                 console.warn(`Vai trò không hợp lệ: ${staff.role}, đặt mặc định là 'staff'`);
             }
         }
         
-        // Mật khẩu không bắt buộc khi cập nhật
         const passwordRequired = document.getElementById('passwordRequired');
         if (passwordRequired) {
             passwordRequired.style.display = 'none';
         }
         
-        // Xóa giá trị mật khẩu
         document.getElementById('password').value = '';
         
-        // Hiển thị ảnh nếu có
         const imagePreview = document.getElementById('staffImagePreview');
         if (imagePreview) {
             let imageSrc = DEFAULT_AVATAR;
@@ -544,12 +469,10 @@ async function editStaff(staffId) {
                 if (staff.image.startsWith('data:')) {
                     imageSrc = staff.image;
                 } else if (staff.image.startsWith('/uploads/')) {
-                    // Sử dụng hàm tải ảnh an toàn
                     imageSrc = await loadStaffImage(staff.image, staffId);
                 }
             }
             
-            // Tạo thẻ img với xử lý lỗi để hiển thị ảnh mặc định nếu ảnh không tải được
             imagePreview.innerHTML = `
                 <img src="${imageSrc}" 
                      alt="${staff.fullName || 'Staff Image'}" 
@@ -570,32 +493,26 @@ async function editStaff(staffId) {
     }
 }
 
-// Xác nhận xóa nhân viên
 function openDeleteConfirmModal(staffId, staffName) {
-    // Hiển thị modal xác nhận xóa
     const deleteModal = document.getElementById('deleteStaffModal');
     if (!deleteModal) {
         console.error('Không tìm thấy modal xác nhận xóa');
         return;
     }
     
-    // Cập nhật thông tin trong modal
     const staffNameElement = document.getElementById('deleteStaffName');
     if (staffNameElement) {
         staffNameElement.textContent = staffName;
     }
     
-    // Đặt ID nhân viên cần xóa vào nút xác nhận
     const confirmButton = document.getElementById('confirmDeleteBtn');
     if (confirmButton) {
         confirmButton.setAttribute('data-id', staffId);
     }
     
-    // Hiển thị modal
     deleteModal.style.display = 'block';
 }
 
-// Xóa nhân viên (gọi khi người dùng xác nhận xóa)
 async function confirmDeleteStaff() {
     const confirmButton = document.getElementById('confirmDeleteBtn');
     const staffId = confirmButton.getAttribute('data-id');
@@ -608,24 +525,19 @@ async function confirmDeleteStaff() {
     showLoader(true, 'Đang xóa nhân viên...');
     
     try {
-        // Gọi API xóa nhân viên
         await window.ApiClient.Staff.deleteStaff(staffId);
         
-        // Đóng modal xác nhận xóa
         const deleteModal = document.getElementById('deleteStaffModal');
         if (deleteModal) {
             deleteModal.style.display = 'none';
         }
         
-        // Xóa cache API để đảm bảo lấy dữ liệu mới nhất
         if (window.ApiClient && window.ApiClient.clearCache) {
             window.ApiClient.clearCache();
         }
         
-        // Làm mới danh sách nhân viên
         await loadStaffData();
         
-        // Hiển thị thông báo thành công
         showNotification('Đã xóa nhân viên thành công', 'success');
     } catch (error) {
         console.error(`Lỗi khi xóa nhân viên ID: ${staffId}`, error);
@@ -635,7 +547,6 @@ async function confirmDeleteStaff() {
     }
 }
 
-// Xử lý gửi form nhân viên
 async function handleStaffFormSubmit(event) {
     event.preventDefault();
     hideFormError();
@@ -734,7 +645,6 @@ async function handleStaffFormSubmit(event) {
     }
 }
 
-// Hiển thị lỗi trong form
 function showFormError(message) {
     const container = document.getElementById('formErrorContainer');
     const messageEl = document.getElementById('formErrorMessage');
@@ -743,12 +653,10 @@ function showFormError(message) {
         messageEl.textContent = message;
         container.style.display = 'block';
     } else {
-        // Fallback to notification if form error container not found
         showNotification(message, 'error');
     }
 }
 
-// Ẩn lỗi trong form
 function hideFormError() {
     const container = document.getElementById('formErrorContainer');
     if (container) {
@@ -756,13 +664,11 @@ function hideFormError() {
     }
 }
 
-// Kiểm tra định dạng email
 function validateEmail(email) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);
 }
 
-// Chuyển đổi hình ảnh sang base64
 function convertImageToBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -772,10 +678,9 @@ function convertImageToBase64(file) {
     });
 }
 
-// Lọc danh sách nhân viên theo từ khóa
 function filterStaffList(searchTerm) {
     if (!searchTerm) {
-        // Nếu không có từ khóa, hiển thị lại tất cả
+        staffList = [...originalList];
         staffList = [...originalList];
         currentPage = 1;
         updateStaffTable();
@@ -786,7 +691,6 @@ function filterStaffList(searchTerm) {
     searchTerm = searchTerm.toLowerCase();
     console.log(`Lọc danh sách với từ khóa: "${searchTerm}"`);
     
-    // Lọc danh sách
     staffList = originalList.filter(staff => {
         const fullName = (staff.fullName || '').toLowerCase();
         const username = (staff.userName || '').toLowerCase();
@@ -801,23 +705,18 @@ function filterStaffList(searchTerm) {
     
     console.log(`Kết quả lọc: ${staffList.length}/${originalList.length} nhân viên`);
     
-    // Cập nhật giao diện
     currentPage = 1;
     updateStaffTable();
     updatePaginationControls();
 }
 
-// Lọc nhân viên theo vai trò
 function filterStaffByRole() {
     const roleValue = document.getElementById('staffRoleFilter').value;
     
     if (roleValue === '') {
-        // Nếu không chọn vai trò cụ thể, hiển thị tất cả
         staffList = [...originalList];
     } else {
-        // Lọc theo vai trò
         staffList = originalList.filter(staff => {
-            // Chuyển đổi role thành chữ thường để so sánh không phân biệt hoa thường
             const staffRole = (staff.role || '').toLowerCase();
             console.log(`Kiểm tra vai trò: ${staffRole} so với ${roleValue.toLowerCase()}`);
             return staffRole === roleValue.toLowerCase();
@@ -826,24 +725,20 @@ function filterStaffByRole() {
     
     console.log(`Đã lọc: ${staffList.length}/${originalList.length} nhân viên với vai trò '${roleValue}'`);
     
-    // Cập nhật lại bảng và phân trang
     currentPage = 1;
     updateStaffTable();
     updatePaginationControls();
 }
 
-// Hiển thị hoặc ẩn loader
 function showLoader(show, message = 'Đang tải...') {
     const loader = document.getElementById('loader');
     if (loader) {
-        // Thêm thông báo nếu không có
         if (!loader.querySelector('.loader-message')) {
             const messageDiv = document.createElement('div');
             messageDiv.className = 'loader-message';
             loader.appendChild(messageDiv);
         }
         
-        // Cập nhật thông báo
         const messageElement = loader.querySelector('.loader-message');
         if (messageElement) {
             messageElement.textContent = message;
@@ -853,15 +748,12 @@ function showLoader(show, message = 'Đang tải...') {
     }
 }
 
-// Hiển thị thông báo
 function showNotification(message, type = 'info') {
-    // Kiểm tra xem đã có hàm thông báo từ module admin chưa
     if (window.AdminCore && window.AdminCore.showNotification) {
         window.AdminCore.showNotification(message, type);
         return;
     }
     
-    // Nếu không có, tạo thông báo riêng
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
     notification.innerHTML = `
@@ -872,15 +764,12 @@ function showNotification(message, type = 'info') {
         <button class="notification-close">&times;</button>
     `;
     
-    // Thêm vào body
     document.body.appendChild(notification);
     
-    // Hiển thị notification
     setTimeout(() => {
         notification.classList.add('show');
     }, 10);
     
-    // Tự động đóng sau 5 giây
     setTimeout(() => {
         notification.classList.remove('show');
         setTimeout(() => {
@@ -888,7 +777,6 @@ function showNotification(message, type = 'info') {
         }, 300);
     }, 5000);
     
-    // Đóng khi nhấn nút
     notification.querySelector('.notification-close').addEventListener('click', () => {
         notification.classList.remove('show');
         setTimeout(() => {
@@ -897,7 +785,6 @@ function showNotification(message, type = 'info') {
     });
 }
 
-// Lấy icon cho loại thông báo
 function getIconForType(type) {
     switch (type) {
         case 'success': return 'fa-check-circle';
@@ -907,11 +794,9 @@ function getIconForType(type) {
     }
 }
 
-// Tải lại dữ liệu nhân viên
 async function refreshStaffData() {
     showLoader(true, 'Đang làm mới dữ liệu...');
     
-    // Xóa bộ nhớ đệm API để tải dữ liệu mới nhất
     if (window.ApiClient && window.ApiClient.clearCache) {
         window.ApiClient.clearCache();
     }

@@ -1,22 +1,16 @@
-// register.js - Handle registration functionality
-
 document.addEventListener('DOMContentLoaded', function() {
     const registerForm = document.getElementById('registerForm');
     const errorMsg = document.getElementById('errorMsg');
     
-    // API URL configuration - set the correct port
     const API_BASE_URL = 'http://localhost:8081';
     
-    // Add event listener to registration form
     if (registerForm) {
         registerForm.addEventListener('submit', handleRegistration);
     }
     
-    // Handle the registration process
     async function handleRegistration(e) {
         e.preventDefault();
         
-        // Get form values
         const username = document.getElementById('username').value.trim();
         const fullName = document.getElementById('fullName').value.trim();
         const password = document.getElementById('password').value.trim();
@@ -24,7 +18,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const phone = document.getElementById('phone').value.trim();
         const address = document.getElementById('address').value.trim();
         
-        // Form validation
         if (!username || !fullName || !password || !confirmPassword) {
             showError('Vui lòng điền đầy đủ thông tin bắt buộc');
             return;
@@ -40,10 +33,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Clear previous error messages
         clearError();
         
-        // Show loading state
         const submitButton = registerForm.querySelector('button[type="submit"]');
         const originalText = submitButton.textContent;
         submitButton.textContent = 'Đang đăng ký...';
@@ -52,7 +43,6 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const registerUrl = `${API_BASE_URL}/api/accounts`;
             
-            // Send registration request
             const response = await fetch(registerUrl, {
                 method: 'POST',
                 headers: {
@@ -65,22 +55,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     passWord: password,
                     phone: phone || null,
                     address: address || null,
-                    role: 'CUSTOMER' // Mặc định đăng ký là khách hàng
+                    role: 'CUSTOMER' 
                 })
             });
             
-            // Reset button state
             submitButton.textContent = originalText;
             submitButton.disabled = false;
             
-            // Parse response
             const data = await response.json();
             
             if (response.ok) {
-                // Registration successful
                 handleSuccessfulRegistration(data);
             } else {
-                // Registration failed
                 if (response.status === 409) {
                     showError('Tên đăng nhập đã tồn tại. Vui lòng chọn tên đăng nhập khác.');
                 } else {
@@ -91,27 +77,21 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Lỗi đăng ký:', error);
             
-            // Reset button state
             submitButton.textContent = originalText;
             submitButton.disabled = false;
             
-            // Show connection error message
             showError('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.');
         }
     }
     
-    // Handle successful registration
     function handleSuccessfulRegistration(data) {
-        // Show success message
         showSuccess('Đăng ký thành công! Chuyển hướng đến trang đăng nhập...');
         
-        // Redirect to login page after a delay
         setTimeout(() => {
             window.location.href = 'login.html';
         }, 2000);
     }
     
-    // Show error message
     function showError(message) {
         if (errorMsg) {
             errorMsg.textContent = message;
@@ -120,7 +100,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Show success message
     function showSuccess(message) {
         if (errorMsg) {
             errorMsg.textContent = message;
@@ -129,7 +108,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Clear error message
     function clearError() {
         if (errorMsg) {
             errorMsg.textContent = '';
@@ -137,13 +115,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Add a touch of toast notification like in promotion-manager.js
     function showToast(message, type = 'success') {
-        // Remove existing toast if any
         const existingToast = document.querySelector('.register-toast');
         if (existingToast) existingToast.remove();
         
-        // Create toast element
         const toast = document.createElement('div');
         toast.className = `register-toast ${type}`;
         toast.innerHTML = `
@@ -153,7 +128,6 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
         
-        // Add styles if not already in the document
         if (!document.getElementById('register-toast-style')) {
             const style = document.createElement('style');
             style.id = 'register-toast-style';
@@ -194,16 +168,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         document.body.appendChild(toast);
         
-        // Show toast
         setTimeout(() => toast.classList.add('show'), 10);
         
-        // Setup close button
         toast.querySelector('.toast-close').addEventListener('click', () => {
             toast.classList.remove('show');
             setTimeout(() => toast.remove(), 300);
         });
         
-        // Auto hide after 5 seconds
         setTimeout(() => {
             toast.classList.remove('show');
             setTimeout(() => toast.remove(), 300);

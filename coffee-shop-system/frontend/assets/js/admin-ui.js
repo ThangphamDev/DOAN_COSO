@@ -8,7 +8,6 @@ const AdminUI = {
      * @param {number} duration - Thời gian hiển thị (ms)
      */
     showToast: function(message, type = 'info', duration = 3000) {
-        // Tạo container nếu chưa tồn tại
         let toastContainer = document.getElementById('toast-container');
         if (!toastContainer) {
             toastContainer = document.createElement('div');
@@ -16,7 +15,6 @@ const AdminUI = {
             document.body.appendChild(toastContainer);
         }
         
-        // Tạo toast
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         toast.innerHTML = `
@@ -27,15 +25,12 @@ const AdminUI = {
             <button class="toast-close">&times;</button>
         `;
         
-        // Thêm vào container
         toastContainer.appendChild(toast);
         
-        // Hiệu ứng hiện toast
         setTimeout(() => {
             toast.classList.add('show');
         }, 10);
         
-        // Xử lý nút đóng
         const closeBtn = toast.querySelector('.toast-close');
         closeBtn.addEventListener('click', () => {
             toast.classList.remove('show');
@@ -46,8 +41,7 @@ const AdminUI = {
                 }
             }, 300);
         });
-        
-        // Tự động ẩn sau 5 giây
+
         setTimeout(() => {
             if (toast && document.body.contains(toastContainer)) {
                 toast.classList.remove('show');
@@ -146,9 +140,7 @@ const AdminUI = {
         });
     },
     
-    /**
-     * Toggle Switch Elements
-     */
+
     initToggleSwitches: function() {
         document.querySelectorAll('.toggle-switch input[type="checkbox"]').forEach(toggle => {
             toggle.addEventListener('change', function() {
@@ -160,9 +152,6 @@ const AdminUI = {
         });
     },
     
-    /**
-     * Data Tables Enhancement
-     */
     enhanceTables: function() {
         document.querySelectorAll('.data-table').forEach(table => {
             const container = table.closest('.data-table-container');
@@ -181,9 +170,7 @@ const AdminUI = {
         });
     },
     
-    /**
-     * Khởi tạo tất cả các chức năng UI
-     */
+
     init: function() {
         
         if (document.readyState === 'loading') {
@@ -244,9 +231,7 @@ function renderProductTable(products) {
     addTableActionListeners();
 }
 
-/**
- * Thêm event listener cho các nút hành động trong bảng (Sửa, Xóa).
- */
+
 function addTableActionListeners() {
     const editButtons = document.querySelectorAll('#product-table-body .btn-edit');
     const deleteButtons = document.querySelectorAll('#product-table-body .btn-delete');
@@ -313,9 +298,7 @@ function formatCurrency(amount) {
     }
 }
 
-/**
- * Thiết lập các event listener chung cho trang admin.
- */
+
 function setupEventListeners() {
     console.log("Setting up general event listeners...");
      const addProductButton = document.getElementById('add-product-button');

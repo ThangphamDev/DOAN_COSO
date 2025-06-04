@@ -1,10 +1,8 @@
 $(document).ready(function() {
-    // Hàm trợ giúp để lấy token từ localStorage
     function getAuthToken() {
         return localStorage.getItem('token');
     }
 
-    // Hàm trợ giúp để tạo headers với token xác thực
     function getAuthHeaders() {
         const token = getAuthToken();
         const headers = {
@@ -19,17 +17,14 @@ $(document).ready(function() {
         return headers;
     }
 
-    // API base URL
     const API_BASE_URL = 'http://localhost:8081/api';
 
-    // Load tất cả dữ liệu
     function loadData() {
         loadStats();
         loadTables();
         loadPayments();
     }
 
-    // Load thống kê (đơn hàng, doanh thu)
     function loadStats() {
         fetch(`${API_BASE_URL}/stats/today`, {
             method: 'GET',
@@ -145,7 +140,6 @@ $(document).ready(function() {
 
     // Hiển thị thông báo
     function showNotification(message, type = 'info') {
-        // Kiểm tra xem đã có container thông báo chưa
         let notificationContainer = document.getElementById('notificationContainer');
         if (!notificationContainer) {
             notificationContainer = document.createElement('div');
@@ -164,10 +158,8 @@ $(document).ready(function() {
             <button class="notification-close">&times;</button>
         `;
         
-        // Thêm vào container
         notificationContainer.appendChild(notification);
         
-        // Hiệu ứng hiện thông báo
         setTimeout(() => {
             notification.classList.add('show');
         }, 10);
@@ -184,7 +176,6 @@ $(document).ready(function() {
             }, 300);
         });
         
-        // Tự động ẩn sau 5 giây
         setTimeout(() => {
             if (notification.parentElement) {
                 notification.classList.remove('show');
@@ -198,36 +189,27 @@ $(document).ready(function() {
         }, 5000);
     }
 
-    // Kiểm tra xác thực
     function checkAuthentication() {
         const token = localStorage.getItem('token');
         const role = localStorage.getItem('role');
         
         if (!token || !role || !role.toLowerCase().includes('staff')) {
-            // Chuyển hướng về trang đăng nhập nếu không phải nhân viên
             window.location.href = '../auth/login.html';
             return false;
         }
         
-        // Debug thông tin token
-        console.log("Token hiện tại:", token);
-        console.log("Role hiện tại:", role);
-        
         return true;
     }
 
-    // Kiểm tra xác thực trước khi tải dữ liệu
     if (checkAuthentication()) {
-        // Tải dữ liệu ban đầu và làm mới mỗi 30 giây
         loadData();
         setInterval(loadData, 30000);
 
-        // Kiểm tra thời gian để reset doanh thu (giả lập qua ngày mới)
         setInterval(function() {
             const now = new Date();
             if (now.getHours() === 0 && now.getMinutes() === 0) {
-                loadStats(); // Reset doanh thu khi sang ngày mới
+                loadStats(); 
             }
-        }, 60000); // Kiểm tra mỗi phút
+        }, 60000); 
     }
 });

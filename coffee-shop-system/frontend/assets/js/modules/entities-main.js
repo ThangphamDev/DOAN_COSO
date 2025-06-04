@@ -1,28 +1,20 @@
-// entities-main.js
-// Tập hợp tất cả các module quản lý entities
-
-// Import các module con
 import * as UserModule from './entities-user.js';
 import * as CategoryModule from './entities-category.js';
 import * as ProductModule from './entities-product.js';
 import * as StaffModule from './entities-staff.js';
 import * as Utils from './entities-utils.js';
 
-// Re-export các module con để sử dụng từ bên ngoài
 export const User = UserModule;
 export const Category = CategoryModule;
 export const Product = ProductModule;
 export const Staff = StaffModule;
 export const Utilities = Utils;
 
-// Khởi tạo toàn bộ hệ thống entities
 export function initializeEntitySystem() {
     console.log('Khởi tạo hệ thống quản lý entities...');
     
-    // Lấy trang hiện tại
     const currentPage = window.location.pathname.split('/').pop();
     
-    // Khởi tạo các chức năng tùy theo trang
     if (currentPage === 'user.html') {
         console.log('Trang quản lý người dùng được phát hiện');
         UserModule.initializeUserManagement();
@@ -44,8 +36,6 @@ export function initializeEntitySystem() {
     }
 }
 
-// Tạo đối tượng tương thích với code cũ
-// Điều này cho phép code cũ vẫn hoạt động trong khi chuyển đổi sang mô hình module
 window.AdminEntities = {
     initializeUserManagement: UserModule.initializeUserManagement,
     initializeProductManagement: ProductModule.initializeProductManagement,
@@ -61,9 +51,7 @@ window.AdminEntities = {
     }
 };
 
-// Tự động khởi tạo khi tài liệu đã tải xong
 document.addEventListener('DOMContentLoaded', function() {
-    // Thiết lập CSS cần thiết
     const style = document.createElement('style');
     style.innerHTML = `
         .category-uncategorized {
@@ -110,7 +98,6 @@ document.addEventListener('DOMContentLoaded', function() {
     `;
     document.head.appendChild(style);
     
-    // Kiểm tra API client đã được tải chưa
     if (!window.ApiClient) {
         console.error('API Client chưa được tải!');
         if (window.AdminCore) {
@@ -119,6 +106,5 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
-    // Khởi tạo hệ thống entities
     initializeEntitySystem();
 }); 

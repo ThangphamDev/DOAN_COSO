@@ -1,13 +1,9 @@
-// entities-staff.js
-// Toàn bộ logic quản lý nhân viên, chỉ dùng API thật, không có dữ liệu mẫu
-
 import { showLoadingMessage, showSuccessMessage, showErrorMessage, hideLoadingMessage, initializeModal, setupSearchFilter, formatRole } from './entities-utils.js';
 
 export async function loadStaffData() {
     showLoadingMessage('Đang tải dữ liệu nhân viên...');
     
     try {
-        // Gọi API để lấy danh sách nhân viên
         const staffList = await ApiClient.Staff.getAllStaff();
         displayStaff(staffList);
         
@@ -34,7 +30,6 @@ export function displayStaff(staffList) {
     staffList.forEach(staff => {
         const row = document.createElement('tr');
         
-        // Tạo các cột dữ liệu
         row.innerHTML = `
             <td>${staff.id}</td>
             <td>${staff.fullName || ''}</td>
@@ -67,7 +62,6 @@ function formatPosition(position) {
 }
 
 function setupStaffActions() {
-    // Xử lý nút chỉnh sửa
     const editButtons = document.querySelectorAll('.edit-staff');
     editButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -76,7 +70,6 @@ function setupStaffActions() {
         });
     });
     
-    // Xử lý nút xóa
     const deleteButtons = document.querySelectorAll('.delete-staff');
     deleteButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -92,17 +85,14 @@ async function editStaff(staffId) {
     try {
         showLoadingMessage('Đang tải thông tin nhân viên...');
         
-        // Gọi API để lấy thông tin nhân viên
         const staff = await ApiClient.Staff.getStaffById(staffId);
         
-        // Điền dữ liệu vào form
         document.getElementById('staffId').value = staff.id;
         document.getElementById('fullName').value = staff.fullName || '';
         document.getElementById('email').value = staff.email || '';
         document.getElementById('phone').value = staff.phone || '';
         document.getElementById('position').value = staff.position || '';
         
-        // Điền thông tin khác nếu có
         if (document.getElementById('address')) {
             document.getElementById('address').value = staff.address || '';
         }
@@ -111,13 +101,11 @@ async function editStaff(staffId) {
             document.getElementById('joinDate').value = staff.joinDate || '';
         }
         
-        // Cập nhật tiêu đề
         const title = document.querySelector('#staffModal h2');
         if (title) {
             title.textContent = 'Chỉnh sửa nhân viên';
         }
         
-        // Mở modal
         document.getElementById('staffModal').style.display = 'flex';
         setTimeout(() => {
             document.getElementById('staffModal').classList.add('show');
@@ -134,10 +122,8 @@ async function deleteStaff(staffId) {
     try {
         showLoadingMessage('Đang xóa nhân viên...');
         
-        // Gọi API để xóa nhân viên
         await ApiClient.Staff.deleteStaff(staffId);
         
-        // Tải lại danh sách nhân viên
         loadStaffData();
         
         showSuccessMessage('Xóa nhân viên thành công');
@@ -154,12 +140,10 @@ export function setupStaffFormSubmission() {
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        // Kiểm tra dữ liệu
         if (!validateStaffForm()) {
             return;
         }
         
-        // Thu thập dữ liệu từ form
         const staffData = {
             id: document.getElementById('staffId').value,
             fullName: document.getElementById('fullName').value.trim(),
@@ -168,7 +152,6 @@ export function setupStaffFormSubmission() {
             position: document.getElementById('position').value
         };
         
-        // Thêm các trường tùy chọn
         if (document.getElementById('address')) {
             staffData.address = document.getElementById('address').value.trim();
         }
@@ -177,27 +160,22 @@ export function setupStaffFormSubmission() {
             staffData.joinDate = document.getElementById('joinDate').value;
         }
         
-        // Xác định thêm mới hay cập nhật
         const isUpdate = staffData.id !== '';
         
         try {
             showLoadingMessage(`Đang ${isUpdate ? 'cập nhật' : 'thêm'} nhân viên...`);
             
             if (isUpdate) {
-                // Cập nhật nhân viên hiện có
                 await ApiClient.Staff.updateStaff(staffData.id, staffData);
             } else {
-                // Thêm nhân viên mới
                 await ApiClient.Staff.createStaff(staffData);
             }
             
-            // Đóng modal
             document.getElementById('staffModal').classList.remove('show');
             setTimeout(() => {
                 document.getElementById('staffModal').style.display = 'none';
             }, 300);
             
-            // Tải lại danh sách nhân viên
             loadStaffData();
             
             showSuccessMessage(`Đã ${isUpdate ? 'cập nhật' : 'thêm'} nhân viên thành công`);
@@ -213,19 +191,16 @@ function validateStaffForm() {
     const email = document.getElementById('email').value.trim();
     const phone = document.getElementById('phone').value.trim();
     
-    // Kiểm tra họ tên
     if (!fullName) {
         showErrorMessage('Vui lòng nhập họ tên nhân viên');
         return false;
     }
     
-    // Kiểm tra email
     if (email && !validateEmail(email)) {
         showErrorMessage('Email không hợp lệ');
         return false;
     }
     
-    // Kiểm tra số điện thoại
     if (!phone) {
         showErrorMessage('Vui lòng nhập số điện thoại');
         return false;
@@ -266,16 +241,11 @@ export function filterStaff(searchTerm) {
 export function initializeStaffManagement() {
     console.log('Khởi tạo chức năng quản lý nhân viên');
     
-    // Tải dữ liệu nhân viên
     loadStaffData();
     
-    // Khởi tạo modal thêm/sửa nhân viên
     initializeModal('staffModal', 'addStaffBtn');
     
-    // Xử lý form thêm/sửa nhân viên
     setupStaffFormSubmission();
     
-    // Xử lý tìm kiếm nhân viên
     setupSearchFilter('searchStaff', filterStaff);
 }
-// ... các hàm khác liên quan đến nhân viên ... 

@@ -1,7 +1,4 @@
-
-
 document.addEventListener('DOMContentLoaded', function() {
-    // Kiểm tra API client đã được tải chưa
     if (!window.ApiClient) {
         console.error('API Client chưa được tải!');
         if (window.AdminCore) {
@@ -10,10 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    // Xác định trang hiện tại để tải các chức năng phù hợp
     const currentPage = window.location.pathname.split('/').pop();
     
-    // Khởi tạo các chức năng tùy theo trang
     if (currentPage === 'orders.html') {
         initializeOrderManagement();
     } 
@@ -35,19 +30,14 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeOrderManagement() {
     console.log('Khởi tạo chức năng quản lý đơn hàng');
     
-    // Tải dữ liệu đơn hàng
     loadOrderData();
     
-    // Khởi tạo modal xem chi tiết đơn hàng
     initializeModal('orderDetailModal', null);
     
-    // Xử lý tìm kiếm đơn hàng
     setupSearchFilter('searchOrder', filterOrders);
     
-    // Thiết lập bộ lọc theo trạng thái
     setupStatusFilter();
     
-    // Thiết lập sắp xếp
     setupSorting();
 }
 
@@ -56,7 +46,6 @@ async function loadOrderData() {
     showLoadingMessage('Đang tải dữ liệu đơn hàng...');
     
     try {
-        // Gọi API để lấy danh sách đơn hàng
         const orders = await ApiClient.Order.getAllOrders();
         displayOrders(orders);
         
@@ -77,12 +66,10 @@ function displayOrders(orders) {
     orders.forEach(order => {
         const row = document.createElement('tr');
         
-        // Định dạng ngày giờ
         const orderDate = new Date(order.orderDate);
         const formattedDate = orderDate.toLocaleDateString('vi-VN');
         const formattedTime = orderDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
         
-        // Tạo các cột dữ liệu
         row.innerHTML = `
             <td>${order.orderNumber}</td>
             <td>${order.customerName}</td>
@@ -100,7 +87,6 @@ function displayOrders(orders) {
         tableBody.appendChild(row);
     });
     
-    // Thêm xử lý sự kiện cho các nút
     setupOrderActions();
 }
 
@@ -108,28 +94,22 @@ function displayOrders(orders) {
 function initializeTableManagement() {
     console.log('Khởi tạo chức năng quản lý bàn');
     
-    // Tải dữ liệu bàn
     loadTableData();
     
-    // Khởi tạo modal thêm/sửa bàn
     initializeModal('tableModal', 'addTableBtn');
     
-    // Xử lý form thêm/sửa bàn
     setupTableFormSubmission();
     
-    // Xử lý tìm kiếm bàn
     setupSearchFilter('searchTable', filterTables);
     
-    // Thiết lập bộ lọc theo trạng thái
     setupTableStatusFilter();
 }
 
-// Tải dữ liệu bàn
+
 async function loadTableData() {
     showLoadingMessage('Đang tải dữ liệu bàn...');
     
     try {
-        // Gọi API để lấy danh sách bàn
         const tables = await ApiClient.Table.getAllTables();
         displayTables(tables);
         
@@ -144,28 +124,22 @@ async function loadTableData() {
 function initializePromotionManagement() {
     console.log('Khởi tạo chức năng quản lý khuyến mãi');
     
-    // Tải dữ liệu khuyến mãi
     loadPromotionData();
     
-    // Khởi tạo modal thêm/sửa khuyến mãi
     initializeModal('promotionModal', 'addPromotionBtn');
     
-    // Xử lý form thêm/sửa khuyến mãi
     setupPromotionFormSubmission();
     
-    // Xử lý tìm kiếm khuyến mãi
     setupSearchFilter('searchPromotion', filterPromotions);
     
-    // Thiết lập bộ lọc theo trạng thái
     setupPromotionStatusFilter();
 }
 
-// Tải dữ liệu khuyến mãi
+
 async function loadPromotionData() {
     showLoadingMessage('Đang tải dữ liệu khuyến mãi...');
     
     try {
-        // Gọi API để lấy danh sách khuyến mãi
         const promotions = await ApiClient.Promotion.getAllPromotions();
         displayPromotions(promotions);
         
@@ -180,16 +154,12 @@ async function loadPromotionData() {
 function initializeActivityLog() {
     console.log('Khởi tạo chức năng nhật ký hoạt động');
     
-    // Tải dữ liệu hoạt động
     loadActivityData();
     
-    // Xử lý tìm kiếm hoạt động
     setupSearchFilter('searchActivity', filterActivities);
     
-    // Thiết lập bộ lọc theo loại hoạt động
     setupActivityTypeFilter();
     
-    // Thiết lập lọc theo thời gian
     setupDateFilter();
 }
 
@@ -197,16 +167,12 @@ function initializeActivityLog() {
 function initializeDashboard() {
     console.log('Khởi tạo trang tổng quan');
     
-    // Tải dữ liệu tổng quan
     loadDashboardData();
     
-    // Khởi tạo các biểu đồ
     initializeCharts();
     
-    // Tải hoạt động gần đây
     loadRecentActivities();
     
-    // Thiết lập bộ lọc thời gian
     setupDateFilter();
 }
 
@@ -215,7 +181,6 @@ async function loadDashboardData() {
     showLoadingMessage('Đang tải dữ liệu tổng quan...');
     
     try {
-        // Gọi API để lấy dữ liệu tổng quan
         const dashboardData = await ApiClient.Report.getDashboardStats();
         displayDashboardData(dashboardData);
         
@@ -228,7 +193,6 @@ async function loadDashboardData() {
 
 
 function displayDashboardData(data) {
-    // Cập nhật các số liệu thống kê
     updateElement('todayRevenue', formatCurrency(data.todayRevenue));
     updateElement('todayOrders', data.todayOrders);
     updateElement('staffCount', data.staffCount);
@@ -238,7 +202,6 @@ function displayDashboardData(data) {
     updateElement('avgOrderValue', formatCurrency(data.avgOrderValue));
     updateElement('loyalCustomers', data.loyalCustomers);
     
-    // Cập nhật biểu đồ
     if (window.revenueChart) {
         updateRevenueChart(data.revenueByDay);
     }
@@ -248,9 +211,8 @@ function displayDashboardData(data) {
     }
 }
 
-// Khởi tạo biểu đồ
+
 function initializeCharts() {
-    // Biểu đồ doanh thu
     const revenueCtx = document.getElementById('revenueChart');
     if (revenueCtx) {
         window.revenueChart = new Chart(revenueCtx, {
@@ -293,7 +255,6 @@ function initializeCharts() {
         });
     }
     
-    // Biểu đồ danh mục
     const categoryCtx = document.getElementById('categoryChart');
     if (categoryCtx) {
         window.categoryChart = new Chart(categoryCtx, {
@@ -333,18 +294,14 @@ function initializeModal(modalId, openBtnId) {
     const openBtn = document.getElementById(openBtnId);
     const closeBtn = modal.querySelector('.close-btn');
     
-    // Xử lý mở modal nếu có nút mở
     if (openBtn) {
         openBtn.addEventListener('click', function() {
-            // Reset form
             const form = modal.querySelector('form');
             if (form) form.reset();
             
-            // Reset các trường ẩn
             const hiddenFields = modal.querySelectorAll('input[type="hidden"]');
             hiddenFields.forEach(field => field.value = '');
             
-            // Hiển thị modal
             modal.style.display = 'flex';
             setTimeout(() => {
                 modal.classList.add('show');
@@ -352,14 +309,12 @@ function initializeModal(modalId, openBtnId) {
         });
     }
     
-    // Đóng modal khi nhấn nút đóng
     if (closeBtn) {
         closeBtn.addEventListener('click', function() {
             closeModal(modalId);
         });
     }
     
-    // Đóng modal khi nhấn bên ngoài
     window.addEventListener('click', function(e) {
         if (e.target === modal) {
             closeModal(modalId);
@@ -367,7 +322,7 @@ function initializeModal(modalId, openBtnId) {
     });
 }
 
-// Đóng modal
+
 function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (!modal) return;
@@ -378,7 +333,7 @@ function closeModal(modalId) {
     }, 300);
 }
 
-// Thiết lập tìm kiếm
+
 function setupSearchFilter(inputId, filterFunction) {
     const searchInput = document.getElementById(inputId);
     if (!searchInput) return;
@@ -388,7 +343,7 @@ function setupSearchFilter(inputId, filterFunction) {
     }, 300));
 }
 
-// Hàm debounce để tránh gọi quá nhiều lần khi tìm kiếm
+
 function debounce(func, wait) {
     let timeout;
     return function() {
@@ -399,7 +354,7 @@ function debounce(func, wait) {
     };
 }
 
-// Định dạng trạng thái đơn hàng
+
 function formatOrderStatus(status) {
     switch (status) {
         case 'pending':
@@ -415,7 +370,7 @@ function formatOrderStatus(status) {
     }
 }
 
-// Cập nhật phần tử HTML
+
 function updateElement(id, value) {
     const element = document.getElementById(id);
     if (element) {
@@ -423,12 +378,11 @@ function updateElement(id, value) {
     }
 }
 
-// Định dạng tiền tệ
+
 function formatCurrency(value) {
     return value.toLocaleString('vi-VN') + ' VNĐ';
 }
 
-// Hiển thị thông báo loading
 function showLoadingMessage(message) {
     if (window.AdminCore && window.AdminCore.showNotification) {
         window.AdminCore.showNotification(message, 'info');
@@ -437,7 +391,7 @@ function showLoadingMessage(message) {
     }
 }
 
-// Hiển thị thông báo thành công
+
 function showSuccessMessage(message) {
     if (window.AdminCore && window.AdminCore.showNotification) {
         window.AdminCore.showNotification(message, 'success');
@@ -446,7 +400,7 @@ function showSuccessMessage(message) {
     }
 }
 
-// Hiển thị thông báo lỗi
+
 function showErrorMessage(message) {
     if (window.AdminCore && window.AdminCore.showNotification) {
         window.AdminCore.showNotification(message, 'error');
@@ -458,10 +412,9 @@ function showErrorMessage(message) {
 
 
 /**
- * @param {string|number} productId ID của sản phẩm cần xóa.
+ * @param {string|number} productId 
  */
 async function deleteProduct(productId) {
-    // Kiểm tra xem CafeAPI và AdminUI có tồn tại không
     if (typeof CafeAPI === 'undefined' || typeof CafeAPI.deleteProduct !== 'function') {
         console.error("CafeAPI or CafeAPI.deleteProduct is not defined.");
         alert("Lỗi: Không thể kết nối đến API để xóa sản phẩm.");
@@ -469,33 +422,26 @@ async function deleteProduct(productId) {
     }
     if (typeof AdminUI === 'undefined' || typeof AdminUI.showErrorMessage !== 'function') {
         console.error("AdminUI or AdminUI.showErrorMessage is not defined.");
-        // Không cần alert ở đây vì lỗi sẽ được hiển thị bởi hàm gọi
     }
 
     try {
         console.log(`Đang xóa sản phẩm ID: ${productId}...`);
-        const success = await CafeAPI.deleteProduct(productId); // Gọi API xóa
-
+        const success = await CafeAPI.deleteProduct(productId); 
         if (success) {
             console.log(`Sản phẩm ID: ${productId} đã được xóa thành công.`);
-            // Tải lại danh sách sản phẩm để cập nhật bảng
-            // Kiểm tra xem AdminModule và loadProducts có tồn tại không
             if (window.AdminModule && typeof window.AdminModule.loadProducts === 'function') {
                  AdminModule.loadProducts();
-            } else if (typeof loadProducts === 'function') { // Fallback kiểm tra hàm global
+            } else if (typeof loadProducts === 'function') { 
                  loadProducts();
             } else {
                  console.error("Hàm loadProducts không tồn tại để tải lại bảng.");
                  alert('Xóa sản phẩm thành công! Vui lòng tải lại trang để cập nhật.');
             }
-            // Hiển thị thông báo thành công nếu có
             if (window.AdminUI && typeof window.AdminUI.showToast === 'function') {
                 AdminUI.showToast('Xóa sản phẩm thành công!', 'success');
             } else {
-                // alert('Xóa sản phẩm thành công!'); // Bỏ alert nếu đã có toast
             }
         } else {
-            // Trường hợp API trả về false nhưng không throw error
              if (window.AdminUI && typeof AdminUI.showErrorMessage === 'function') {
                 AdminUI.showErrorMessage(`Không thể xóa sản phẩm ID: ${productId}. Phản hồi từ API không thành công.`);
              } else {
@@ -512,10 +458,9 @@ async function deleteProduct(productId) {
     }
 }
 
-// Export các chức năng nếu cần
 const existingAdminOperations = window.AdminOperations || {};
 window.AdminOperations = {
-    ...existingAdminOperations, // Giữ lại các hàm cũ
+    ...existingAdminOperations, 
     initializeOrderManagement,
     initializeTableManagement,
     initializePromotionManagement,

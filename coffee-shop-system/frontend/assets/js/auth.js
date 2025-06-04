@@ -1,5 +1,3 @@
-// auth.js - Authentication utilities and user management
-
 class AuthManager {
     constructor() {
         this.token = localStorage.getItem('token');
@@ -8,12 +6,10 @@ class AuthManager {
         this.fullName = localStorage.getItem('fullName');
     }
 
-    // Check if user is logged in
     isLoggedIn() {
         return !!this.token;
     }
 
-    // Get current user info
     getCurrentUser() {
         if (!this.isLoggedIn()) return null;
         
@@ -25,25 +21,20 @@ class AuthManager {
         };
     }
 
-    // Check if user is customer
     isCustomer() {
         return this.role && this.role.toLowerCase().includes('customer');
     }
 
-    // Check if user is staff
     isStaff() {
         return this.role && this.role.toLowerCase().includes('staff');
     }
 
-    // Check if user is admin
     isAdmin() {
         return this.role && this.role.toLowerCase().includes('admin');
     }
 
-    // Get user's loyalty points (from orders)
     async getLoyaltyPoints() {
         try {
-            // Kiểm tra xem người dùng đã đăng nhập chưa
             if (!this.isLoggedIn()) {
                 console.error('Người dùng chưa đăng nhập, không thể lấy điểm thưởng');
                 return 0;
@@ -56,7 +47,6 @@ class AuthManager {
                 return 0;
             }
             
-            // Gọi API để lấy điểm thưởng
             const response = await fetch(`http://localhost:8081/api/accounts/${currentUser.userId}/reward-points`);
             
             if (!response.ok) {
@@ -74,31 +64,26 @@ class AuthManager {
         }
     }
 
-    // Logout user
     logout() {
         localStorage.removeItem('token');
         localStorage.removeItem('role');
         localStorage.removeItem('userId');
         localStorage.removeItem('fullName');
         
-        // Clear current instance
         this.token = null;
         this.role = null;
         this.userId = null;
         this.fullName = null;
 
-        // Redirect to login page or home
         window.location.href = '/auth/login.html';
     }
 
-    // Update user info after login
     updateUserInfo(userData) {
         this.token = userData.token;
         this.role = userData.role;
         this.userId = userData.userId;
         this.fullName = userData.fullName;
 
-        // Update localStorage
         localStorage.setItem('token', userData.token);
         localStorage.setItem('role', userData.role);
         localStorage.setItem('userId', userData.userId);
@@ -106,5 +91,4 @@ class AuthManager {
     }
 }
 
-// Global instance
 window.AuthManager = new AuthManager();

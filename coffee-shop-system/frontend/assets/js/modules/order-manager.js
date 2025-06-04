@@ -15,12 +15,10 @@ const STATUS_CLASSES = {
     'pending': 'pending'
 };
 
-// Hàm trợ giúp để lấy token từ localStorage
 function getAuthToken() {
     return localStorage.getItem('token');
 }
 
-// Hàm trợ giúp để tạo headers với token xác thực
 function getAuthHeaders() {
     const token = getAuthToken();
     const headers = {

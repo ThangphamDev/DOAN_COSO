@@ -9,12 +9,10 @@ let selectedOptions = {
     toppings: []
 };
 
-// Hàm trợ giúp để lấy token từ localStorage
 function getAuthToken() {
     return localStorage.getItem('token');
 }
 
-// Hàm trợ giúp để tạo headers với token xác thực
 function getAuthHeaders() {
     const token = getAuthToken();
     const headers = {
@@ -30,7 +28,6 @@ function getAuthHeaders() {
 }
 
 document.addEventListener('DOMContentLoaded', async function() {
-    // Kiểm tra xác thực trước khi tải dữ liệu
     if (checkAuthentication()) {
         const urlParams = new URLSearchParams(window.location.search);
         const productId = urlParams.get('id');
@@ -41,13 +38,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 
-// Kiểm tra xác thực
 function checkAuthentication() {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
     
     if (!token || !role || !(role.toLowerCase().includes('staff') || role.toLowerCase().includes('admin'))) {
-        // Chuyển hướng về trang đăng nhập nếu không phải nhân viên hoặc admin
         window.location.href = '../../auth/login.html';
         return false;
     }
@@ -83,12 +78,10 @@ async function loadVariants() {
         
         const allVariants = await response.json();
         
-        // Lọc variants cho sản phẩm hiện tại
         const productId = new URLSearchParams(window.location.search).get('id');
         variants = [];
         
         if (currentProduct) {
-            // Tìm variants có category chứa sản phẩm hiện tại
             variants = allVariants.filter(variant => {
                 if (!variant.category || !variant.category.products) return false;
                 
@@ -103,14 +96,12 @@ async function loadVariants() {
     } catch (error) {
         console.error('Error loading variants:', error);
         showNotification('Không thể tải thông tin biến thể', 'error');
-        // Nếu lỗi, vẫn hiển thị variants rỗng để ẩn các section
         variants = [];
         displayVariants();
     }
 }
 
 function displayProductDetails(product) {
-    // Update product image
     const productImage = document.getElementById('productImage');
     if (product.image) {
         productImage.src = `${API_URL}/products/images/${product.image}`;
@@ -118,7 +109,6 @@ function displayProductDetails(product) {
         productImage.src = '../assets/images/no-image.png';
     }
 
-    // Update product info
     document.getElementById('productName').textContent = product.productName;
     document.getElementById('productCategory').textContent = product.categoryName || product.category?.categoryName || 'Chưa phân loại';
     document.getElementById('productStatus').textContent = product.isAvailable ? 'Đang bán' : 'Ngừng bán';
@@ -128,7 +118,6 @@ function displayProductDetails(product) {
 }
 
 function displayVariants() {
-    // Size
     const sizeVariants = variants.filter(v => v.variantType === 'size');
     const sizeSection = document.querySelector('.size-options');
     const sizeOptions = document.getElementById('sizeOptions');
@@ -145,16 +134,13 @@ function displayVariants() {
                     ${variant.additionalPrice > 0 ? `(+${formatCurrency(variant.additionalPrice)})` : ''}
                 </button>
             `).join('');
-        // Set default
         const defaultSize = sizeVariants.find(v => v.isDefault);
         if (defaultSize) selectedOptions.size = defaultSize.variantValue;
     } else {
         if (sizeSection) sizeSection.style.display = 'none';
-        // Reset size selection nếu không có variants
         selectedOptions.size = null;
     }
 
-    // Ice
     const iceVariants = variants.filter(v => v.variantType === 'ice');
     const iceSection = document.querySelector('.ice-options');
     const iceOptions = document.getElementById('iceOptions');
@@ -176,7 +162,6 @@ function displayVariants() {
         selectedOptions.ice = null;
     }
 
-    // Sugar
     const sugarVariants = variants.filter(v => v.variantType === 'sugar');
     const sugarSection = document.querySelector('.sugar-options');
     const sugarOptions = document.getElementById('sugarOptions');
@@ -198,7 +183,6 @@ function displayVariants() {
         selectedOptions.sugar = null;
     }
 
-    // Topping
     const toppingVariants = variants.filter(v => v.variantType === 'topping');
     const toppingSection = document.querySelector('.toppings-section');
     const toppingOptions = document.getElementById('toppingOptions');
@@ -268,7 +252,6 @@ function updateTotalPrice() {
     let basePrice = currentProduct.price;
     const quantity = parseInt(document.getElementById('quantity').value);
     
-    // Size price (chỉ tính nếu có size được chọn)
     if (selectedOptions.size) {
         const selectedSize = variants.find(v => v.variantType === 'size' && v.variantValue === selectedOptions.size);
         if (selectedSize) {
@@ -276,7 +259,6 @@ function updateTotalPrice() {
         }
     }
     
-    // Topping price
     let toppingTotal = 0;
     if (selectedOptions.toppings && selectedOptions.toppings.length > 0) {
         toppingTotal = selectedOptions.toppings.reduce((sum, t) => sum + t.price, 0);
@@ -310,7 +292,6 @@ function addToOrder() {
 
     const quantity = parseInt(document.getElementById('quantity').textContent) || 1;
     
-    // Lấy đơn hàng hiện tại từ localStorage
     let currentOrder = JSON.parse(localStorage.getItem('T2K_CURRENT_ORDER')) || {
         items: [],
         tableId: null,
@@ -319,7 +300,6 @@ function addToOrder() {
         notes: ''
     };
     
-    // Tạo item mới với các tùy chọn đã chọn
     const newItem = {
         id: currentProduct.idProduct,
         name: currentProduct.productName,
@@ -328,7 +308,6 @@ function addToOrder() {
         options: {}
     };
     
-    // Thêm các tùy chọn đã chọn
     if (selectedOptions.size) {
         const sizeVariant = variants.find(v => v.variantType === 'size' && v.variantValue === selectedOptions.size);
         if (sizeVariant) {
@@ -373,33 +352,25 @@ function addToOrder() {
         });
     }
     
-    // Kiểm tra xem đã có sản phẩm tương tự trong giỏ hàng chưa
     const existingItemIndex = currentOrder.items.findIndex(item => 
         item.id === newItem.id && 
         JSON.stringify(item.options) === JSON.stringify(newItem.options)
     );
     
     if (existingItemIndex !== -1) {
-        // Nếu có, tăng số lượng
         currentOrder.items[existingItemIndex].quantity += quantity;
     } else {
-        // Nếu không, thêm mới
         currentOrder.items.push(newItem);
     }
     
-    // Cập nhật tổng tiền
     currentOrder.total = currentOrder.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
-    // Lưu lại vào localStorage
     localStorage.setItem('T2K_CURRENT_ORDER', JSON.stringify(currentOrder));
     
-    // Cập nhật số lượng sản phẩm trong giỏ hàng
     updateCartCount(currentOrder.items.reduce((sum, item) => sum + item.quantity, 0));
     
-    // Hiển thị thông báo
     showNotification('Đã thêm sản phẩm vào đơn hàng', 'success');
     
-    // Chuyển về trang order sau 1 giây
     setTimeout(() => {
         window.location.href = '../staff/order.html';
     }, 1000);
@@ -418,23 +389,18 @@ function updateCartCount(count) {
 }
 
 function setupEventListeners() {
-    // Size
     document.querySelectorAll('.size-btn[data-size]').forEach(button => {
         button.addEventListener('click', function() { selectSize(this); });
     });
-    // Ice
     document.querySelectorAll('.size-btn[data-ice]').forEach(button => {
         button.addEventListener('click', function() { selectIceLevel(this); });
     });
-    // Sugar
     document.querySelectorAll('.size-btn[data-sugar]').forEach(button => {
         button.addEventListener('click', function() { selectSugarLevel(this); });
     });
-    // Topping
     document.querySelectorAll('input[type="checkbox"][data-topping]').forEach(checkbox => {
         checkbox.addEventListener('change', function() { onToppingChange(this); });
     });
-    // Quantity
     const quantityInput = document.getElementById('quantity');
     quantityInput.addEventListener('change', () => {
         let value = parseInt(quantityInput.value);

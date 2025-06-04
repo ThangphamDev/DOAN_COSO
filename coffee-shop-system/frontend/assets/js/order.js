@@ -1,9 +1,3 @@
-/**
- * Order Management Module - T2K Coffee Staff
- * Module quản lý gọi món cho nhân viên
- */
-
-// Constants
 const API_BASE_URL = 'http://localhost:8081/api';
 const ENDPOINTS = {
     TABLES: `${API_BASE_URL}/tables`,
@@ -12,12 +6,10 @@ const ENDPOINTS = {
     ORDERS: `${API_BASE_URL}/orders`
 };
 
-// Hàm trợ giúp để lấy token từ localStorage
 function getAuthToken() {
     return localStorage.getItem('token');
 }
 
-// Hàm trợ giúp để tạo headers với token xác thực
 function getAuthHeaders() {
     const token = getAuthToken();
     const headers = {
@@ -32,7 +24,6 @@ function getAuthHeaders() {
     return headers;
 }
 
-// State
 let menuItems = [];
 let categories = [];
 let tables = [];
@@ -44,10 +35,8 @@ let currentOrder = {
     notes: ''
 };
 
-// Constants
 const STORAGE_KEY = 'T2K_CURRENT_ORDER';
 
-// DOM Elements
 let menuGrid;
 let menuSearch;
 let categoryFilter;
@@ -58,9 +47,7 @@ let totalElement;
 let clearOrderBtn;
 let submitOrderBtn;
 
-// Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
-    // Kiểm tra xác thực trước khi tải trang
     if (checkAuthentication()) {
         initializeDOMElements();
         setupEventListeners();
@@ -69,25 +56,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Kiểm tra xác thực
 function checkAuthentication() {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
     
     if (!token || !role || !(role.toLowerCase().includes('staff') || role.toLowerCase().includes('admin'))) {
-        // Chuyển hướng về trang đăng nhập nếu không phải nhân viên hoặc admin
         window.location.href = '../auth/login.html';
         return false;
     }
-    
-    // Debug thông tin token
-    console.log("Token hiện tại:", token);
-    console.log("Role hiện tại:", role);
-    
     return true;
 }
 
-// Initialize DOM element references
 function initializeDOMElements() {
     menuGrid = document.getElementById('menuGrid');
     menuSearch = document.getElementById('menu-search');
@@ -100,14 +79,12 @@ function initializeDOMElements() {
     submitOrderBtn = document.getElementById('submitOrder');
 }
 
-// Setup event listeners
 function setupEventListeners() {
     menuSearch.addEventListener('input', filterMenuItems);
     clearOrderBtn.addEventListener('click', clearOrder);
     submitOrderBtn.addEventListener('click', submitOrder);
 }
 
-// Load all initial data
 async function loadInitialData() {
     try {
         await Promise.all([
@@ -120,7 +97,6 @@ async function loadInitialData() {
     }
 }
 
-// Load categories from API
 async function loadCategories() {
     try {
         const response = await fetch(ENDPOINTS.CATEGORIES, {
@@ -133,12 +109,10 @@ async function loadCategories() {
         categories = await response.json();
         renderCategories();
         
-        // Gom tất cả sản phẩm lại, gán idCategory cho từng sản phẩm
         let allProducts = [];
         categories.forEach(category => {
             if (category.products && Array.isArray(category.products)) {
                 category.products.forEach(product => {
-                    // Chỉ thêm sản phẩm đang bán
                     if (product.isAvailable === true || 
                         product.status === 'active' || 
                         product.status === true || 
@@ -162,7 +136,6 @@ async function loadCategories() {
     }
 }
 
-// Load tables from API
 async function loadTables() {
     try {
         const response = await fetch(ENDPOINTS.TABLES, {
@@ -180,14 +153,11 @@ async function loadTables() {
     }
 }
 
-// Render categories
 function renderCategories() {
     if (!categoryFilter) return;
 
-    // Clear existing categories
     categoryFilter.innerHTML = '';
 
-    // Add "All" button
     const allButton = document.createElement('button');
     allButton.className = 'category-btn active';
     allButton.setAttribute('data-category', 'all');
@@ -195,7 +165,6 @@ function renderCategories() {
     allButton.onclick = () => filterByCategory('all');
     categoryFilter.appendChild(allButton);
 
-    // Add category buttons
     categories.forEach(category => {
         if (category && category.categoryName) {
             const button = document.createElement('button');
@@ -208,9 +177,7 @@ function renderCategories() {
     });
 }
 
-// Filter by category
 function filterByCategory(categoryId) {
-    // Update active button
     document.querySelectorAll('.category-btn').forEach(btn => {
         btn.classList.remove('active');
         if (btn.getAttribute('data-category') === categoryId.toString()) {
@@ -218,7 +185,6 @@ function filterByCategory(categoryId) {
         }
     });
 
-    // Filter products
     let filteredItems;
     if (categoryId === 'all') {
         filteredItems = menuItems;
@@ -229,14 +195,11 @@ function filterByCategory(categoryId) {
     renderMenuItems(filteredItems);
 }
 
-// Render table options
 function renderTableOptions() {
     if (!tableSelect) return;
     
-    // Clear existing options
     tableSelect.innerHTML = '<option value="">Chọn bàn (tùy chọn)</option>';
 
-    // Add available tables only
     const availableTables = tables.filter(table => table.status !== 'Occupied');
     
     if (availableTables.length === 0) {
@@ -247,10 +210,8 @@ function renderTableOptions() {
         return;
     }
 
-    // Sort tables by number
     availableTables.sort((a, b) => a.tableNumber - b.tableNumber);
 
-    // Add table options
     availableTables.forEach(table => {
         const option = document.createElement('option');
         option.value = table.idTable;
@@ -259,7 +220,6 @@ function renderTableOptions() {
     });
 }
 
-// Render menu items
 function renderMenuItems(filteredItems = null) {
     if (!menuGrid) return;
     
@@ -271,7 +231,6 @@ function renderMenuItems(filteredItems = null) {
         return;
     }
 
-    // Lọc chỉ lấy sản phẩm đang bán
     const availableItems = itemsToRender.filter(item => 
         item.isAvailable === true || 
         item.status === 'active' || 
@@ -291,11 +250,9 @@ function renderMenuItems(filteredItems = null) {
         menuItem.style.opacity = '0';
         menuItem.style.cursor = 'pointer';
 
-        // Xử lý hình ảnh sản phẩm
         let imageUrl = '../assets/images/no-image.png';
         let imageClass = 'no-image';
         
-        // Kiểm tra và xử lý đường dẫn ảnh
         if (item.image) {
             if (typeof item.image === 'string') {
                 if (item.image.startsWith('data:image')) {
@@ -334,7 +291,6 @@ function renderMenuItems(filteredItems = null) {
             </button>
         `;
 
-        // Thêm sự kiện click để chuyển đến trang chi tiết sản phẩm
         menuItem.addEventListener('click', () => {
             window.location.href = `product-detail.html?id=${item.idProduct}`;
         });
@@ -343,12 +299,10 @@ function renderMenuItems(filteredItems = null) {
     });
 }
 
-// Filter menu items
 function filterMenuItems() {
     const searchText = menuSearch.value.toLowerCase();
     const activeCategory = document.querySelector('.category-btn.active').getAttribute('data-category');
     
-    // Lọc sản phẩm theo trạng thái đang bán trước
     let availableItems = menuItems.filter(item => 
         item.isAvailable === true || 
         item.status === 'active' || 
@@ -356,7 +310,6 @@ function filterMenuItems() {
         item.status === 1
     );
     
-    // Sau đó lọc theo tìm kiếm và danh mục
     let filteredItems = availableItems.filter(item => {
         const matchesSearch = item.productName.toLowerCase().includes(searchText);
         const matchesCategory = activeCategory === 'all' || item.idCategory.toString() === activeCategory;
@@ -366,7 +319,6 @@ function filterMenuItems() {
     renderMenuItems(filteredItems);
 }
 
-// Load saved order from localStorage
 function loadSavedOrder() {
     const savedOrder = localStorage.getItem(STORAGE_KEY);
     if (savedOrder) {
@@ -375,12 +327,10 @@ function loadSavedOrder() {
     }
 }
 
-// Save current order to localStorage
 function saveOrderToStorage() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(currentOrder));
 }
 
-// Clear order
 function clearOrder() {
     if (!confirm('Bạn có chắc muốn xóa toàn bộ đơn hàng?')) return;
     
@@ -399,7 +349,6 @@ function clearOrder() {
     showNotification('Đã xóa toàn bộ đơn hàng', 'info');
 }
 
-// Submit order
 async function submitOrder() {
     if (currentOrder.items.length === 0) {
         showNotification('Vui lòng thêm sản phẩm vào đơn hàng', 'warning');
@@ -407,7 +356,6 @@ async function submitOrder() {
     }
 
     try {
-        // Lưu thông tin bàn vào currentOrder nếu có chọn bàn
         if (tableSelect.value) {
             const selectedTable = tables.find(t => t.idTable == tableSelect.value);
             if (selectedTable) {
@@ -422,16 +370,12 @@ async function submitOrder() {
             currentOrder.tableInfo = null;
         }
 
-        // Lưu ghi chú vào currentOrder
         currentOrder.notes = document.getElementById('orderNote').value || '';
         
-        // Lưu đơn hàng hiện tại vào localStorage
         saveOrderToStorage();
         
-        // Mở modal thanh toán
         const paymentWindow = window.open('payment-modal.html', 'PaymentWindow', 'width=800,height=700');
         
-        // Kiểm tra nếu cửa sổ bị chặn popup
         if (!paymentWindow || paymentWindow.closed || typeof paymentWindow.closed === 'undefined') {
             showNotification('Vui lòng cho phép popup để mở cửa sổ thanh toán', 'error');
         } else {
@@ -444,7 +388,6 @@ async function submitOrder() {
     }
 }
 
-// Add item to order
 function addToOrder(item) {
     if (!item || !item.idProduct) {
         console.error('Invalid product data:', item);
@@ -470,7 +413,6 @@ function addToOrder(item) {
     showNotification(`Đã thêm ${item.productName} vào đơn hàng`, 'success');
 }
 
-// Update order display
 function updateOrderDisplay() {
     if (!orderItems) return;
     
@@ -509,7 +451,6 @@ function updateOrderDisplay() {
     updateOrderTotal();
 }
 
-// Update item quantity
 function updateItemQuantity(itemId, change) {
     const item = currentOrder.items.find(i => i.id === itemId);
     if (!item) return;
@@ -524,7 +465,6 @@ function updateItemQuantity(itemId, change) {
     }
 }
 
-// Remove item from order
 function removeFromOrder(itemId) {
     const item = currentOrder.items.find(i => i.id === itemId);
     if (item) {
@@ -536,7 +476,6 @@ function removeFromOrder(itemId) {
     }
 }
 
-// Update order total
 function updateOrderTotal() {
     if (!currentOrder.items || currentOrder.items.length === 0) {
         currentOrder.total = 0;
@@ -549,11 +488,9 @@ function updateOrderTotal() {
         if (totalElement) totalElement.textContent = formatCurrency(subtotal);
     }
     
-    // Cập nhật localStorage sau khi tính toán lại tổng tiền
     saveOrderToStorage();
 }
 
-// Helper function to format currency
 function formatCurrency(amount) {
     return new Intl.NumberFormat('vi-VN', {
         style: 'currency',
@@ -561,14 +498,11 @@ function formatCurrency(amount) {
     }).format(amount);
 }
 
-// Helper function to show notifications
 function showNotification(message, type = 'info') {
-    // Thay thế alert bằng thông báo đẹp hơn
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
     notification.textContent = message;
     
-    // Thêm style cho notification
     notification.style.position = 'fixed';
     notification.style.top = '20px';
     notification.style.right = '20px';
@@ -582,14 +516,12 @@ function showNotification(message, type = 'info') {
     
     document.body.appendChild(notification);
     
-    // Tự động xóa sau 3 giây
     setTimeout(() => {
         notification.style.animation = 'slideOut 0.5s ease';
         setTimeout(() => notification.remove(), 500);
     }, 3000);
 }
 
-// Add animation styles
 const style = document.createElement('style');
 style.textContent = `
     @keyframes slideIn {

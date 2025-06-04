@@ -1,24 +1,17 @@
 import { showLoadingMessage, showSuccessMessage, showErrorMessage, hideLoadingMessage } from './entities-utils.js';
-
-// Đảm bảo biến API_BASE_URL có giá trị
 const API_BASE_URL = window.API_BASE_URL || 'http://localhost:8081/api';
 
 let isLoadingProducts = false;
 let isLoadingCategories = false;
-// Biến để theo dõi form đã được khởi tạo chưa
 let isProductFormInitialized = false;
 
 export function initializeProductManagement() {
-    // Tải dữ liệu sản phẩm
     loadProductData();
     
-    // Thiết lập bộ lọc danh mục sản phẩm
     setupCategoryFilter();
     
-    // Thiết lập form thêm/sửa sản phẩm
     setupProductFormSubmission();
     
-    // Kiểm tra trạng thái server API
     checkApiServerStatus();
 }
 
@@ -116,9 +109,7 @@ export function displayProducts(products) {
             return;
         }
         
-        // Sắp xếp sản phẩm theo danh mục
         products.sort((a, b) => {
-            // Lấy tên danh mục
             const getCategoryName = (product) => {
                 if (product.categoryName) return product.categoryName;
                 if (product.category && product.category.categoryName) return product.category.categoryName;
@@ -129,7 +120,6 @@ export function displayProducts(products) {
             const categoryA = getCategoryName(a).toLowerCase();
             const categoryB = getCategoryName(b).toLowerCase();
             
-            // Sắp xếp theo danh mục, nếu danh mục giống nhau thì sắp xếp theo tên sản phẩm
             if (categoryA !== categoryB) {
                 return categoryA.localeCompare(categoryB);
             } else {
@@ -278,29 +268,20 @@ function displayProductsOldFormat(products, tableBody) {
 }
 
 function attachProductButtonEvents() {
-    // Xử lý nút sửa sản phẩm
     const editButtons = document.querySelectorAll('.edit-product-btn, .edit-product, .btn-sua, [class*="sua"]');
     
     editButtons.forEach(button => {
-        // Xóa event listener cũ nếu có
         button.removeEventListener('click', editButtonClickHandler);
-        
-        // Thêm event listener mới
         button.addEventListener('click', editButtonClickHandler);
     });
     
-    // Xử lý nút xóa sản phẩm
     const deleteButtons = document.querySelectorAll('.delete-product-btn, .delete-product, .btn-xoa, [class*="xoa"]');
     deleteButtons.forEach(button => {
-        // Xóa event listener cũ nếu có
         button.removeEventListener('click', deleteButtonClickHandler);
-        
-        // Thêm event listener mới
         button.addEventListener('click', deleteButtonClickHandler);
     });
 }
 
-// Hàm xử lý click cho nút sửa
 function editButtonClickHandler(event) {
     const productId = this.getAttribute('data-id');
     if (!productId) {
@@ -309,7 +290,6 @@ function editButtonClickHandler(event) {
     editProduct(productId);
 }
 
-// Hàm xử lý click cho nút xóa
 function deleteButtonClickHandler(event) {
     const productId = this.getAttribute('data-id');
     if (confirm('Bạn có chắc muốn xóa sản phẩm này không?')) {
@@ -420,7 +400,6 @@ export async function editProduct(productId) {
         
         if (editProductModal) {
             updateNewModalWithProductData(product, editProductModal);
-            // Mở modal sản phẩm mới
             if (typeof bootstrap !== 'undefined' && typeof bootstrap.Modal !== 'undefined') {
                 const modalInstance = new bootstrap.Modal(editProductModal);
                 modalInstance.show();
@@ -429,7 +408,6 @@ export async function editProduct(productId) {
             }
         } else if (productModal) {
             updateOldModalWithProductData(product, productModal);
-            // Mở modal sản phẩm cũ
             if (typeof openModal === 'function') {
                 openModal('productModal');
             } else {
@@ -534,16 +512,13 @@ export function setupProductFormSubmission() {
     const form = document.getElementById('productForm');
     if (!form) return;
     
-    // Kiểm tra xem form đã được khởi tạo chưa
     if (isProductFormInitialized) {
         return;
     }
     
-    // Xóa tất cả event listener cũ bằng cách tạo bản sao của form
     const newForm = form.cloneNode(true);
     form.parentNode.replaceChild(newForm, form);
     
-    // Thêm event listener mới cho form
     newForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         
@@ -638,7 +613,6 @@ export function setupProductFormSubmission() {
         }
     });
     
-    // Đánh dấu form đã được khởi tạo
     isProductFormInitialized = true;
 }
 
@@ -669,17 +643,13 @@ export async function loadCategoriesForDropdown() {
     isLoadingCategories = true;
     
     try {
-        // Gọi API để lấy danh sách danh mục
         const categories = await ApiClient.Category.getAllCategories();
         
-        // Lưu vào cache
         window.cachedCategories = categories;
         
-        // Tìm dropdown danh mục
         const categoryDropdown = document.getElementById('category');
         const categoryFilter = document.getElementById('categoryFilter');
         
-        // Đổ danh mục vào dropdown chính
         if (categoryDropdown) {
             categoryDropdown.innerHTML = '<option value="">-- Chọn danh mục --</option>';
             categories.forEach(category => {
@@ -690,7 +660,6 @@ export async function loadCategoriesForDropdown() {
             });
         }
         
-        // Đổ danh mục vào bộ lọc nếu có
         if (categoryFilter) {
             categoryFilter.innerHTML = '<option value="all">Tất cả danh mục</option>';
             categories.forEach(category => {
@@ -707,7 +676,6 @@ export async function loadCategoriesForDropdown() {
         showErrorMessage('Không thể tải danh mục. Vui lòng thử lại sau.');
         return [];
     } finally {
-        // Đặt timeout để tránh gọi liên tục
         setTimeout(() => {
             isLoadingCategories = false;
         }, 2000);
@@ -761,19 +729,16 @@ export async function loadProductsByCategory(categoryId) {
 }
 
 function updateCategoryTitle(categoryName) {
-    // Cập nhật tiêu đề hiển thị danh mục đang được chọn
     const categoryTitle = document.getElementById('category-title');
     if (categoryTitle) {
         categoryTitle.textContent = categoryName;
     }
     
-    // Cập nhật breadcrumb nếu có
     const breadcrumbCategory = document.querySelector('.breadcrumb .current-category');
     if (breadcrumbCategory) {
         breadcrumbCategory.textContent = categoryName;
     }
     
-    // Cập nhật tiêu đề trang
     document.title = `${categoryName} - T2K Coffee Admin`;
 }
 

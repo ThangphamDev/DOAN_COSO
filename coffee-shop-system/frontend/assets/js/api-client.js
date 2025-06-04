@@ -285,33 +285,27 @@ const CategoryApi = {
 
 // API cho sản phẩm
 const ProductApi = {
-  // Lấy tất cả sản phẩm
   getAllProducts: async () => {
     return await fetchApi('/products');
   },
   
-  // Lấy sản phẩm theo ID
   getProductById: async (id) => {
     return await fetchApi(`/products/${id}`);
   },
   
-  // Lấy sản phẩm nổi bật
   getFeaturedProducts: async () => {
     return await fetchApi('/products/featured');
   },
   
-  // Tìm kiếm sản phẩm
   searchProducts: async (query) => {
     return await fetchApi(`/products/search?q=${encodeURIComponent(query)}`);
   },
   
-  // Lọc sản phẩm
   filterProducts: async (params) => {
     const queryParams = new URLSearchParams(params).toString();
     return await fetchApi(`/products/filter?${queryParams}`);
   },
   
-  // Tạo sản phẩm mới
   createProduct: async (productData) => {
     return await fetchApi('/products', {
       method: 'POST',
@@ -322,7 +316,6 @@ const ProductApi = {
     });
   },
   
-  // Tạo sản phẩm mới với ảnh (sử dụng FormData)
   createProductWithImage: async (formData) => {
     try {
       console.log('Đang tạo sản phẩm mới với ảnh');
@@ -347,7 +340,6 @@ const ProductApi = {
     }
   },
   
-  // Cập nhật sản phẩm
   updateProduct: async (id, productData) => {
     return await fetchApi(`/products/${id}`, {
       method: 'PUT',
@@ -358,14 +350,12 @@ const ProductApi = {
     });
   },
   
-  // Xóa sản phẩm
   deleteProduct: async (id) => {
     return await fetchApi(`/products/${id}`, {
       method: 'DELETE'
     });
   },
   
-  // Cập nhật hình ảnh sản phẩm (sử dụng FormData)
   uploadProductImage: async (id, imageFile) => {
     const formData = new FormData();
     formData.append('image', imageFile);
@@ -376,7 +366,6 @@ const ProductApi = {
       const response = await fetch(`${API_BASE_URL}/products/${id}/image`, {
         method: 'POST',
         body: formData,
-        // Không đặt Content-Type, để trình duyệt tự xác định boundary cho multipart/form-data
         headers: getAuthHeadersForFormData()
       });
       
@@ -483,21 +472,16 @@ const ProductApi = {
   }
 };
 
-// API cho nhân viên
 const StaffApi = {
-  // Lấy tất cả nhân viên
   getAllStaff: async () => {
     return await fetchApi('/accounts');
   },
   
-  // Lấy nhân viên theo ID
   getStaffById: async (id) => {
     return await fetchApi(`/accounts/${id}`);
   },
   
-  // Tạo nhân viên mới
   createStaff: async (staffData) => {
-    // Loại bỏ ảnh khỏi dữ liệu gửi đi nếu có
     const apiStaffData = { ...staffData };
     if (apiStaffData.image) {
       delete apiStaffData.image;
@@ -509,9 +493,7 @@ const StaffApi = {
     });
   },
   
-  // Cập nhật thông tin nhân viên
   updateStaff: async (id, staffData) => {
-    // Loại bỏ ảnh khỏi dữ liệu gửi đi nếu có
     const apiStaffData = { ...staffData };
     if (apiStaffData.image) {
       delete apiStaffData.image;
@@ -523,21 +505,18 @@ const StaffApi = {
     });
   },
   
-  // Xóa nhân viên
   deleteStaff: async (id) => {
     return await fetchApi(`/accounts/${id}`, {
       method: 'DELETE'
     });
   },
   
-  // Cập nhật trạng thái nhân viên (đang làm việc/nghỉ việc)
   updateStaffStatus: async (id, isActive) => {
     return await fetchApi(`/accounts/${id}/status?active=${isActive}`, {
       method: 'PATCH'
     });
   },
   
-  // Tải lên ảnh đại diện nhân viên
   uploadStaffAvatar: async (id, imageFile) => {
     const formData = new FormData();
     formData.append('avatar', imageFile);
@@ -560,32 +539,26 @@ const StaffApi = {
 
 // API cho báo cáo
 const ReportApi = {
-  // Lấy báo cáo doanh thu
   getRevenueReport: async (startDate, endDate, period = 'day') => {
     return await fetchApi(`/reports/revenue?start=${startDate}&end=${endDate}&period=${period}`);
   },
   
-  // Lấy báo cáo sản phẩm bán chạy
   getTopSellingProducts: async (startDate, endDate, limit = 10) => {
     return await fetchApi(`/reports/top-products?start=${startDate}&end=${endDate}&limit=${limit}`);
   },
   
-  // Lấy báo cáo theo danh mục
   getCategoryReport: async (startDate, endDate) => {
     return await fetchApi(`/reports/category?start=${startDate}&end=${endDate}`);
   },
   
-  // Lấy báo cáo theo thời gian trong ngày
   getHourlyReport: async (date) => {
     return await fetchApi(`/reports/hourly?date=${date}`);
   },
   
-  // Lấy báo cáo tổng quan
   getDashboardReport: async () => {
     return await fetchApi('/reports/dashboard');
   },
   
-  // Xuất báo cáo doanh thu dưới dạng CSV
   exportRevenueReport: async (startDate, endDate, period = 'day') => {
     const response = await fetch(
       `${API_BASE_URL}/reports/revenue/export?start=${startDate}&end=${endDate}&period=${period}`,
@@ -603,7 +576,6 @@ const ReportApi = {
     return await response.blob();
   },
   
-  // Lấy báo cáo khách hàng
   getCustomerReport: async (startDate, endDate) => {
     return await fetchApi(`/reports/customers?start=${startDate}&end=${endDate}`);
   }
@@ -611,17 +583,14 @@ const ReportApi = {
 
 // API cho quản lý bàn
 const TableApi = {
-  // Lấy tất cả bàn
   getAllTables: async () => {
     return await fetchApi('/tables');
   },
   
-  // Lấy thông tin bàn theo ID
   getTableById: async (id) => {
     return await fetchApi(`/tables/${id}`);
   },
   
-  // Tạo bàn mới
   createTable: async (tableData) => {
     return await fetchApi('/tables', {
       method: 'POST',
@@ -629,7 +598,6 @@ const TableApi = {
     });
   },
   
-  // Cập nhật thông tin bàn
   updateTable: async (id, tableData) => {
     return await fetchApi(`/tables/${id}`, {
       method: 'PUT',
@@ -637,7 +605,6 @@ const TableApi = {
     });
   },
   
-  // Cập nhật trạng thái bàn
   updateTableStatus: async (id, status) => {
     return await fetchApi(`/tables/${id}/status`, {
       method: 'PATCH',
@@ -645,19 +612,16 @@ const TableApi = {
     });
   },
   
-  // Xóa bàn
   deleteTable: async (id) => {
     return await fetchApi(`/tables/${id}`, {
       method: 'DELETE'
     });
   },
   
-  // Lấy danh sách bàn theo trạng thái
   getTablesByStatus: async (status) => {
     return await fetchApi(`/tables/status/${status}`);
   },
   
-  // Hợp nhất các bàn
   mergeTables: async (sourceTableId, targetTableId) => {
     return await fetchApi('/tables/merge', {
       method: 'POST',
@@ -671,17 +635,14 @@ const TableApi = {
 
 // API cho quản lý đơn hàng
 const OrderApi = {
-  // Lấy tất cả đơn hàng
   getAllOrders: async (page = 1, limit = 10) => {
     return await fetchApi(`/orders?page=${page}&limit=${limit}`);
   },
   
-  // Lấy thông tin đơn hàng theo ID
   getOrderById: async (id) => {
     return await fetchApi(`/orders/${id}`);
   },
   
-  // Tạo đơn hàng mới
   createOrder: async (orderData) => {
     return await fetchApi('/orders', {
       method: 'POST',
@@ -689,7 +650,6 @@ const OrderApi = {
     });
   },
   
-  // Cập nhật thông tin đơn hàng
   updateOrder: async (id, orderData) => {
     return await fetchApi(`/orders/${id}`, {
       method: 'PUT',
@@ -697,7 +657,6 @@ const OrderApi = {
     });
   },
   
-  // Cập nhật trạng thái đơn hàng
   updateOrderStatus: async (id, status) => {
     return await fetchApi(`/orders/${id}/status`, {
       method: 'PATCH',
@@ -705,14 +664,12 @@ const OrderApi = {
     });
   },
   
-  // Xóa đơn hàng
   deleteOrder: async (id) => {
     return await fetchApi(`/orders/${id}`, {
       method: 'DELETE'
     });
   },
   
-  // Thêm sản phẩm vào đơn hàng
   addProductToOrder: async (orderId, productData) => {
     return await fetchApi(`/orders/${orderId}/items`, {
       method: 'POST',
@@ -720,7 +677,6 @@ const OrderApi = {
     });
   },
   
-  // Cập nhật sản phẩm trong đơn hàng
   updateOrderItem: async (orderId, itemId, itemData) => {
     return await fetchApi(`/orders/${orderId}/items/${itemId}`, {
       method: 'PUT',
@@ -728,19 +684,16 @@ const OrderApi = {
     });
   },
   
-  // Xóa sản phẩm khỏi đơn hàng
   removeOrderItem: async (orderId, itemId) => {
     return await fetchApi(`/orders/${orderId}/items/${itemId}`, {
       method: 'DELETE'
     });
   },
   
-  // Lấy đơn hàng theo bàn
   getOrdersByTable: async (tableId) => {
     return await fetchApi(`/orders/table/${tableId}`);
   },
   
-  // Thanh toán đơn hàng
   checkoutOrder: async (orderId, paymentData) => {
     return await fetchApi(`/orders/${orderId}/checkout`, {
       method: 'POST',
@@ -748,12 +701,10 @@ const OrderApi = {
     });
   },
   
-  // Lấy hóa đơn
   getInvoice: async (orderId) => {
     return await fetchApi(`/orders/${orderId}/invoice`);
   },
   
-  // In hóa đơn
   printInvoice: async (orderId) => {
     const response = await fetch(`${API_BASE_URL}/orders/${orderId}/print`, {
       method: 'POST',

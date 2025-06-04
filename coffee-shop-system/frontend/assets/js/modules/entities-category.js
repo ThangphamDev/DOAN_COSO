@@ -1,6 +1,3 @@
-// entities-category.js
-// Toàn bộ logic quản lý danh mục, chỉ dùng API thật, không có dữ liệu mẫu
-
 import { showLoadingMessage, showSuccessMessage, showErrorMessage, hideLoadingMessage, initializeModal, setupSearchFilter } from './entities-utils.js';
 
 let isLoadingCategories = false;
@@ -10,11 +7,9 @@ export async function loadCategoryData() {
     showLoadingMessage('Đang tải dữ liệu danh mục...');
     
     try {
-        // Gọi API để lấy danh sách danh mục
         const categories = await ApiClient.Category.getAllCategories();
         displayCategories(categories);
         
-        // Cập nhật cache
         window.cachedCategories = categories;
         
         showSuccessMessage('Đã tải dữ liệu danh mục thành công');
@@ -44,7 +39,6 @@ export function displayCategories(categories) {
         const categoryName = category.name || category.categoryName;
         const description = category.description || '';
         
-        // Tạo các cột dữ liệu
         row.innerHTML = `
             <td>${categoryId}</td>
             <td>${categoryName}</td>
@@ -62,7 +56,6 @@ export function displayCategories(categories) {
 }
 
 function setupCategoryActions() {
-    // Xử lý nút chỉnh sửa
     const editButtons = document.querySelectorAll('.edit-category');
     editButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -71,7 +64,6 @@ function setupCategoryActions() {
         });
     });
     
-    // Xử lý nút xóa
     const deleteButtons = document.querySelectorAll('.delete-category');
     deleteButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -85,21 +77,17 @@ async function editCategory(categoryId) {
     try {
         showLoadingMessage('Đang tải thông tin danh mục...');
         
-        // Gọi API để lấy thông tin danh mục
         const category = await ApiClient.Category.getCategoryById(categoryId);
         
-        // Điền dữ liệu vào form
         document.getElementById('categoryId').value = category.id || category.idCategory;
         document.getElementById('categoryName').value = category.name || category.categoryName;
         document.getElementById('categoryDescription').value = category.description || '';
         
-        // Cập nhật tiêu đề
         const title = document.querySelector('#categoryModal h2');
         if (title) {
             title.textContent = 'Chỉnh sửa danh mục';
         }
         
-        // Mở modal
         document.getElementById('categoryModal').style.display = 'flex';
         setTimeout(() => {
             document.getElementById('categoryModal').classList.add('show');
@@ -120,16 +108,13 @@ async function deleteCategory(categoryId) {
     try {
         showLoadingMessage('Đang xóa danh mục...');
         
-        // Gọi API để xóa danh mục
         await ApiClient.Category.deleteCategory(categoryId);
         
-        // Xóa khỏi cache
         if (window.cachedCategories) {
             window.cachedCategories = window.cachedCategories.filter(c => 
                 (c.id != categoryId) && (c.idCategory != categoryId));
         }
         
-        // Tải lại danh sách danh mục
         loadCategoryData();
         
         showSuccessMessage('Xóa danh mục thành công');
@@ -146,12 +131,10 @@ export function setupCategoryFormSubmission() {
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        // Kiểm tra dữ liệu
         if (!validateCategoryForm()) {
             return;
         }
         
-        // Thu thập dữ liệu từ form
         const categoryData = {
             id: document.getElementById('categoryId').value,
             name: document.getElementById('categoryName').value.trim(),
@@ -159,32 +142,26 @@ export function setupCategoryFormSubmission() {
             description: document.getElementById('categoryDescription').value.trim()
         };
         
-        // Xác định thêm mới hay cập nhật
         const isUpdate = categoryData.id !== '';
         
         try {
             showLoadingMessage(`Đang ${isUpdate ? 'cập nhật' : 'thêm'} danh mục...`);
             
             if (isUpdate) {
-                // Cập nhật danh mục hiện có
                 await ApiClient.Category.updateCategory(categoryData.id, categoryData);
             } else {
-                // Thêm danh mục mới
                 await ApiClient.Category.createCategory(categoryData);
             }
             
-            // Đóng modal
             document.getElementById('categoryModal').classList.remove('show');
             setTimeout(() => {
                 document.getElementById('categoryModal').style.display = 'none';
             }, 300);
             
-            // Xóa cache
             if (typeof ApiClient.clearCache === 'function') {
                 ApiClient.clearCache();
             }
             
-            // Tải lại danh sách danh mục
             loadCategoryData();
             
             showSuccessMessage(`Đã ${isUpdate ? 'cập nhật' : 'thêm'} danh mục thành công`);
@@ -198,7 +175,6 @@ export function setupCategoryFormSubmission() {
 function validateCategoryForm() {
     const categoryName = document.getElementById('categoryName').value.trim();
     
-    // Kiểm tra tên danh mục
     if (!categoryName) {
         showErrorMessage('Vui lòng nhập tên danh mục');
         return false;
@@ -225,12 +201,10 @@ export function filterCategories(searchTerm) {
 }
 
 export async function loadCategoriesForDropdown() {
-    // Tránh tải nhiều lần liên tục
     if (isLoadingCategories) return;
     isLoadingCategories = true;
     
     try {
-        // Nếu đã có danh mục trong cache, sử dụng chúng
         let categories = [];
         
         if (window.cachedCategories && window.cachedCategories.length > 0) {
@@ -239,11 +213,9 @@ export async function loadCategoriesForDropdown() {
         } else {
             console.log('Không có danh mục trong cache, tải từ API...');
             
-            // Gọi API để lấy danh sách danh mục
             try {
                 categories = await ApiClient.Category.getAllCategories();
                 
-                // Lưu vào cache
                 if (categories && categories.length > 0) {
                     window.cachedCategories = categories;
                 }
@@ -255,7 +227,6 @@ export async function loadCategoriesForDropdown() {
         const categoryDropdown = document.getElementById('category');
         const categoryFilter = document.getElementById('categoryFilter');
         
-        // Đổ danh mục vào dropdown
         if (categoryDropdown) {
             categoryDropdown.innerHTML = '<option value="">-- Chọn danh mục --</option>';
             categories.forEach(category => {
@@ -266,7 +237,6 @@ export async function loadCategoriesForDropdown() {
             });
         }
         
-        // Đổ danh mục vào bộ lọc nếu có
         if (categoryFilter) {
             categoryFilter.innerHTML = '<option value="all">Tất cả danh mục</option>';
             categories.forEach(category => {
@@ -282,7 +252,6 @@ export async function loadCategoriesForDropdown() {
         console.error('Lỗi khi tải danh mục cho dropdown:', error);
         showErrorMessage('Không thể tải danh mục. Vui lòng thử lại sau.');
     } finally {
-        // Đặt timeout để tránh gọi liên tục
         setTimeout(() => {
             isLoadingCategories = false;
         }, 2000);
@@ -292,16 +261,11 @@ export async function loadCategoriesForDropdown() {
 export function initializeCategoryManagement() {
     console.log('Khởi tạo chức năng quản lý danh mục');
     
-    // Tải dữ liệu danh mục
     loadCategoryData();
     
-    // Khởi tạo modal thêm/sửa danh mục
     initializeModal('categoryModal', 'addCategoryBtn');
     
-    // Xử lý form thêm/sửa danh mục
     setupCategoryFormSubmission();
     
-    // Xử lý tìm kiếm danh mục
     setupSearchFilter('searchCategory', filterCategories);
 }
-// ... các hàm khác liên quan đến danh mục ... 

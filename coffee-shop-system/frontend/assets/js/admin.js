@@ -76,7 +76,6 @@ async function checkApiConnection() {
                 console.error('Không thể đọc nội dung phản hồi lỗi');
             }
             
-            // Vẫn tiếp tục tải dữ liệu để user có thể dùng
             showMessage('Cảnh báo: API trả về lỗi. Một số chức năng có thể không hoạt động. Vui lòng kiểm tra kết nối máy chủ.', 'warning');
         }
     } catch (error) {
@@ -84,11 +83,9 @@ async function checkApiConnection() {
         showMessage('Cảnh báo: Không thể kết nối đến máy chủ. Một số dữ liệu có thể không hiển thị đúng.', 'warning');
     }
     
-    // Dù có lỗi hay không, vẫn tiếp tục tải dữ liệu dashboard
     return true;
 }
 
-// Thiết lập sidebar và điều hướng
 function setupSidebar() {
     const navItems = document.querySelectorAll('.admin-nav li a');
     
@@ -96,23 +93,19 @@ function setupSidebar() {
         item.addEventListener('click', function(e) {
             const target = this.getAttribute('href').substring(1);
             
-            // Chỉ ngăn chặn mặc định cho các link nội bộ
             if (target && !target.includes('://')) {
                 e.preventDefault();
                 
-                // Đánh dấu mục đang active
                 document.querySelectorAll('.admin-nav li').forEach(li => {
                     li.classList.remove('active');
                 });
                 this.parentElement.classList.add('active');
                 
-                // Xử lý điều hướng
                 handleNavigation(target);
             }
         });
     });
     
-    // Xử lý nút đăng xuất
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', function() {
@@ -121,9 +114,8 @@ function setupSidebar() {
     }
 }
 
-// Xử lý điều hướng giữa các trang
+
 function handleNavigation(target) {
-    // Trong trường hợp single-page application
     if (target === 'dashboard') {
         window.location.href = 'dashboard.html';
     } else if (target === 'staff') {
@@ -143,7 +135,7 @@ function handleNavigation(target) {
     }
 }
 
-// Đăng xuất
+
 function logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
@@ -153,18 +145,17 @@ function logout() {
     window.location.href = '../auth/login.html';
 }
 
-// Nạp dữ liệu cho dashboard
+
 async function loadDashboardData() {
-    // Hiển thị loading spinner
     showLoader(true);
     
     try {
-        // Lấy token xác thực
+
         const token = localStorage.getItem('token');
         
         console.log('Bắt đầu tải dữ liệu dashboard...');
         
-        // Sử dụng Promise.allSettled để tải song song và không dừng khi một phần lỗi
+        
         const results = await Promise.allSettled([
             loadSummaryData(token),
             loadRecentActivity(token),
@@ -172,24 +163,14 @@ async function loadDashboardData() {
             loadChartData(token)
         ]);
         
-        // Log kết quả để debug
-        console.log('Kết quả tải dữ liệu dashboard:', 
-            results.map((r, i) => {
-                const names = ['Summary', 'Activities', 'Categories', 'Charts'];
-                return `${names[i]}: ${r.status}${r.reason ? ' - ' + r.reason : ''}`;
-            })
-        );
         
-        // Kiểm tra xem có phần nào bị lỗi không
         const failures = results.filter(r => r.status === 'rejected');
         if (failures.length > 0) {
             console.warn(`${failures.length} phần dữ liệu không tải được.`);
             
             if (failures.length === results.length) {
-                // Tất cả các phần đều lỗi
                 showMessage('Không thể tải dữ liệu dashboard. Vui lòng kiểm tra kết nối và thử lại.', 'error');
             } else {
-                // Chỉ một số phần bị lỗi
                 showMessage('Một số dữ liệu không thể tải được. Vui lòng làm mới trang nếu cần.', 'warning');
             }
         }
@@ -197,18 +178,14 @@ async function loadDashboardData() {
         console.error('Lỗi khi nạp dữ liệu dashboard:', error);
         showMessage('Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại sau.', 'error');
     } finally {
-        // Ẩn loading spinner dù có lỗi hay không
         showLoader(false);
     }
 }
 
-// Nạp dữ liệu tổng quan
 async function loadSummaryData(token) {
     try {
-        // API_BASE_URL được định nghĩa trong ứng dụng
         const API_BASE_URL = 'http://localhost:8081';
         
-        // Gọi API để lấy dữ liệu tổng quan
         const response = await fetch(`${API_BASE_URL}/api/dashboard/summary`, {
             method: 'GET',
             headers: {
@@ -217,14 +194,11 @@ async function loadSummaryData(token) {
             }
         });
         
-        // Ghi log để debug
-        console.log('API Dashboard Summary - Status:', response.status);
         
         if (response.ok) {
             const data = await response.json();
             console.log('API Dashboard Summary - Data:', data);
             
-            // Hiển thị dữ liệu từ API
             document.getElementById('todayRevenue').textContent = data.todayRevenue.toLocaleString('vi-VN');
             document.getElementById('todayOrders').textContent = data.todayOrders;
             document.getElementById('staffCount').textContent = data.staffCount;
@@ -233,19 +207,17 @@ async function loadSummaryData(token) {
             document.getElementById('busiestTime').textContent = data.busiestTime || 'Chưa có dữ liệu';
             document.getElementById('avgOrderValue').textContent = data.avgOrderValue.toLocaleString('vi-VN') + ' VND';
             
-            // Hiển thị số lượng khách hàng thân thiết (nếu có)
             const loyalCustomersElement = document.getElementById('loyalCustomers');
             if (loyalCustomersElement) {
                 loyalCustomersElement.textContent = data.loyalCustomers || '0';
             }
             
-            // Cập nhật các trend nếu có
+            
             updateTrend('revenueTrend', data.revenueTrend);
             updateTrend('ordersTrend', data.ordersTrend);
             updateTrend('staffTrend', data.staffTrend);
             updateTrend('productTrend', data.productTrend);
         } else {
-            // Nếu API trả về lỗi, hiển thị thông báo lỗi
             console.warn('Không thể tải dữ liệu từ API');
             console.warn('Status code:', response.status);
             
@@ -256,7 +228,6 @@ async function loadSummaryData(token) {
                 console.error('Cannot read error response');
             }
             
-            // Hiển thị thông báo không có dữ liệu
             document.getElementById('todayRevenue').textContent = '0';
             document.getElementById('todayOrders').textContent = '0';
             document.getElementById('staffCount').textContent = '0';
@@ -265,22 +236,18 @@ async function loadSummaryData(token) {
             document.getElementById('busiestTime').textContent = 'Chưa có dữ liệu';
             document.getElementById('avgOrderValue').textContent = '0 VND';
             
-            // Đặt số lượng khách hàng thân thiết thành 0
             const loyalCustomersElement = document.getElementById('loyalCustomers');
             if (loyalCustomersElement) {
                 loyalCustomersElement.textContent = '0';
             }
             
-            // Xóa các trend
             clearTrends();
             
-            // Thông báo cho người dùng
             showMessage('Không thể kết nối đến máy chủ. Vui lòng thử lại sau.', 'error');
         }
     } catch (error) {
         console.error('Lỗi khi nạp dữ liệu tổng quan:', error);
         
-        // Hiển thị thông báo không có dữ liệu
         document.getElementById('todayRevenue').textContent = '0';
         document.getElementById('todayOrders').textContent = '0';
         document.getElementById('staffCount').textContent = '0';
@@ -289,22 +256,19 @@ async function loadSummaryData(token) {
         document.getElementById('busiestTime').textContent = 'Chưa có dữ liệu';
         document.getElementById('avgOrderValue').textContent = '0 VND';
         
-        // Đặt số lượng khách hàng thân thiết thành 0
         const loyalCustomersElement = document.getElementById('loyalCustomers');
         if (loyalCustomersElement) {
             loyalCustomersElement.textContent = '0';
         }
         
-        // Xóa các trend
         clearTrends();
         
-        // Thông báo lỗi
         showMessage('Lỗi kết nối tới máy chủ. Vui lòng thử lại sau.', 'error');
         throw error;
     }
 }
 
-// Cập nhật hiển thị trend (tỉ lệ tăng/giảm)
+
 function updateTrend(elementId, trendValue) {
     const trendElement = document.getElementById(elementId);
     
@@ -315,7 +279,7 @@ function updateTrend(elementId, trendValue) {
         return;
     }
     
-    // Giá trị trend có thể là số hoặc đối tượng { value: -5.2, direction: "down" }
+    
     let value = 0;
     let direction = 'no-change';
     
@@ -327,7 +291,7 @@ function updateTrend(elementId, trendValue) {
         direction = trendValue.direction || (value > 0 ? 'up' : (value < 0 ? 'down' : 'no-change'));
     }
     
-    // Lấy giá trị tuyệt đối và làm tròn đến 1 chữ số thập phân
+    
     const absValue = Math.abs(parseFloat(value)).toFixed(1);
     
     let iconClass = '';
@@ -349,7 +313,7 @@ function updateTrend(elementId, trendValue) {
     trendElement.innerHTML = `<i class="fas ${iconClass}"></i> ${absValue}%`;
 }
 
-// Xóa tất cả các hiển thị trend
+
 function clearTrends() {
     const trendElements = ['revenueTrend', 'ordersTrend', 'staffTrend', 'productTrend'];
     
@@ -361,12 +325,11 @@ function clearTrends() {
     });
 }
 
-// Nạp dữ liệu hoạt động gần đây
+
 async function loadRecentActivity(token) {
     try {
         const API_BASE_URL = 'http://localhost:8081';
         
-        // Gọi API để lấy danh sách hoạt động gần đây
         const response = await fetch(`${API_BASE_URL}/api/activities/recent`, {
             method: 'GET',
             headers: {
@@ -374,10 +337,7 @@ async function loadRecentActivity(token) {
                 'Authorization': `Bearer ${token}`
             }
         });
-        
-        // Ghi log để debug
-        console.log('API Activities Recent - Status:', response.status);
-        
+         
         const activityList = document.getElementById('recentActivity');
         activityList.innerHTML = '';
         
@@ -385,10 +345,8 @@ async function loadRecentActivity(token) {
             const data = await response.json();
             console.log('API Activities Recent - Data:', data);
             
-            // Kiểm tra nếu có dữ liệu hoạt động
             if (data && data.length > 0) {
                 data.forEach(item => {
-                    // Định dạng thời gian cho dễ đọc
                     const timestamp = new Date(item.time);
                     const formattedTime = timestamp.toLocaleString('vi-VN', {
                         hour: '2-digit',
@@ -408,7 +366,6 @@ async function loadRecentActivity(token) {
                     activityList.appendChild(row);
                 });
             } else {
-                // Hiển thị thông báo nếu không có hoạt động nào
                 const emptyRow = document.createElement('tr');
                 emptyRow.innerHTML = `
                     <td colspan="4" class="text-center">Không có hoạt động nào gần đây</td>
@@ -426,20 +383,17 @@ async function loadRecentActivity(token) {
                 console.error('Cannot read error response');
             }
             
-            // Hiển thị thông báo không có dữ liệu
             const emptyRow = document.createElement('tr');
             emptyRow.innerHTML = `
                 <td colspan="4" class="text-center">Không thể tải dữ liệu hoạt động. Vui lòng thử lại sau.</td>
             `;
             activityList.appendChild(emptyRow);
             
-            // Thông báo cho người dùng biết không thể kết nối
             showMessage('Không thể kết nối đến máy chủ để lấy dữ liệu hoạt động', 'error');
         }
     } catch (error) {
         console.error('Lỗi khi nạp dữ liệu hoạt động gần đây:', error);
         
-        // Hiển thị thông báo lỗi trong bảng
         const activityList = document.getElementById('recentActivity');
         activityList.innerHTML = '';
         
@@ -449,18 +403,15 @@ async function loadRecentActivity(token) {
         `;
         activityList.appendChild(emptyRow);
         
-        // Thông báo lỗi cho người dùng
         showMessage('Lỗi khi tải dữ liệu hoạt động', 'error');
         throw error;
     }
 }
 
-// Nạp danh sách danh mục cho select box
 async function loadCategories(token) {
     try {
         const API_BASE_URL = 'http://localhost:8081';
         
-        // Gọi API để lấy danh sách danh mục
         const response = await fetch(`${API_BASE_URL}/api/categories`, {
             method: 'GET',
             headers: {
@@ -469,8 +420,6 @@ async function loadCategories(token) {
             }
         });
         
-        // Ghi log để debug
-        console.log('API Categories - Status:', response.status);
         
         const productCategorySelect = document.getElementById('productCategory');
         if (productCategorySelect) {
@@ -481,7 +430,6 @@ async function loadCategories(token) {
                 console.log('API Categories - Data:', data);
                 
                 if (data && data.length > 0) {
-                    // Nếu có dữ liệu, hiển thị trong dropdown
                     data.forEach(category => {
                         const option = document.createElement('option');
                         option.value = category.id || category.idCategory;
@@ -489,7 +437,6 @@ async function loadCategories(token) {
                         productCategorySelect.appendChild(option);
                     });
                 } else {
-                    // Thêm option mặc định nếu không có danh mục nào
                     const defaultOption = document.createElement('option');
                     defaultOption.value = "";
                     defaultOption.textContent = "-- Không có danh mục --";
@@ -497,13 +444,11 @@ async function loadCategories(token) {
                     defaultOption.selected = true;
                     productCategorySelect.appendChild(defaultOption);
                     
-                    // Thêm nút tạo danh mục mới
                     const addCategoryBtn = document.getElementById('addCategoryBtn');
                     if (addCategoryBtn) {
                         addCategoryBtn.classList.add('highlight');
                     }
                     
-                    // Thông báo cho người dùng
                     showMessage('Chưa có danh mục nào, vui lòng tạo danh mục trước', 'warning');
                 }
             } else {
@@ -517,7 +462,6 @@ async function loadCategories(token) {
                     console.error('Cannot read error response');
                 }
                 
-                // Thêm option mặc định thay vì dữ liệu mẫu
                 const defaultOption = document.createElement('option');
                 defaultOption.value = "";
                 defaultOption.textContent = "-- Không có danh mục --";
@@ -525,14 +469,12 @@ async function loadCategories(token) {
                 defaultOption.selected = true;
                 productCategorySelect.appendChild(defaultOption);
                 
-                // Thông báo cho người dùng biết
                 showMessage('Không thể tải danh mục từ máy chủ', 'error');
             }
         }
     } catch (error) {
         console.error('Lỗi khi nạp danh sách danh mục:', error);
         
-        // Hiển thị thông báo không có danh mục thay vì dữ liệu mẫu
         const productCategorySelect = document.getElementById('productCategory');
         if (productCategorySelect) {
             productCategorySelect.innerHTML = '';
@@ -545,22 +487,19 @@ async function loadCategories(token) {
             productCategorySelect.appendChild(defaultOption);
         }
         
-        // Thông báo lỗi
         showMessage('Lỗi khi tải danh mục', 'error');
         throw error;
     }
 }
 
-// Nạp dữ liệu biểu đồ
+
 async function loadChartData(token) {
     try {
         const API_BASE_URL = 'http://localhost:8081';
         
-        // Lấy period từ dropdown nếu có
         const periodSelect = document.getElementById('revenueChartPeriod');
         const period = periodSelect ? periodSelect.value : 'week';
         
-        // Gọi API để lấy dữ liệu biểu đồ
         const response = await fetch(`${API_BASE_URL}/api/dashboard/chart?period=${period}`, {
             method: 'GET',
             headers: {
@@ -569,19 +508,14 @@ async function loadChartData(token) {
             }
         });
         
-        // Ghi log để debug
-        console.log('API Chart Data - Status:', response.status);
         
         if (response.ok) {
             const data = await response.json();
             console.log('API Chart Data - Data:', data);
             
-            // Kiểm tra nếu dữ liệu có revenue
             if (data && data.revenue) {
-                // Cập nhật biểu đồ doanh thu
                 updateRevenueChart(data.revenue);
                 
-                // Cập nhật biểu đồ sản phẩm bán chạy
                 loadTopProducts(token);
             } else {
                 console.warn('Dữ liệu biểu đồ không hợp lệ:', data);
@@ -598,7 +532,6 @@ async function loadChartData(token) {
                 console.error('Cannot read error response');
             }
             
-            // Hiển thị thông báo lỗi
             showMessage('Không thể tải dữ liệu biểu đồ từ máy chủ', 'error');
         }
     } catch (error) {
@@ -608,12 +541,10 @@ async function loadChartData(token) {
     }
 }
 
-// Nạp dữ liệu top sản phẩm bán chạy
 async function loadTopProducts(token) {
     try {
         const API_BASE_URL = 'http://localhost:8081';
         
-        // Gọi API để lấy dữ liệu top sản phẩm
         const response = await fetch(`${API_BASE_URL}/api/dashboard/top-products`, {
             method: 'GET',
             headers: {
@@ -622,14 +553,11 @@ async function loadTopProducts(token) {
             }
         });
         
-        // Ghi log để debug
-        console.log('API Top Products - Status:', response.status);
         
         if (response.ok) {
             const data = await response.json();
             console.log('API Top Products - Data:', data);
             
-            // Cập nhật biểu đồ sản phẩm bán chạy
             updateProductChart(data);
         } else {
             console.warn('Không thể tải dữ liệu top sản phẩm từ API');
@@ -642,7 +570,6 @@ async function loadTopProducts(token) {
                 console.error('Cannot read error response');
             }
             
-            // Hiển thị thông báo lỗi
             showMessage('Không thể tải dữ liệu top sản phẩm từ máy chủ', 'error');
         }
     } catch (error) {
@@ -652,15 +579,12 @@ async function loadTopProducts(token) {
     }
 }
 
-// Biến lưu trữ biểu đồ để có thể cập nhật
 let revenueChart = null;
 let productChart = null;
 
-// Khởi tạo biểu đồ
+
 function initializeCharts() {
-    // Khởi tạo biểu đồ nếu có thư viện Chart.js
     if (typeof Chart !== 'undefined') {
-        // Biểu đồ doanh thu
         const revenueCtx = document.getElementById('revenueChart');
         if (revenueCtx) {
             revenueChart = new Chart(revenueCtx, {
@@ -694,7 +618,6 @@ function initializeCharts() {
             });
         }
         
-        // Biểu đồ sản phẩm bán chạy
         const productCtx = document.getElementById('productChart');
         if (productCtx) {
             productChart = new Chart(productCtx, {
@@ -724,7 +647,7 @@ function initializeCharts() {
             });
         }
         
-        // Thiết lập sự kiện thay đổi khoảng thời gian cho biểu đồ doanh thu
+        
         const revenueChartPeriod = document.getElementById('revenueChartPeriod');
         if (revenueChartPeriod) {
             revenueChartPeriod.addEventListener('change', async function() {
@@ -733,7 +656,7 @@ function initializeCharts() {
             });
         }
         
-        // Thiết lập nút làm mới cho biểu đồ sản phẩm
+        
         const refreshProductChart = document.getElementById('refreshProductChart');
         if (refreshProductChart) {
             refreshProductChart.addEventListener('click', async function() {
@@ -746,13 +669,13 @@ function initializeCharts() {
     }
 }
 
-// Cập nhật biểu đồ doanh thu
+
 function updateRevenueChart(data) {
     if (revenueChart) {
-        // Kiểm tra dữ liệu đầu vào
+        
         if (!data || !data.labels || !data.data) {
             console.warn('Dữ liệu biểu đồ doanh thu không hợp lệ:', data);
-            // Đặt dữ liệu mặc định nếu không có dữ liệu
+            
             revenueChart.data.labels = [];
             revenueChart.data.datasets[0].data = [];
             revenueChart.update();
@@ -761,7 +684,6 @@ function updateRevenueChart(data) {
         
         console.log('Cập nhật biểu đồ doanh thu với:', data);
         
-        // Cập nhật dữ liệu cho biểu đồ
         revenueChart.data.labels = data.labels;
         revenueChart.data.datasets[0].data = data.data;
         revenueChart.update();
@@ -770,7 +692,6 @@ function updateRevenueChart(data) {
     }
 }
 
-// Cập nhật biểu đồ sản phẩm
 function updateProductChart(data) {
     if (productChart && data) {
         productChart.data.labels = data.labels;
@@ -779,9 +700,7 @@ function updateProductChart(data) {
     }
 }
 
-// Thiết lập các modal
 function setupModals() {
-    // Lấy tất cả các nút mở modal
     const modalBtns = {
         'addStaffBtn': 'staffModal',
         'addProductBtn': 'productModal',
@@ -790,7 +709,6 @@ function setupModals() {
         'addPromotionBtn': 'promotionModal'
     };
     
-    // Thiết lập sự kiện mở modal
     Object.keys(modalBtns).forEach(btn => {
         const button = document.getElementById(btn);
         const modal = document.getElementById(modalBtns[btn]);
@@ -800,7 +718,6 @@ function setupModals() {
                 modal.style.display = 'flex';
             });
             
-            // Thêm sự kiện đóng modal
             const closeBtn = modal.querySelector('.close-btn');
             if (closeBtn) {
                 closeBtn.addEventListener('click', () => {
@@ -808,7 +725,6 @@ function setupModals() {
                 });
             }
             
-            // Đóng modal khi click bên ngoài
             window.addEventListener('click', (e) => {
                 if (e.target === modal) {
                     modal.style.display = 'none';
@@ -818,9 +734,7 @@ function setupModals() {
     });
 }
 
-// Thiết lập các form
 function setupForms() {
-    // Form thêm nhân viên
     const addStaffForm = document.getElementById('addStaffForm');
     if (addStaffForm) {
         addStaffForm.addEventListener('submit', async (e) => {
@@ -829,7 +743,6 @@ function setupForms() {
         });
     }
     
-    // Form thêm sản phẩm
     const addProductForm = document.getElementById('addProductForm');
     if (addProductForm) {
         addProductForm.addEventListener('submit', async (e) => {
@@ -839,10 +752,8 @@ function setupForms() {
     }
 }
 
-// Xử lý thêm nhân viên
 async function handleAddStaff() {
     try {
-        // Lấy dữ liệu từ form
         const username = document.getElementById('staffUsername').value.trim();
         const fullName = document.getElementById('staffFullName').value.trim();
         const password = document.getElementById('staffPassword').value.trim();
@@ -851,7 +762,6 @@ async function handleAddStaff() {
         const address = document.getElementById('staffAddress') ? document.getElementById('staffAddress').value.trim() : '';
         const imageFile = document.getElementById('staffImage').files[0];
         
-        // Kiểm tra dữ liệu đầu vào
         if (!username) {
             showMessage('Vui lòng nhập tên đăng nhập', 'error');
             return;
@@ -867,10 +777,8 @@ async function handleAddStaff() {
             return;
         }
         
-        // Hiển thị trạng thái đang xử lý
         showLoader(true);
         
-        // Tạo FormData để gửi dữ liệu kèm file
         const formData = new FormData();
         formData.append('userName', username);
         formData.append('fullName', fullName);
@@ -885,11 +793,9 @@ async function handleAddStaff() {
             formData.append('image', imageFile);
         }
         
-        // Gọi API
         const API_BASE_URL = 'http://localhost:8081';
         const token = localStorage.getItem('token');
         
-        // Log dữ liệu trước khi gửi (không hiển thị mật khẩu)
         console.log('Đang thêm nhân viên với dữ liệu:', {
             userName: username,
             fullName: fullName,
@@ -899,7 +805,6 @@ async function handleAddStaff() {
             hasImage: !!imageFile
         });
         
-        // Ghi log thông tin request để debug
         console.log('Gửi request đến:', `${API_BASE_URL}/api/accounts/with-image`);
         
         const response = await fetch(`${API_BASE_URL}/api/accounts/with-image`, {
@@ -916,21 +821,17 @@ async function handleAddStaff() {
             const responseData = await response.json();
             console.log('Thêm nhân viên thành công:', responseData);
             
-            // Hiển thị thông báo thành công
             showMessage(`Thêm nhân viên ${fullName} thành công!`, 'success');
             
-            // Đóng modal và reset form
             document.getElementById('staffModal').style.display = 'none';
             document.getElementById('addStaffForm').reset();
             
-            // Xóa preview ảnh nếu có
             const imagePreview = document.getElementById('staffImagePreview');
             if (imagePreview) {
                 imagePreview.style.backgroundImage = '';
                 imagePreview.textContent = 'Chọn ảnh để xem trước';
             }
             
-            // Nạp lại dữ liệu
             await loadDashboardData();
             
             return responseData;
@@ -948,7 +849,6 @@ async function handleAddStaff() {
                 errorData = { message: `Lỗi: Mã trạng thái ${response.status}` };
             }
             
-            // Xử lý các loại lỗi cụ thể
             if (response.status === 409) {
                 throw new Error('Tên đăng nhập đã tồn tại, vui lòng chọn tên khác');
             } else if (response.status === 400) {
@@ -965,7 +865,7 @@ async function handleAddStaff() {
     }
 }
 
-// Xử lý thêm sản phẩm
+
 async function handleAddProduct() {
     try {
         const name = document.getElementById('productName').value.trim();
@@ -975,7 +875,6 @@ async function handleAddProduct() {
         const status = document.getElementById('productStatus').value;
         const imageFile = document.getElementById('productImage').files[0];
         
-        // Kiểm tra dữ liệu đầu vào
         if (!name) {
             showMessage('Vui lòng nhập tên sản phẩm', 'error');
             return;
@@ -993,7 +892,6 @@ async function handleAddProduct() {
         
         showLoader(true);
         
-        // Tạo FormData để gửi dữ liệu kèm file
         const formData = new FormData();
         formData.append('productName', name);
         formData.append('categoryId', categoryId);
@@ -1005,22 +903,8 @@ async function handleAddProduct() {
             formData.append('image', imageFile);
         }
         
-        // Gọi API
         const API_BASE_URL = 'http://localhost:8081';
         const token = localStorage.getItem('token');
-        
-        // Log dữ liệu trước khi gửi
-        console.log('Đang thêm sản phẩm với dữ liệu:', {
-            productName: name,
-            categoryId: categoryId,
-            price: price,
-            description: description,
-            isAvailable: status === '1',
-            hasImage: !!imageFile
-        });
-        
-        // Ghi log thông tin request để debug
-        console.log('Gửi request đến:', `${API_BASE_URL}/api/products/with-image`);
         
         const response = await fetch(`${API_BASE_URL}/api/products/with-image`, {
             method: 'POST',
@@ -1036,21 +920,17 @@ async function handleAddProduct() {
             const responseData = await response.json();
             console.log('Thêm sản phẩm thành công:', responseData);
             
-            // Hiển thị thông báo thành công
             showMessage(`Thêm sản phẩm ${name} thành công!`, 'success');
             
-            // Đóng modal và reset form
             document.getElementById('productModal').style.display = 'none';
             document.getElementById('addProductForm').reset();
             
-            // Xóa preview ảnh nếu có
             const imagePreview = document.getElementById('productImagePreview');
             if (imagePreview) {
                 imagePreview.style.backgroundImage = '';
                 imagePreview.textContent = 'Chọn ảnh để xem trước';
             }
             
-            // Nạp lại dữ liệu
             await loadDashboardData();
             
             return responseData;
@@ -1078,7 +958,7 @@ async function handleAddProduct() {
     }
 }
 
-// Hiển thị/ẩn loading spinner
+
 function showLoader(show) {
     const loader = document.getElementById('loader');
     if (loader) {
@@ -1086,9 +966,8 @@ function showLoader(show) {
     }
 }
 
-// Hiển thị thông báo
+
 function showMessage(message, type = 'info') {
-    // Tạo container nếu chưa tồn tại
     let messageContainer = document.getElementById('messageContainer');
     if (!messageContainer) {
         messageContainer = document.createElement('div');
@@ -1097,7 +976,6 @@ function showMessage(message, type = 'info') {
         document.body.appendChild(messageContainer);
     }
     
-    // Tạo message box
     const messageBox = document.createElement('div');
     messageBox.className = `message ${type}`;
     messageBox.innerHTML = `
@@ -1106,15 +984,12 @@ function showMessage(message, type = 'info') {
         <button class="message-close">&times;</button>
     `;
     
-    // Thêm vào container
     messageContainer.appendChild(messageBox);
     
-    // Hiệu ứng hiện message
     setTimeout(() => {
         messageBox.classList.add('show');
     }, 10);
     
-    // Xử lý nút đóng
     const closeButton = messageBox.querySelector('.message-close');
     if (closeButton) {
         closeButton.addEventListener('click', () => {
@@ -1128,7 +1003,6 @@ function showMessage(message, type = 'info') {
         });
     }
     
-    // Tự động ẩn sau 5 giây
     setTimeout(() => {
         if (messageBox && document.body.contains(messageContainer)) {
             messageBox.classList.remove('show');
@@ -1142,12 +1016,11 @@ function showMessage(message, type = 'info') {
     }, 5000);
 }
 
-// Hàm trợ giúp để lấy token từ localStorage
+
 function getAuthToken() {
     return localStorage.getItem('token');
 }
 
-// Hàm trợ giúp để tạo headers với token xác thực
 function getAuthHeaders() {
     const token = getAuthToken();
     const headers = {

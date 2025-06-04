@@ -9,12 +9,10 @@ const STATUS_TRANSLATIONS = {
     'Occupied': 'Đang phục vụ'
 };
 
-// Hàm trợ giúp để lấy token từ localStorage
 function getAuthToken() {
     return localStorage.getItem('token');
 }
 
-// Hàm trợ giúp để tạo headers với token xác thực
 function getAuthHeaders() {
     const token = getAuthToken();
     const headers = {
@@ -29,19 +27,15 @@ function getAuthHeaders() {
     return headers;
 }
 
-// State variables
 let tables = [];
 let filteredTables = [];
 
-// DOM Elements
 let tablesGrid;
 let tableStatsElements = {};
 let tableSearchInput;
 let areaFilterSelect;
 
-// Khởi tạo khi trang tải xong
 document.addEventListener('DOMContentLoaded', function() {
-    // Kiểm tra xác thực trước khi tải trang
     if (checkAuthentication()) {
         initDOMReferences();
         setupEventListeners();
@@ -49,13 +43,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Kiểm tra xác thực
 function checkAuthentication() {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
     
     if (!token || !role || !(role.toLowerCase().includes('staff') || role.toLowerCase().includes('admin'))) {
-        // Chuyển hướng về trang đăng nhập nếu không phải nhân viên hoặc admin
         window.location.href = '../auth/login.html';
         return false;
     }
@@ -63,7 +55,6 @@ function checkAuthentication() {
     return true;
 }
 
-// Khởi tạo tham chiếu đến các phần tử DOM
 function initDOMReferences() {
     tablesGrid = document.getElementById('tablesGrid');
     tableStatsElements.total = document.getElementById('total-tables');
@@ -76,7 +67,6 @@ function initDOMReferences() {
 // Tải dữ liệu bàn từ API
 async function loadTables() {
     try {
-        // Check for authentication token
         const token = getAuthToken();
         if (!token) {
             window.location.href = '../auth/login.html';
@@ -164,7 +154,6 @@ function updateTableStatistics() {
 
 // Chuyển đổi trạng thái bàn
 async function toggleTableStatus(table) {
-    // Check for authentication token
     const token = getAuthToken();
     if (!token) {
         window.location.href = '../auth/login.html';
@@ -173,7 +162,6 @@ async function toggleTableStatus(table) {
     
     const newStatus = table.status === 'Available' ? 'Occupied' : 'Available';
     try {
-        // Tạo đối tượng dữ liệu để gửi lên server
         const tableData = {
             idTable: table.id,
             tableNumber: table.number,
