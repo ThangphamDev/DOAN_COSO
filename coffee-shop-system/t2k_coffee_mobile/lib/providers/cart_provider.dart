@@ -81,7 +81,12 @@ class CartProvider with ChangeNotifier {
   }
 
   // Add item to cart
-  void addItem(Product product, {ProductVariants? variants, int quantity = 1}) {
+  void addItem(
+    Product product, {
+    ProductVariants? variants,
+    int quantity = 1,
+    double? unitPrice,
+  }) {
     final itemVariants = variants ?? ProductVariants.defaultVariants;
 
     // Check if item with same variants already exists
@@ -103,11 +108,11 @@ class CartProvider with ChangeNotifier {
       );
     } else {
       // Add new item
-      final price = product.price ?? 0.0;
+      final price = unitPrice ?? (product.price ?? 0.0);
       final newItem = CartItem(
         productId: product.idProduct!,
         productName: product.productName!,
-        basePrice: price,
+        basePrice: product.price ?? 0.0,
         price: price,
         quantity: quantity,
         variants: itemVariants,

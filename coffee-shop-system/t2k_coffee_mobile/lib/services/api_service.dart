@@ -36,7 +36,9 @@ class ApiService {
         _currentUser = User.fromJson(json.decode(userJson));
       }
       print('Token loaded: ${_token != null ? "YES" : "NO"}');
-      print('User loaded: ${_currentUser != null ? "YES (ID: ${_currentUser?.idAccount})" : "NO"}');
+      print(
+        'User loaded: ${_currentUser != null ? "YES (ID: ${_currentUser?.idAccount})" : "NO"}',
+      );
     } catch (e) {
       print('Error loading token from storage: $e');
       _token = null;
@@ -218,6 +220,21 @@ class ApiService {
       return [];
     } catch (e) {
       throw Exception('Failed to fetch products: $e');
+    }
+  }
+
+  // Variants by category
+  Future<Map<String, dynamic>> getVariantsByCategory(int categoryId) async {
+    try {
+      final response = await _makeRequest(
+        'GET',
+        '${ApiConfig.variantsEndpoint}/category/$categoryId',
+      );
+      final data = _handleResponse(response);
+      if (data is Map<String, dynamic>) return data;
+      throw Exception('Invalid variant response format');
+    } catch (e) {
+      throw Exception('Failed to fetch variants: $e');
     }
   }
 

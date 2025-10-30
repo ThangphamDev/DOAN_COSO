@@ -52,8 +52,14 @@ public class ProductVariantController {
         List<ProductVariant> variants = productVariantService.getVariantsByCategory(categoryId);
         
         if (variants.isEmpty()) {
-            // Nếu không có biến thể, tạo mẫu dữ liệu mặc định
-            return new ResponseEntity<>(createDefaultVariantResponse(categoryId), HttpStatus.OK);
+            // Không có biến thể thật sự cho category này -> trả về rỗng và cờ hasVariants=false
+            VariantResponse empty = new VariantResponse();
+            empty.setSizes(Collections.emptyList());
+            empty.setIce(Collections.emptyList());
+            empty.setSugar(Collections.emptyList());
+            empty.setToppings(Collections.emptyList());
+            empty.setHasVariants(false);
+            return new ResponseEntity<>(empty, HttpStatus.OK);
         }
         
         // Tạo response từ dữ liệu trong DB
@@ -67,29 +73,30 @@ public class ProductVariantController {
         if (variantsByType.containsKey("size")) {
             response.setSizes(convertToVariantMap(variantsByType.get("size")));
         } else {
-            response.setSizes(createDefaultSizes());
+            response.setSizes(Collections.emptyList());
         }
         
         // Xử lý đá
         if (variantsByType.containsKey("ice")) {
             response.setIce(convertToVariantMap(variantsByType.get("ice")));
         } else {
-            response.setIce(createDefaultIce());
+            response.setIce(Collections.emptyList());
         }
         
         // Xử lý đường
         if (variantsByType.containsKey("sugar")) {
             response.setSugar(convertToVariantMap(variantsByType.get("sugar")));
         } else {
-            response.setSugar(createDefaultSugar());
+            response.setSugar(Collections.emptyList());
         }
         
         // Xử lý topping
         if (variantsByType.containsKey("topping")) {
             response.setToppings(convertToVariantMap(variantsByType.get("topping")));
         } else {
-            response.setToppings(createDefaultToppings());
+            response.setToppings(Collections.emptyList());
         }
+        response.setHasVariants(true);
         
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -163,14 +170,7 @@ public class ProductVariantController {
     }
 
     // Phương thức hỗ trợ để tạo đối tượng VariantResponse mặc định
-    private VariantResponse createDefaultVariantResponse(Integer categoryId) {
-        VariantResponse response = new VariantResponse();
-        response.setSizes(createDefaultSizes());
-        response.setIce(createDefaultIce());
-        response.setSugar(createDefaultSugar());
-        response.setToppings(createDefaultToppings());
-        return response;
-    }
+    // Previously returned defaults; now unused to avoid showing variants where none exist
 
     // Chuyển đổi danh sách biến thể thành định dạng phản hồi
     private List<Map<String, Object>> convertToVariantMap(List<ProductVariant> variants) {

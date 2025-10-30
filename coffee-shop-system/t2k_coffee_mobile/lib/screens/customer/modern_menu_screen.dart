@@ -112,8 +112,9 @@ class _ModernMenuScreenState extends State<ModernMenuScreen>
     // Filter by category
     if (_selectedCategoryIndex != 0) {
       final categoryId = _categories[_selectedCategoryIndex - 1].idCategory;
-      filtered =
-          filtered.where((product) => product.categoryId == categoryId).toList();
+      filtered = filtered
+          .where((product) => product.categoryId == categoryId)
+          .toList();
     }
 
     // Filter by search query
@@ -121,7 +122,8 @@ class _ModernMenuScreenState extends State<ModernMenuScreen>
       filtered = filtered.where((product) {
         final name = product.productName?.toLowerCase() ?? '';
         final description = product.description?.toLowerCase() ?? '';
-        return name.contains(_searchQuery) || description.contains(_searchQuery);
+        return name.contains(_searchQuery) ||
+            description.contains(_searchQuery);
       }).toList();
     }
 
@@ -167,9 +169,7 @@ class _ModernMenuScreenState extends State<ModernMenuScreen>
       flexibleSpace: Container(
         decoration: const BoxDecoration(
           gradient: AppTheme.primaryGradient,
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(24),
-          ),
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
           boxShadow: [
             BoxShadow(
               color: Color(0x20000000),
@@ -180,19 +180,52 @@ class _ModernMenuScreenState extends State<ModernMenuScreen>
         ),
         child: FlexibleSpaceBar(
           centerTitle: true,
-          title: const Text(
-            'Menu',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              letterSpacing: 0.5,
-            ),
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.25),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: const [
+                    Icon(Icons.coffee_rounded, size: 16, color: Colors.white),
+                    SizedBox(width: 6),
+                    Text(
+                      'T2K Coffee',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Menu',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
           ),
           background: Container(
-            decoration: const BoxDecoration(
-              gradient: AppTheme.primaryGradient,
-            ),
+            decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),
           ),
         ),
       ),
@@ -263,7 +296,9 @@ class _ModernMenuScreenState extends State<ModernMenuScreen>
             final categoryName = index == 0
                 ? 'Tất cả'
                 : _categories[index - 1].categoryName ?? '';
-            final icon = index == 0 ? Icons.apps_rounded : Icons.local_cafe_rounded;
+            final icon = index == 0
+                ? Icons.apps_rounded
+                : Icons.local_cafe_rounded;
 
             return ModernCategoryChip(
               label: categoryName,
@@ -301,17 +336,17 @@ class _ModernMenuScreenState extends State<ModernMenuScreen>
               Text(
                 'Không tìm thấy sản phẩm',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 _searchQuery.isNotEmpty
                     ? 'Thử tìm kiếm với từ khóa khác'
                     : 'Vui lòng thử lại sau',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppTheme.textSecondary,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
               ),
             ],
           ),
@@ -324,27 +359,25 @@ class _ModernMenuScreenState extends State<ModernMenuScreen>
       sliver: SliverGrid(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          childAspectRatio: 0.7,
+          // Increase item height to avoid text overflow on long names
+          childAspectRatio: 0.65,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
         ),
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final product = _filteredProducts[index];
-            return FadeTransition(
-              opacity: _fadeAnimation,
-              child: ModernProductCard(
-                product: product,
-                onTap: () {
-                  // Navigate to product detail (if exists)
-                  _showAddToCartDialog(product);
-                },
-                onAddToCart: () => _showAddToCartDialog(product),
-              ),
-            );
-          },
-          childCount: _filteredProducts.length,
-        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final product = _filteredProducts[index];
+          return FadeTransition(
+            opacity: _fadeAnimation,
+            child: ModernProductCard(
+              product: product,
+              onTap: () {
+                // Navigate to product detail (if exists)
+                _showAddToCartDialog(product);
+              },
+              onAddToCart: () => _showAddToCartDialog(product),
+            ),
+          );
+        }, childCount: _filteredProducts.length),
       ),
     );
   }
@@ -371,17 +404,17 @@ class _ModernMenuScreenState extends State<ModernMenuScreen>
             const SizedBox(height: 24),
             Text(
               'Không thể tải menu',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               _error ?? 'Đã xảy ra lỗi',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.textSecondary,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -418,25 +451,60 @@ class ModernAddToCartBottomSheet extends StatefulWidget {
       _ModernAddToCartBottomSheetState();
 }
 
-class _ModernAddToCartBottomSheetState
-    extends State<ModernAddToCartBottomSheet> with TickerProviderStateMixin {
+class _ModernAddToCartBottomSheetState extends State<ModernAddToCartBottomSheet>
+    with TickerProviderStateMixin {
   int _quantity = 1;
   String _selectedSize = 'M';
-  String _iceLevel = 'Bình thường';
-  String _sugarLevel = 'Bình thường';
+  String _iceLevel = '100';
+  String _sugarLevel = '100';
   final List<String> _selectedToppings = [];
 
+  // Variant options fetched from API: each item {name, value, price, isDefault}
+  List<Map<String, dynamic>> _sizeOptions = [];
+  List<Map<String, dynamic>> _iceOptions = [];
+  List<Map<String, dynamic>> _sugarOptions = [];
+  List<Map<String, dynamic>> _toppingOptions = [];
+  bool _hasVariants = false;
+
   final List<String> _sizes = ['S', 'M', 'L'];
-  final List<String> _toppings = [
-    'Trân châu',
-    'Thạch dừa',
-    'Kem cheese',
-    'Đậu đỏ',
-    'Kem tươi',
-  ];
 
   late AnimationController _slideController;
   late Animation<Offset> _slideAnimation;
+
+  String _formatCurrency(num? v) {
+    final value = (v ?? 0).toDouble();
+    final s = value
+        .toStringAsFixed(0)
+        .replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (m) => '${m[1]},',
+        );
+    return '$s đ';
+  }
+
+  String _optionLabel(Map<String, dynamic> opt, {bool isSize = false}) {
+    final name = (opt['name'] ?? '').toString();
+    final price = (opt['price'] as num?)?.toDouble() ?? 0;
+    if (price > 0) {
+      // For size, show compact format: "M (+5k)"
+      if (isSize) {
+        if (price >= 1000) {
+          final thousands = (price / 1000).toStringAsFixed(0);
+          return '$name (+${thousands}k)';
+        }
+        return '$name (+${price.toInt()})';
+      }
+      // For other options, show full format
+      final formatted = price
+          .toStringAsFixed(0)
+          .replaceAllMapped(
+            RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+            (m) => '${m[1]},',
+          );
+      return '$name (+$formatted đ)';
+    }
+    return name;
+  }
 
   @override
   void initState() {
@@ -445,14 +513,88 @@ class _ModernAddToCartBottomSheetState
       duration: AppTheme.normalDuration,
       vsync: this,
     );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: AppTheme.smoothCurve,
-    ));
+    _slideAnimation = Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
+        .animate(
+          CurvedAnimation(
+            parent: _slideController,
+            curve: AppTheme.smoothCurve,
+          ),
+        );
     _slideController.forward();
+    _loadVariants();
+  }
+
+  Future<void> _loadVariants() async {
+    try {
+      final categoryId = widget.product.categoryId;
+      if (categoryId == null) return;
+      final data = await ApiService().getVariantsByCategory(categoryId);
+      setState(() {
+        _sizeOptions =
+            (data['sizes'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ??
+            [];
+        _iceOptions =
+            (data['ice'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
+        _sugarOptions =
+            (data['sugar'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ??
+            [];
+        _toppingOptions =
+            (data['toppings'] as List<dynamic>?)
+                ?.cast<Map<String, dynamic>>() ??
+            [];
+        _hasVariants =
+            (data['hasVariants'] == true) ||
+            _sizeOptions.isNotEmpty ||
+            _iceOptions.isNotEmpty ||
+            _sugarOptions.isNotEmpty ||
+            _toppingOptions.isNotEmpty;
+
+        // Defaults
+        final defSize = _sizeOptions.firstWhere(
+          (e) => e['isDefault'] == true,
+          orElse: () => _sizeOptions.isNotEmpty ? _sizeOptions.first : {},
+        );
+        if (defSize.isNotEmpty)
+          _selectedSize = (defSize['value'] ?? 'M').toString();
+
+        final defIce = _iceOptions.firstWhere(
+          (e) => e['isDefault'] == true,
+          orElse: () => _iceOptions.isNotEmpty ? _iceOptions.first : {},
+        );
+        if (defIce.isNotEmpty)
+          _iceLevel = (defIce['value'] ?? '100').toString();
+
+        final defSugar = _sugarOptions.firstWhere(
+          (e) => e['isDefault'] == true,
+          orElse: () => _sugarOptions.isNotEmpty ? _sugarOptions.first : {},
+        );
+        if (defSugar.isNotEmpty)
+          _sugarLevel = (defSugar['value'] ?? '100').toString();
+      });
+    } catch (e) {
+      // Fallback silently
+    }
+  }
+
+  double _computeUnitPrice() {
+    double price = widget.product.price ?? 0;
+    if (_hasVariants) {
+      // Size extra
+      final size = _sizeOptions.firstWhere(
+        (e) => e['value'] == _selectedSize,
+        orElse: () => {},
+      );
+      if (size.isNotEmpty) price += (size['price'] as num?)?.toDouble() ?? 0;
+      // Toppings
+      for (final t in _selectedToppings) {
+        final opt = _toppingOptions.firstWhere(
+          (e) => e['value'] == t,
+          orElse: () => {},
+        );
+        if (opt.isNotEmpty) price += (opt['price'] as num?)?.toDouble() ?? 0;
+      }
+    }
+    return price;
   }
 
   @override
@@ -463,7 +605,8 @@ class _ModernAddToCartBottomSheetState
 
   @override
   Widget build(BuildContext context) {
-    final totalPrice = (widget.product.price ?? 0) * _quantity;
+    final unitPrice = _computeUnitPrice();
+    final totalPrice = unitPrice * _quantity;
 
     return SlideTransition(
       position: _slideAnimation,
@@ -503,13 +646,13 @@ class _ModernAddToCartBottomSheetState
                   children: [
                     _buildProductHeader(),
                     const SizedBox(height: 24),
-                    _buildSizeSelection(),
-                    const SizedBox(height: 24),
-                    _buildIceLevel(),
-                    const SizedBox(height: 24),
-                    _buildSugarLevel(),
-                    const SizedBox(height: 24),
-                    _buildToppings(),
+                    if (_hasVariants) _buildSizeSelection(),
+                    if (_hasVariants) const SizedBox(height: 24),
+                    if (_hasVariants) _buildIceLevel(),
+                    if (_hasVariants) const SizedBox(height: 24),
+                    if (_hasVariants) _buildSugarLevel(),
+                    if (_hasVariants) const SizedBox(height: 24),
+                    if (_hasVariants) _buildToppings(),
                     const SizedBox(height: 20),
                   ],
                 ),
@@ -537,7 +680,7 @@ class _ModernAddToCartBottomSheetState
                   const SizedBox(width: 16),
                   Expanded(
                     child: ModernButton(
-                      text: '${totalPrice.toStringAsFixed(0)} đ',
+                      text: _formatCurrency(totalPrice),
                       onPressed: _addToCart,
                       type: ModernButtonType.accent,
                       icon: Icons.shopping_bag_rounded,
@@ -661,46 +804,28 @@ class _ModernAddToCartBottomSheetState
       children: [
         _buildSectionTitle('Kích thước', Icons.fullscreen_rounded),
         const SizedBox(height: 12),
-        Row(
-          children: _sizes.map((size) {
-            final isSelected = _selectedSize == size;
-            return Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: GestureDetector(
-                  onTap: () => setState(() => _selectedSize = size),
-                  child: AnimatedContainer(
-                    duration: AppTheme.fastDuration,
-                    curve: AppTheme.quickCurve,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      gradient:
-                          isSelected ? AppTheme.primaryGradient : null,
-                      color: isSelected ? null : AppTheme.backgroundColor,
-                      borderRadius: AppTheme.mediumRadius,
-                      border: Border.all(
-                        color: isSelected
-                            ? Colors.transparent
-                            : AppTheme.textLight.withValues(alpha: 0.3),
-                        width: 2,
-                      ),
-                      boxShadow:
-                          isSelected ? AppTheme.cardShadow : null,
-                    ),
-                    child: Text(
-                      size,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : AppTheme.textPrimary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _sizeOptions.isNotEmpty
+              ? _sizeOptions.map((opt) {
+                  final value = (opt['value'] ?? '').toString();
+                  final label = _optionLabel(opt, isSize: true);
+                  final isSelected = _selectedSize == value;
+                  return _buildOptionChip(
+                    label: label,
+                    isSelected: isSelected,
+                    onTap: () => setState(() => _selectedSize = value),
+                  );
+                }).toList()
+              : _sizes.map((size) {
+                  final isSelected = _selectedSize == size;
+                  return _buildOptionChip(
+                    label: size,
+                    isSelected: isSelected,
+                    onTap: () => setState(() => _selectedSize = size),
+                  );
+                }).toList(),
         ),
       ],
     );
@@ -715,15 +840,27 @@ class _ModernAddToCartBottomSheetState
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: ['Không đá', 'Ít đá', 'Bình thường', 'Nhiều đá']
-              .map((level) {
-            final isSelected = _iceLevel == level;
-            return _buildOptionChip(
-              label: level,
-              isSelected: isSelected,
-              onTap: () => setState(() => _iceLevel = level),
-            );
-          }).toList(),
+          children:
+              (_iceOptions.isNotEmpty
+                      ? _iceOptions
+                      : [
+                          {'name': '100% đá', 'value': '100'},
+                          {'name': '70% đá', 'value': '70'},
+                          {'name': '50% đá', 'value': '50'},
+                          {'name': '30% đá', 'value': '30'},
+                          {'name': '0% đá', 'value': '0'},
+                        ])
+                  .map((opt) {
+                    final value = (opt['value'] ?? '').toString();
+                    final label = _optionLabel(opt);
+                    final isSelected = _iceLevel == value;
+                    return _buildOptionChip(
+                      label: label,
+                      isSelected: isSelected,
+                      onTap: () => setState(() => _iceLevel = value),
+                    );
+                  })
+                  .toList(),
         ),
       ],
     );
@@ -739,15 +876,26 @@ class _ModernAddToCartBottomSheetState
           spacing: 8,
           runSpacing: 8,
           children:
-              ['Không đường', 'Ít đường', 'Bình thường', 'Nhiều đường']
-                  .map((level) {
-            final isSelected = _sugarLevel == level;
-            return _buildOptionChip(
-              label: level,
-              isSelected: isSelected,
-              onTap: () => setState(() => _sugarLevel = level),
-            );
-          }).toList(),
+              (_sugarOptions.isNotEmpty
+                      ? _sugarOptions
+                      : [
+                          {'name': '100% đường', 'value': '100'},
+                          {'name': '70% đường', 'value': '70'},
+                          {'name': '50% đường', 'value': '50'},
+                          {'name': '30% đường', 'value': '30'},
+                          {'name': '0% đường', 'value': '0'},
+                        ])
+                  .map((opt) {
+                    final value = (opt['value'] ?? '').toString();
+                    final label = _optionLabel(opt);
+                    final isSelected = _sugarLevel == value;
+                    return _buildOptionChip(
+                      label: label,
+                      isSelected: isSelected,
+                      onTap: () => setState(() => _sugarLevel = value),
+                    );
+                  })
+                  .toList(),
         ),
       ],
     );
@@ -762,17 +910,21 @@ class _ModernAddToCartBottomSheetState
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: _toppings.map((topping) {
-            final isSelected = _selectedToppings.contains(topping);
+          children: (_toppingOptions.isNotEmpty ? _toppingOptions : []).map((
+            opt,
+          ) {
+            final value = (opt['value'] ?? '').toString();
+            final label = _optionLabel(opt);
+            final isSelected = _selectedToppings.contains(value);
             return _buildOptionChip(
-              label: topping,
+              label: label,
               isSelected: isSelected,
               onTap: () {
                 setState(() {
                   if (isSelected) {
-                    _selectedToppings.remove(topping);
+                    _selectedToppings.remove(value);
                   } else {
-                    _selectedToppings.add(topping);
+                    _selectedToppings.add(value);
                   }
                 });
               },
@@ -831,9 +983,7 @@ class _ModernAddToCartBottomSheetState
       decoration: BoxDecoration(
         color: AppTheme.backgroundColor,
         borderRadius: AppTheme.mediumRadius,
-        border: Border.all(
-          color: AppTheme.textLight.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: AppTheme.textLight.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -877,10 +1027,12 @@ class _ModernAddToCartBottomSheetState
       toppings: _selectedToppings,
     );
 
+    final unitPrice = _computeUnitPrice();
     cartProvider.addItem(
       widget.product,
       variants: variants,
       quantity: _quantity,
+      unitPrice: unitPrice,
     );
 
     Navigator.of(context).pop();
@@ -915,9 +1067,7 @@ class _ModernAddToCartBottomSheetState
         ),
         backgroundColor: AppTheme.successColor,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppTheme.mediumRadius,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppTheme.mediumRadius),
         duration: const Duration(seconds: 2),
       ),
     );

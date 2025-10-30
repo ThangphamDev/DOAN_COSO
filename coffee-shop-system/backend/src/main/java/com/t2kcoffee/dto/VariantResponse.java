@@ -12,6 +12,7 @@ public class VariantResponse {
     private List<Map<String, Object>> ice;
     private List<Map<String, Object>> sugar;
     private List<Map<String, Object>> toppings;
+    private boolean hasVariants;
     
     public VariantResponse() {
     }
@@ -46,5 +47,13 @@ public class VariantResponse {
     
     public void setToppings(List<Map<String, Object>> toppings) {
         this.toppings = toppings;
+    }
+
+    public boolean isHasVariants() {
+        return hasVariants;
+    }
+
+    public void setHasVariants(boolean hasVariants) {
+        this.hasVariants = hasVariants;
     }
 } 

@@ -32,9 +32,10 @@ class _ModernProductCardState extends State<ModernProductCard>
       duration: AppTheme.fastDuration,
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _controller, curve: AppTheme.quickCurve),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.95,
+    ).animate(CurvedAnimation(parent: _controller, curve: AppTheme.quickCurve));
   }
 
   @override
@@ -188,16 +189,18 @@ class _ModernProductCardState extends State<ModernProductCard>
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             // Product name
-                            Text(
-                              widget.product.productName ?? 'Unknown',
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.textPrimary,
-                                height: 1.3,
+                            Flexible(
+                              child: Text(
+                                widget.product.productName ?? 'Unknown',
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.textPrimary,
+                                  height: 1.25,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
                             ),
                             // Price and Add button row
                             Row(

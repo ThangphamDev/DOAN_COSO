@@ -23,6 +23,7 @@ class ApiConfig {
   static const String ordersEndpoint = '/api/orders';
   static const String tablesEndpoint = '/api/tables';
   static const String dashboardEndpoint = '/api/dashboard';
+  static const String variantsEndpoint = '/api/variants';
   static const String websocketTestEndpoint = '/api/websocket/test';
 
   // WebSocket Topics
