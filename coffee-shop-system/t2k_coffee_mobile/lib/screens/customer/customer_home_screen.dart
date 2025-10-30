@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/cart_provider.dart';
-import '../../providers/auth_provider.dart';
 import '../../utils/app_theme.dart';
-import '../../widgets/connection_status_widget.dart';
-import 'menu_screen.dart';
+import 'modern_menu_screen.dart';
 import 'cart_screen.dart';
 import 'orders_screen.dart';
 import 'profile_screen.dart';
@@ -21,7 +19,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   late PageController _pageController;
 
   final List<Widget> _screens = [
-    const MenuScreen(),
+    const ModernMenuScreen(),
     const CartScreen(),
     const OrdersScreen(),
     const ProfileScreen(),
@@ -53,38 +51,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('T2K Coffee'),
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          Consumer<AuthProvider>(
-            builder: (context, authProvider, child) {
-              // For now, show connection status based on auth status
-              // TODO: Add WebSocket connection status for customers
-              return ConnectionStatusWidget(
-                isConnected: authProvider.isLoggedIn,
-                isConnecting: false,
-                onTap: () {
-                  // Show connection info
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        authProvider.isLoggedIn
-                            ? 'Đã kết nối'
-                            : 'Chưa đăng nhập',
-                      ),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
       body: PageView(
         controller: _pageController,
         onPageChanged: (index) {

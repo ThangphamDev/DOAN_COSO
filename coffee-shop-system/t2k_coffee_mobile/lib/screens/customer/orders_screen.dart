@@ -3,7 +3,7 @@ import '../../models/order.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_theme.dart';
 import '../../widgets/loading_widget.dart';
-import '../../widgets/order_card.dart';
+import '../../widgets/modern_order_card.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
@@ -191,7 +191,10 @@ class _OrdersScreenState extends State<OrdersScreen>
         itemCount: orders.length,
         itemBuilder: (context, index) {
           final order = orders[index];
-          return OrderCard(order: order, onTap: () => _showOrderDetails(order));
+          return ModernOrderCard(
+            order: order,
+            onTap: () => _showOrderDetails(order),
+          );
         },
       ),
     );
