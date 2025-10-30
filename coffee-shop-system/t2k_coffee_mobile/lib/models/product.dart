@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import '../utils/api_config.dart';
 
 part 'product.g.dart';
 
@@ -62,7 +63,7 @@ class Product {
     if (image!.startsWith('http')) {
       return image!;
     }
-    // Construct full URL with base URL
-    return 'https://impetrative-jenelle-rightly.ngrok-free.dev/uploads/images/$image';
+    // Construct full URL with base URL from ApiConfig
+    return '${ApiConfig.baseUrl}/uploads/images/$image';
   }
 }

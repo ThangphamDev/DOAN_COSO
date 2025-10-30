@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import '../utils/api_config.dart';
 
 part 'user.g.dart';
 
@@ -56,4 +57,15 @@ class User {
   bool get isAdmin => role?.toUpperCase() == 'ADMIN';
   bool get isStaff => role?.toUpperCase() == 'STAFF';
   bool get isCustomer => role?.toUpperCase() == 'CUSTOMER' || role == null;
+
+  String get imageUrl {
+    if (image == null || image!.isEmpty) {
+      return 'assets/images/default-avatar.png';
+    }
+    if (image!.startsWith('http')) {
+      return image!;
+    }
+    // Construct full URL with base URL from ApiConfig
+    return '${ApiConfig.baseUrl}/uploads/images/$image';
+  }
 }
