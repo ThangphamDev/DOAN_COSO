@@ -1,10 +1,13 @@
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import '../models/cart_item.dart';
 import '../models/product.dart';
 
 class CartProvider with ChangeNotifier {
   List<CartItem> _items = [];
   bool _isLoading = false;
+  int? _currentUserId;
 
   // Getters
   List<CartItem> get items => _items;
@@ -16,6 +19,65 @@ class CartProvider with ChangeNotifier {
 
   String get formattedTotalAmount {
     return '${totalAmount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')} đ';
+  }
+
+  // Initialize cart for specific user
+  Future<void> initialize(int? userId) async {
+    _currentUserId = userId;
+    if (userId != null) {
+      await _loadCart();
+    } else {
+      _items = [];
+      notifyListeners();
+    }
+  }
+
+  // Update user ID and load their cart
+  Future<void> updateUserId(int? userId) async {
+    if (_currentUserId != userId) {
+      _currentUserId = userId;
+      if (userId != null) {
+        await _loadCart();
+      } else {
+        _items = [];
+        notifyListeners();
+      }
+    }
+  }
+
+  // Save cart to SharedPreferences
+  Future<void> _saveCart() async {
+    if (_currentUserId == null) return;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cartKey = 'cart_$_currentUserId';
+
+      final cartData = _items.map((item) => item.toJson()).toList();
+      await prefs.setString(cartKey, json.encode(cartData));
+    } catch (e) {
+      print('Error saving cart: $e');
+    }
+  }
+
+  // Load cart from SharedPreferences
+  Future<void> _loadCart() async {
+    if (_currentUserId == null) return;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cartKey = 'cart_$_currentUserId';
+
+      final cartString = prefs.getString(cartKey);
+      if (cartString != null) {
+        final cartData = json.decode(cartString) as List;
+        _items = cartData.map((item) => CartItem.fromJson(item)).toList();
+        notifyListeners();
+      }
+    } catch (e) {
+      print('Error loading cart: $e');
+      _items = [];
+    }
   }
 
   // Add item to cart
@@ -55,6 +117,7 @@ class CartProvider with ChangeNotifier {
       _items.add(newItem);
     }
 
+    _saveCart();
     notifyListeners();
   }
 
@@ -65,6 +128,7 @@ class CartProvider with ChangeNotifier {
           item.productId == productId &&
           _variantsEqual(item.variants, variants),
     );
+    _saveCart();
     notifyListeners();
   }
 
@@ -93,6 +157,7 @@ class CartProvider with ChangeNotifier {
         quantity: newQuantity,
         totalPrice: newTotalPrice,
       );
+      _saveCart();
       notifyListeners();
     }
   }
@@ -101,6 +166,7 @@ class CartProvider with ChangeNotifier {
   void clearCart() {
     _items = [];
     _isLoading = false;
+    _saveCart();
     notifyListeners();
   }
 

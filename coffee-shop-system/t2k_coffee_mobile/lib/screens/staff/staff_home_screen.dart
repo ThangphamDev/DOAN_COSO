@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/cart_provider.dart';
 import '../../providers/staff_provider.dart';
 import '../../utils/app_theme.dart';
 import '../../widgets/custom_button.dart';
@@ -415,6 +416,10 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
               // Stop staff polling and clear privileged data
               final staffProvider = Provider.of<StaffProvider>(context, listen: false);
               staffProvider.clearStaffData();
+
+              // Update cart to anonymous mode (userId = null)
+              final cartProvider = Provider.of<CartProvider>(context, listen: false);
+              await cartProvider.updateUserId(null);
 
               // Clear authentication token
               await authProvider.logout();

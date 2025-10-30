@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
+import '../providers/cart_provider.dart';
 import '../utils/app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -51,6 +52,10 @@ class _SplashScreenState extends State<SplashScreen>
     // Initialize auth provider
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     await authProvider.initialize();
+
+    // Initialize cart provider with current user's ID
+    final cartProvider = Provider.of<CartProvider>(context, listen: false);
+    await cartProvider.initialize(authProvider.currentUser?.idAccount);
 
     // Wait for animation to complete
     await Future.delayed(const Duration(milliseconds: 2500));
