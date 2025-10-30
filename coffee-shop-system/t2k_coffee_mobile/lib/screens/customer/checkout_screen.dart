@@ -379,6 +379,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         });
       },
       child: Container(
+        constraints: const BoxConstraints(minHeight: 100),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
@@ -391,6 +392,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
@@ -402,8 +405,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             const SizedBox(height: 8),
             Text(
               title,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: isSelected
                     ? AppTheme.primaryColor

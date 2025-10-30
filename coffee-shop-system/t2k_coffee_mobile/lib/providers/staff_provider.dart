@@ -16,6 +16,8 @@ class StaffProvider with ChangeNotifier {
   String? _error;
   bool _isConnected = false;
   String? _staffName;
+  StreamSubscription<OrderNotification>? _orderNotificationSubscription;
+  StreamSubscription<String>? _connectionStatusSubscription;
 
   // Getters
   List<Order> get allOrders => _allOrders;
@@ -42,7 +44,8 @@ class StaffProvider with ChangeNotifier {
     try {
       // Check if user is staff before initializing
       final currentUser = _apiService.currentUser;
-      if (currentUser == null || (!currentUser.isStaff && !currentUser.isAdmin)) {
+      if (currentUser == null ||
+          (!currentUser.isStaff && !currentUser.isAdmin)) {
         _setError('User is not authorized for staff operations');
         return;
       }
@@ -106,15 +109,37 @@ class StaffProvider with ChangeNotifier {
       if (connected) {
         _isConnected = true;
 
-        // Listen to order notifications
-        _webSocketService.orderNotificationStream.listen(
-          _handleOrderNotification,
-        );
+        // Cancel existing subscriptions if any
+        _orderNotificationSubscription?.cancel();
+        _connectionStatusSubscription?.cancel();
 
-        // Listen to connection status
-        _webSocketService.connectionStatusStream.listen(
-          _handleConnectionStatus,
-        );
+        // Listen to order notifications with error handling
+        _orderNotificationSubscription = _webSocketService
+            .orderNotificationStream
+            .listen(
+              _handleOrderNotification,
+              onError: (error) {
+                // Don't let stream errors disconnect WebSocket
+              },
+              onDone: () {
+                // Stream closed, but don't auto-reconnect here
+                // Let WebSocketService handle reconnection
+              },
+              cancelOnError: false, // Don't cancel on error
+            );
+
+        // Listen to connection status with error handling
+        _connectionStatusSubscription = _webSocketService.connectionStatusStream
+            .listen(
+              _handleConnectionStatus,
+              onError: (error) {
+                // Don't let stream errors disconnect WebSocket
+              },
+              onDone: () {
+                // Connection status stream closed
+              },
+              cancelOnError: false, // Don't cancel on error
+            );
 
         notifyListeners();
       }
@@ -125,43 +150,68 @@ class StaffProvider with ChangeNotifier {
 
   // Handle order notifications
   void _handleOrderNotification(OrderNotification notification) {
-    if (notification.isNewOrder) {
-      // Add new order to list
-      final order = Order.fromJson(notification.order);
-      _allOrders.insert(0, order);
+    // Run async operations without blocking the stream listener
+    _processOrderNotification(notification).catchError((error) {
+      // Continue processing even if there's an error
+    });
+  }
 
-      // Sắp xếp lại danh sách theo thời gian mới nhất
-      _allOrders.sort((a, b) {
-        if (a.orderTime == null && b.orderTime == null) return 0;
-        if (a.orderTime == null) return 1;
-        if (b.orderTime == null) return -1;
-        return b.orderTime!.compareTo(a.orderTime!);
-      });
+  // Process order notification asynchronously
+  Future<void> _processOrderNotification(OrderNotification notification) async {
+    try {
+      if (notification.isNewOrder) {
+        // Parse order from notification
+        final order = Order.fromJson(notification.order);
 
-      // Show notification alert
-      _showNewOrderNotification(order);
+        if (order.idOrder == null) {
+          return;
+        }
 
-      // Play notification sound and announce
-      _playNotificationSound();
-      _speechService.announceNewOrder(
-        orderId: order.idOrder!,
-        tableNumber: order.tableNumber,
-        location: order.location,
-        totalAmount: order.totalAmount,
-      );
+        // Check if order already exists to avoid duplicates
+        final existingIndex = _allOrders.indexWhere(
+          (o) => o.idOrder == order.idOrder,
+        );
 
-      notifyListeners();
-    } else if (notification.isOrderUpdated) {
-      // Update existing order
-      final updatedOrder = Order.fromJson(notification.order);
-      final index = _allOrders.indexWhere(
-        (order) => order.idOrder == updatedOrder.idOrder,
-      );
+        Order? finalOrder;
 
-      if (index >= 0) {
-        _allOrders[index] = updatedOrder;
+        if (existingIndex >= 0) {
+          // Order already exists, update it instead
+          // Fetch full order details from API to ensure we have all items
+          try {
+            final fullOrder = await _apiService.getOrder(order.idOrder!);
+            if (fullOrder != null) {
+              _allOrders[existingIndex] = fullOrder;
+              finalOrder = fullOrder;
+            } else {
+              // If API call fails, just update with notification data
+              _allOrders[existingIndex] = order;
+              finalOrder = order;
+            }
+          } catch (e) {
+            // If API call fails, just update with notification data
+            _allOrders[existingIndex] = order;
+            finalOrder = order;
+          }
+        } else {
+          // New order, fetch full details from API to ensure we have all items
+          try {
+            final fullOrder = await _apiService.getOrder(order.idOrder!);
+            if (fullOrder != null) {
+              _allOrders.insert(0, fullOrder);
+              finalOrder = fullOrder;
+            } else {
+              // If API call fails, use notification data
+              _allOrders.insert(0, order);
+              finalOrder = order;
+            }
+          } catch (e) {
+            // If API call fails, use notification data
+            _allOrders.insert(0, order);
+            finalOrder = order;
+          }
+        }
 
-        // Sắp xếp lại danh sách sau khi cập nhật
+        // Sắp xếp lại danh sách theo thời gian mới nhất
         _allOrders.sort((a, b) {
           if (a.orderTime == null && b.orderTime == null) return 0;
           if (a.orderTime == null) return 1;
@@ -169,8 +219,63 @@ class StaffProvider with ChangeNotifier {
           return b.orderTime!.compareTo(a.orderTime!);
         });
 
+        // Show notification alert
+        _showNewOrderNotification(finalOrder);
+
+        // Play notification sound and announce
+        _playNotificationSound();
+        try {
+          _speechService.announceNewOrder(
+            orderId: finalOrder.idOrder!,
+            tableNumber: finalOrder.tableNumber,
+            location: finalOrder.location,
+            totalAmount: finalOrder.totalAmount,
+          );
+        } catch (e) {
+          // Error announcing new order, continue anyway
+        }
+
         notifyListeners();
+      } else if (notification.isOrderUpdated) {
+        // Update existing order
+        final updatedOrder = Order.fromJson(notification.order);
+
+        if (updatedOrder.idOrder == null) {
+          return;
+        }
+
+        final index = _allOrders.indexWhere(
+          (order) => order.idOrder == updatedOrder.idOrder,
+        );
+
+        if (index >= 0) {
+          // Fetch full order details from API to ensure we have all items
+          try {
+            final fullOrder = await _apiService.getOrder(updatedOrder.idOrder!);
+            if (fullOrder != null) {
+              _allOrders[index] = fullOrder;
+            } else {
+              // If API call fails, use notification data
+              _allOrders[index] = updatedOrder;
+            }
+          } catch (e) {
+            // If API call fails, use notification data
+            _allOrders[index] = updatedOrder;
+          }
+
+          // Sắp xếp lại danh sách sau khi cập nhật
+          _allOrders.sort((a, b) {
+            if (a.orderTime == null && b.orderTime == null) return 0;
+            if (a.orderTime == null) return 1;
+            if (b.orderTime == null) return -1;
+            return b.orderTime!.compareTo(a.orderTime!);
+          });
+
+          notifyListeners();
+        }
       }
+    } catch (e) {
+      // Don't rethrow, just continue
     }
   }
 
@@ -272,6 +377,12 @@ class StaffProvider with ChangeNotifier {
 
   // Clear all staff data (called during logout)
   void clearStaffData() {
+    // Cancel subscriptions
+    _orderNotificationSubscription?.cancel();
+    _connectionStatusSubscription?.cancel();
+    _orderNotificationSubscription = null;
+    _connectionStatusSubscription = null;
+
     _allOrders = [];
     _isLoading = false;
     _error = null;
@@ -283,6 +394,12 @@ class StaffProvider with ChangeNotifier {
   // Dispose resources
   @override
   void dispose() {
+    // Cancel subscriptions
+    _orderNotificationSubscription?.cancel();
+    _connectionStatusSubscription?.cancel();
+    _orderNotificationSubscription = null;
+    _connectionStatusSubscription = null;
+
     _webSocketService.disconnect();
     super.dispose();
   }
