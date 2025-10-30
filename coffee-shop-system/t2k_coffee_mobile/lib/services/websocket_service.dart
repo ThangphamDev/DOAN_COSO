@@ -44,15 +44,37 @@ class WebSocketService {
     required String userId,
     required String userType,
     String? deviceId,
+    bool forceReconnect = false,
   }) async {
-    if (_isConnecting || _isConnected) {
-      return _isConnected;
+    // If already connected with same user and not forcing reconnect, return
+    if (!forceReconnect &&
+        _isConnected &&
+        _userId == userId &&
+        _userType == userType) {
+      return true;
+    }
+
+    // If connecting, wait a bit and check again
+    if (_isConnecting && !forceReconnect) {
+      await Future.delayed(Duration(milliseconds: 500));
+      if (_isConnected && _userId == userId && _userType == userType) {
+        return true;
+      }
+    }
+
+    // Disconnect existing connection if user changed or forcing reconnect
+    if (forceReconnect ||
+        (_isConnected && (_userId != userId || _userType != userType))) {
+      await disconnect();
+      // Wait a bit for disconnect to complete
+      await Future.delayed(Duration(milliseconds: 300));
     }
 
     _userId = userId;
     _userType = userType;
     _deviceId = deviceId;
     _isConnecting = true;
+    _isConnected = false; // Reset to ensure clean state
     _connectionStatusController.add('connecting');
 
     try {
@@ -103,13 +125,23 @@ class WebSocketService {
     _stopReconnectTimer();
 
     if (_stompClient != null) {
-      // Send disconnect message
-      await _sendMessage(ApiConfig.disconnectDestination, {
-        'userId': _userId,
-        'userType': _userType,
-      });
+      try {
+        // Send disconnect message if still connected
+        if (_isConnected && _userId != null && _userType != null) {
+          await _sendMessage(ApiConfig.disconnectDestination, {
+            'userId': _userId,
+            'userType': _userType,
+          });
+        }
+      } catch (e) {
+        // Ignore errors during disconnect
+      }
 
-      _stompClient!.deactivate();
+      try {
+        _stompClient!.deactivate();
+      } catch (e) {
+        // Ignore errors during deactivate
+      }
       _stompClient = null;
     }
 
@@ -295,7 +327,13 @@ class WebSocketService {
     _isConnecting = false;
     _reconnectAttempts = 0;
     _connectionStatusController.add('connected');
-    await _registerUserAndSubscribe();
-    _startHeartbeat();
+
+    try {
+      await _registerUserAndSubscribe();
+      _startHeartbeat();
+    } catch (e) {
+      // If registration fails, disconnect and try again
+      _handleError(e);
+    }
   }
 }

@@ -99,11 +99,12 @@ class StaffProvider with ChangeNotifier {
 
       _staffName = currentUser.fullName ?? 'Staff';
 
-      // Connect to WebSocket
+      // Connect to WebSocket (force reconnect to ensure clean connection)
       final connected = await _webSocketService.connect(
         userId: currentUser.idAccount.toString(),
         userType: 'STAFF',
         deviceId: 'mobile_device',
+        forceReconnect: true, // Force reconnect to ensure clean connection
       );
 
       if (connected) {

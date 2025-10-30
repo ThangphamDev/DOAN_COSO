@@ -247,6 +247,18 @@ class StaffOrderDetailScreen extends StatelessWidget {
               ),
             ],
           ),
+          // Hiển thị variants nếu có
+          if (detail.hasVariants) ...[
+            const SizedBox(height: 8),
+            Text(
+              detail.variantDescription,
+              style: TextStyle(
+                fontSize: 13,
+                color: AppTheme.textSecondary,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

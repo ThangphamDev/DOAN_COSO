@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'user.dart';
 import 'product.dart';
 
@@ -53,8 +54,8 @@ class Order {
       promotionId: json['promotionId'] as int?,
       orderDetails: json['orderDetails'] != null
           ? (json['orderDetails'] as List)
-              .map((e) => OrderDetail.fromJson(e as Map<String, dynamic>))
-              .toList()
+                .map((e) => OrderDetail.fromJson(e as Map<String, dynamic>))
+                .toList()
           : null,
       payment: json['payment'] != null
           ? Payment.fromJson(json['payment'] as Map<String, dynamic>)
@@ -174,6 +175,10 @@ class OrderDetail {
   final int? quantity;
   final double? unitPrice;
   final double? subtotal;
+  final String? size;
+  final String? icePercent;
+  final String? sugarPercent;
+  final String? toppings;
 
   OrderDetail({
     this.productId,
@@ -182,6 +187,10 @@ class OrderDetail {
     this.quantity,
     this.unitPrice,
     this.subtotal,
+    this.size,
+    this.icePercent,
+    this.sugarPercent,
+    this.toppings,
   });
 
   factory OrderDetail.fromJson(Map<String, dynamic> json) {
@@ -194,6 +203,12 @@ class OrderDetail {
       quantity: json['quantity'] as int?,
       unitPrice: (json['unitPrice'] as num?)?.toDouble(),
       subtotal: (json['subtotal'] as num?)?.toDouble(),
+      size: json['size'] as String?,
+      icePercent:
+          json['icePercent'] as String? ?? json['ice_percent'] as String?,
+      sugarPercent:
+          json['sugarPercent'] as String? ?? json['sugar_percent'] as String?,
+      toppings: json['toppings'] as String?,
     );
   }
 
@@ -205,7 +220,61 @@ class OrderDetail {
       'quantity': quantity,
       'unitPrice': unitPrice,
       'subtotal': subtotal,
+      'size': size,
+      'icePercent': icePercent,
+      'sugarPercent': sugarPercent,
+      'toppings': toppings,
     };
+  }
+
+  String get variantDescription {
+    List<String> descriptions = [];
+
+    // Size
+    if (size != null && size!.isNotEmpty && size!.toLowerCase() != 's') {
+      descriptions.add('Size: $size');
+    }
+
+    // Ice
+    if (icePercent != null && icePercent!.isNotEmpty && icePercent != '100') {
+      descriptions.add('Đá: $icePercent%');
+    }
+
+    // Sugar
+    if (sugarPercent != null &&
+        sugarPercent!.isNotEmpty &&
+        sugarPercent != '100') {
+      descriptions.add('Đường: $sugarPercent%');
+    }
+
+    // Toppings
+    if (toppings != null && toppings!.isNotEmpty) {
+      // Toppings có thể là JSON string hoặc comma-separated
+      try {
+        final toppingsList = List<String>.from(json.decode(toppings!) as List);
+        if (toppingsList.isNotEmpty) {
+          descriptions.add('Topping: ${toppingsList.join(', ')}');
+        }
+      } catch (e) {
+        // Nếu không phải JSON array, coi như là string
+        descriptions.add('Topping: $toppings');
+      }
+    }
+
+    return descriptions.join(' • ');
+  }
+
+  bool get hasVariants {
+    final hasSize =
+        size != null && size!.isNotEmpty && size!.toLowerCase() != 's';
+    final hasIce =
+        icePercent != null && icePercent!.isNotEmpty && icePercent != '100';
+    final hasSugar =
+        sugarPercent != null &&
+        sugarPercent!.isNotEmpty &&
+        sugarPercent != '100';
+    final hasToppings = toppings != null && toppings!.isNotEmpty;
+    return hasSize || hasIce || hasSugar || hasToppings;
   }
 
   String get formattedUnitPrice {
