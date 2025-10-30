@@ -1,8 +1,3 @@
-import 'package:json_annotation/json_annotation.dart';
-
-part 'websocket_message.g.dart';
-
-@JsonSerializable()
 class WebSocketMessage {
   final String? type;
   final dynamic data;
@@ -18,12 +13,27 @@ class WebSocketMessage {
     this.sessionId,
   });
 
-  factory WebSocketMessage.fromJson(Map<String, dynamic> json) =>
-      _$WebSocketMessageFromJson(json);
-  Map<String, dynamic> toJson() => _$WebSocketMessageToJson(this);
+  factory WebSocketMessage.fromJson(Map<String, dynamic> json) {
+    return WebSocketMessage(
+      type: json['type'] as String?,
+      data: json['data'],
+      timestamp: json['timestamp'] as String?,
+      userId: json['userId'] as String?,
+      sessionId: json['sessionId'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type,
+      'data': data,
+      'timestamp': timestamp,
+      'userId': userId,
+      'sessionId': sessionId,
+    };
+  }
 }
 
-@JsonSerializable()
 class OrderNotification {
   final String? notificationType;
   final dynamic order; // Will be parsed as Order object
@@ -39,9 +49,25 @@ class OrderNotification {
     this.timestamp,
   });
 
-  factory OrderNotification.fromJson(Map<String, dynamic> json) =>
-      _$OrderNotificationFromJson(json);
-  Map<String, dynamic> toJson() => _$OrderNotificationToJson(this);
+  factory OrderNotification.fromJson(Map<String, dynamic> json) {
+    return OrderNotification(
+      notificationType: json['notificationType'] as String?,
+      order: json['order'],
+      message: json['message'] as String?,
+      priority: json['priority'] as String?,
+      timestamp: json['timestamp'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'notificationType': notificationType,
+      'order': order,
+      'message': message,
+      'priority': priority,
+      'timestamp': timestamp,
+    };
+  }
 
   bool get isHighPriority => priority?.toUpperCase() == 'HIGH';
   bool get isNewOrder => notificationType == 'NEW_ORDER';
@@ -50,7 +76,6 @@ class OrderNotification {
   bool get isOrderCancelled => notificationType == 'ORDER_CANCELLED';
 }
 
-@JsonSerializable()
 class WebSocketRegistration {
   final String userId;
   final String userType;
@@ -64,12 +89,25 @@ class WebSocketRegistration {
     this.deviceName,
   });
 
-  factory WebSocketRegistration.fromJson(Map<String, dynamic> json) =>
-      _$WebSocketRegistrationFromJson(json);
-  Map<String, dynamic> toJson() => _$WebSocketRegistrationToJson(this);
+  factory WebSocketRegistration.fromJson(Map<String, dynamic> json) {
+    return WebSocketRegistration(
+      userId: json['userId'] as String,
+      userType: json['userType'] as String,
+      deviceId: json['deviceId'] as String?,
+      deviceName: json['deviceName'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'userId': userId,
+      'userType': userType,
+      'deviceId': deviceId,
+      'deviceName': deviceName,
+    };
+  }
 }
 
-@JsonSerializable()
 class WebSocketStats {
   final int? activeStaffCount;
   final int? activeCustomerCount;
@@ -81,7 +119,19 @@ class WebSocketStats {
     this.timestamp,
   });
 
-  factory WebSocketStats.fromJson(Map<String, dynamic> json) =>
-      _$WebSocketStatsFromJson(json);
-  Map<String, dynamic> toJson() => _$WebSocketStatsToJson(this);
+  factory WebSocketStats.fromJson(Map<String, dynamic> json) {
+    return WebSocketStats(
+      activeStaffCount: json['activeStaffCount'] as int?,
+      activeCustomerCount: json['activeCustomerCount'] as int?,
+      timestamp: json['timestamp'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'activeStaffCount': activeStaffCount,
+      'activeCustomerCount': activeCustomerCount,
+      'timestamp': timestamp,
+    };
+  }
 }

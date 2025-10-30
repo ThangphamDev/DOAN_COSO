@@ -1,10 +1,6 @@
-import 'package:json_annotation/json_annotation.dart';
 import 'user.dart';
 import 'product.dart';
 
-part 'order.g.dart';
-
-@JsonSerializable()
 class Order {
   final int? idOrder;
   final int? tableId;
@@ -40,8 +36,57 @@ class Order {
     this.table,
   });
 
-  factory Order.fromJson(Map<String, dynamic> json) => _$OrderFromJson(json);
-  Map<String, dynamic> toJson() => _$OrderToJson(this);
+  factory Order.fromJson(Map<String, dynamic> json) {
+    return Order(
+      idOrder: json['idOrder'] as int?,
+      tableId: json['tableId'] as int?,
+      tableNumber: json['tableNumber'] as String?,
+      location: json['location'] as String?,
+      quantity: json['quantity'] as int?,
+      orderTime: json['orderTime'] != null
+          ? DateTime.parse(json['orderTime'] as String)
+          : null,
+      totalAmount: (json['totalAmount'] as num?)?.toDouble(),
+      note: json['note'] as String?,
+      status: json['status'] as String?,
+      accountId: json['accountId'] as int?,
+      promotionId: json['promotionId'] as int?,
+      orderDetails: json['orderDetails'] != null
+          ? (json['orderDetails'] as List)
+              .map((e) => OrderDetail.fromJson(e as Map<String, dynamic>))
+              .toList()
+          : null,
+      payment: json['payment'] != null
+          ? Payment.fromJson(json['payment'] as Map<String, dynamic>)
+          : null,
+      account: json['account'] != null
+          ? User.fromJson(json['account'] as Map<String, dynamic>)
+          : null,
+      table: json['table'] != null
+          ? Table.fromJson(json['table'] as Map<String, dynamic>)
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'idOrder': idOrder,
+      'tableId': tableId,
+      'tableNumber': tableNumber,
+      'location': location,
+      'quantity': quantity,
+      'orderTime': orderTime?.toIso8601String(),
+      'totalAmount': totalAmount,
+      'note': note,
+      'status': status,
+      'accountId': accountId,
+      'promotionId': promotionId,
+      'orderDetails': orderDetails?.map((e) => e.toJson()).toList(),
+      'payment': payment?.toJson(),
+      'account': account?.toJson(),
+      'table': table?.toJson(),
+    };
+  }
 
   Order copyWith({
     int? idOrder,
@@ -122,7 +167,6 @@ class Order {
   }
 }
 
-@JsonSerializable()
 class OrderDetail {
   final int? productId;
   final int? orderId;
@@ -140,9 +184,29 @@ class OrderDetail {
     this.subtotal,
   });
 
-  factory OrderDetail.fromJson(Map<String, dynamic> json) =>
-      _$OrderDetailFromJson(json);
-  Map<String, dynamic> toJson() => _$OrderDetailToJson(this);
+  factory OrderDetail.fromJson(Map<String, dynamic> json) {
+    return OrderDetail(
+      productId: json['productId'] as int?,
+      orderId: json['orderId'] as int?,
+      product: json['product'] != null
+          ? Product.fromJson(json['product'] as Map<String, dynamic>)
+          : null,
+      quantity: json['quantity'] as int?,
+      unitPrice: (json['unitPrice'] as num?)?.toDouble(),
+      subtotal: (json['subtotal'] as num?)?.toDouble(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'productId': productId,
+      'orderId': orderId,
+      'product': product?.toJson(),
+      'quantity': quantity,
+      'unitPrice': unitPrice,
+      'subtotal': subtotal,
+    };
+  }
 
   String get formattedUnitPrice {
     if (unitPrice == null || unitPrice == 0) return '0 đ';
@@ -166,7 +230,6 @@ class OrderDetail {
   }
 }
 
-@JsonSerializable()
 class Payment {
   final int? idPayment;
   final int? orderId;
@@ -182,9 +245,27 @@ class Payment {
     this.paymentStatus,
   });
 
-  factory Payment.fromJson(Map<String, dynamic> json) =>
-      _$PaymentFromJson(json);
-  Map<String, dynamic> toJson() => _$PaymentToJson(this);
+  factory Payment.fromJson(Map<String, dynamic> json) {
+    return Payment(
+      idPayment: json['idPayment'] as int?,
+      orderId: json['orderId'] as int?,
+      createAt: json['createAt'] != null
+          ? DateTime.parse(json['createAt'] as String)
+          : null,
+      paymentMethod: json['paymentMethod'] as String?,
+      paymentStatus: json['paymentStatus'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'idPayment': idPayment,
+      'orderId': orderId,
+      'createAt': createAt?.toIso8601String(),
+      'paymentMethod': paymentMethod,
+      'paymentStatus': paymentStatus,
+    };
+  }
 
   String get paymentMethodText {
     switch (paymentMethod?.toLowerCase()) {
@@ -215,7 +296,6 @@ class Payment {
   bool get isCompleted => paymentStatus?.toLowerCase() == 'completed';
 }
 
-@JsonSerializable()
 class Table {
   final int? idTable;
   final String? status;
@@ -231,8 +311,25 @@ class Table {
     this.tableNumber,
   });
 
-  factory Table.fromJson(Map<String, dynamic> json) => _$TableFromJson(json);
-  Map<String, dynamic> toJson() => _$TableToJson(this);
+  factory Table.fromJson(Map<String, dynamic> json) {
+    return Table(
+      idTable: json['idTable'] as int?,
+      status: json['status'] as String?,
+      capacity: json['capacity'] as int?,
+      location: json['location'] as String?,
+      tableNumber: json['tableNumber'] as int?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'idTable': idTable,
+      'status': status,
+      'capacity': capacity,
+      'location': location,
+      'tableNumber': tableNumber,
+    };
+  }
 
   String get statusText {
     switch (status?.toLowerCase()) {

@@ -1,9 +1,5 @@
-import 'package:json_annotation/json_annotation.dart';
 import '../utils/api_config.dart';
 
-part 'product.g.dart';
-
-@JsonSerializable()
 class Product {
   final int? idProduct;
   final String? productName;
@@ -25,9 +21,31 @@ class Product {
     this.categoryName,
   });
 
-  factory Product.fromJson(Map<String, dynamic> json) =>
-      _$ProductFromJson(json);
-  Map<String, dynamic> toJson() => _$ProductToJson(this);
+  factory Product.fromJson(Map<String, dynamic> json) {
+    return Product(
+      idProduct: json['idProduct'] as int?,
+      productName: json['productName'] as String?,
+      price: (json['price'] as num?)?.toDouble(),
+      description: json['description'] as String?,
+      image: json['image'] as String?,
+      isAvailable: json['isAvailable'] as bool?,
+      categoryId: json['categoryId'] as int?,
+      categoryName: json['categoryName'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'idProduct': idProduct,
+      'productName': productName,
+      'price': price,
+      'description': description,
+      'image': image,
+      'isAvailable': isAvailable,
+      'categoryId': categoryId,
+      'categoryName': categoryName,
+    };
+  }
 
   Product copyWith({
     int? idProduct,

@@ -1,8 +1,3 @@
-import 'package:json_annotation/json_annotation.dart';
-
-part 'cart_item.g.dart';
-
-@JsonSerializable()
 class CartItem {
   final int productId;
   final String productName;
@@ -22,9 +17,29 @@ class CartItem {
     required this.totalPrice,
   });
 
-  factory CartItem.fromJson(Map<String, dynamic> json) =>
-      _$CartItemFromJson(json);
-  Map<String, dynamic> toJson() => _$CartItemToJson(this);
+  factory CartItem.fromJson(Map<String, dynamic> json) {
+    return CartItem(
+      productId: json['productId'] as int,
+      productName: json['productName'] as String,
+      basePrice: (json['basePrice'] as num).toDouble(),
+      price: (json['price'] as num).toDouble(),
+      quantity: json['quantity'] as int,
+      variants: ProductVariants.fromJson(json['variants'] as Map<String, dynamic>),
+      totalPrice: (json['totalPrice'] as num).toDouble(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'productId': productId,
+      'productName': productName,
+      'basePrice': basePrice,
+      'price': price,
+      'quantity': quantity,
+      'variants': variants.toJson(),
+      'totalPrice': totalPrice,
+    };
+  }
 
   CartItem copyWith({
     int? productId,
@@ -84,7 +99,6 @@ class CartItem {
   }
 }
 
-@JsonSerializable()
 class ProductVariants {
   final String? size;
   final String? ice;
@@ -93,9 +107,25 @@ class ProductVariants {
 
   ProductVariants({this.size, this.ice, this.sugar, this.toppings});
 
-  factory ProductVariants.fromJson(Map<String, dynamic> json) =>
-      _$ProductVariantsFromJson(json);
-  Map<String, dynamic> toJson() => _$ProductVariantsToJson(this);
+  factory ProductVariants.fromJson(Map<String, dynamic> json) {
+    return ProductVariants(
+      size: json['size'] as String?,
+      ice: json['ice'] as String?,
+      sugar: json['sugar'] as String?,
+      toppings: json['toppings'] != null
+          ? (json['toppings'] as List).map((e) => e as String).toList()
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'size': size,
+      'ice': ice,
+      'sugar': sugar,
+      'toppings': toppings,
+    };
+  }
 
   ProductVariants copyWith({
     String? size,
