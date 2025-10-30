@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../models/order.dart';
-import '../../services/api_service.dart';
+import '../../providers/customer_order_provider.dart';
 import '../../utils/app_theme.dart';
 import '../../widgets/loading_widget.dart';
 import '../../widgets/modern_order_card.dart';
@@ -14,20 +15,18 @@ class OrdersScreen extends StatefulWidget {
 
 class _OrdersScreenState extends State<OrdersScreen>
     with SingleTickerProviderStateMixin {
-  final ApiService _apiService = ApiService();
   late TabController _tabController;
-
-  List<Order> _allOrders = [];
-  List<Order> _processingOrders = [];
-  List<Order> _completedOrders = [];
-  bool _isLoading = true;
-  String? _error;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _loadOrders();
+
+    // Initialize customer order provider
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final orderProvider = Provider.of<CustomerOrderProvider>(context, listen: false);
+      orderProvider.initialize();
+    });
   }
 
   @override
@@ -36,107 +35,93 @@ class _OrdersScreenState extends State<OrdersScreen>
     super.dispose();
   }
 
-  Future<void> _loadOrders() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
-    try {
-      // Check if user is logged in before making request
-      if (!_apiService.isLoggedIn) {
-        if (mounted) {
-          setState(() {
-            _error = 'Vui lòng đăng nhập để xem đơn hàng';
-            _isLoading = false;
-          });
-        }
-        return;
-      }
-
-      final orders = await _apiService.getOrders();
-
-      // Sắp xếp đơn hàng theo thời gian mới nhất trước
-      orders.sort((a, b) {
-        if (a.orderTime == null && b.orderTime == null) return 0;
-        if (a.orderTime == null) return 1;
-        if (b.orderTime == null) return -1;
-        return b.orderTime!.compareTo(a.orderTime!);
-      });
-
-      if (mounted) {
-        setState(() {
-          _allOrders = orders;
-          _processingOrders = orders
-              .where(
-                (order) =>
-                    order.isProcessing || order.isPreparing || order.isReady,
-              )
-              .toList();
-          _completedOrders = orders
-              .where((order) => order.isCompleted || order.isCancelled)
-              .toList();
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.toString();
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(
-        title: const Text('Đơn hàng'),
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadOrders),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          indicatorColor: Colors.white,
-          tabs: const [
-            Tab(text: 'Tất cả'),
-            Tab(text: 'Đang xử lý'),
-            Tab(text: 'Hoàn thành'),
-          ],
-        ),
-      ),
-      body: _buildBody(),
+    return Consumer<CustomerOrderProvider>(
+      builder: (context, orderProvider, child) {
+        return Scaffold(
+          backgroundColor: AppTheme.backgroundColor,
+          appBar: AppBar(
+            title: Row(
+              children: [
+                const Text('Đơn hàng'),
+                const SizedBox(width: 8),
+                if (orderProvider.isConnected)
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: Colors.greenAccent,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.greenAccent.withOpacity(0.5),
+                          blurRadius: 4,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            backgroundColor: AppTheme.primaryColor,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: () => orderProvider.refreshOrders(),
+              ),
+            ],
+            bottom: TabBar(
+              controller: _tabController,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white70,
+              indicatorColor: Colors.white,
+              tabs: const [
+                Tab(text: 'Tất cả'),
+                Tab(text: 'Đang xử lý'),
+                Tab(text: 'Hoàn thành'),
+              ],
+            ),
+          ),
+          body: _buildBody(orderProvider),
+        );
+      },
     );
   }
 
-  Widget _buildBody() {
-    if (_isLoading) {
+  Widget _buildBody(CustomerOrderProvider orderProvider) {
+    if (orderProvider.isLoading) {
       return const LoadingWidget(message: 'Đang tải đơn hàng...');
     }
 
-    if (_error != null) {
-      return _buildErrorWidget();
+    if (orderProvider.error != null) {
+      return _buildErrorWidget(orderProvider);
     }
+
+    // Calculate processing orders (processing + preparing + ready)
+    final processingOrders = orderProvider.orders
+        .where((order) =>
+            order.isProcessing || order.isPreparing || order.isReady)
+        .toList();
+
+    // Calculate completed orders (completed + cancelled)
+    final completedOrders = orderProvider.orders
+        .where((order) => order.isCompleted || order.isCancelled)
+        .toList();
 
     return TabBarView(
       controller: _tabController,
       children: [
-        _buildOrdersList(_allOrders),
-        _buildOrdersList(_processingOrders),
-        _buildOrdersList(_completedOrders),
+        _buildOrdersList(orderProvider.orders, orderProvider),
+        _buildOrdersList(processingOrders, orderProvider),
+        _buildOrdersList(completedOrders, orderProvider),
       ],
     );
   }
 
-  Widget _buildErrorWidget() {
+  Widget _buildErrorWidget(CustomerOrderProvider orderProvider) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -152,13 +137,13 @@ class _OrdersScreenState extends State<OrdersScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              _error!,
+              orderProvider.error!,
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: _loadOrders,
+              onPressed: () => orderProvider.refreshOrders(),
               icon: const Icon(Icons.refresh),
               label: const Text('Thử lại'),
             ),
@@ -168,7 +153,7 @@ class _OrdersScreenState extends State<OrdersScreen>
     );
   }
 
-  Widget _buildOrdersList(List<Order> orders) {
+  Widget _buildOrdersList(List<Order> orders, CustomerOrderProvider orderProvider) {
     if (orders.isEmpty) {
       return Center(
         child: Column(
@@ -196,7 +181,7 @@ class _OrdersScreenState extends State<OrdersScreen>
     }
 
     return RefreshIndicator(
-      onRefresh: _loadOrders,
+      onRefresh: () => orderProvider.refreshOrders(),
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: orders.length,

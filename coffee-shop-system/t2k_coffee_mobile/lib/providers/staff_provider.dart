@@ -16,7 +16,6 @@ class StaffProvider with ChangeNotifier {
   String? _error;
   bool _isConnected = false;
   String? _staffName;
-  Timer? _pollingTimer;
 
   // Getters
   List<Order> get allOrders => _allOrders;
@@ -56,9 +55,6 @@ class StaffProvider with ChangeNotifier {
 
       // Connect to WebSocket
       await _connectWebSocket();
-
-      // Start polling for new orders (fallback if WebSocket fails)
-      _startOrderPolling();
 
       _clearError();
     } catch (e) {
@@ -244,82 +240,9 @@ class StaffProvider with ChangeNotifier {
         .toList();
   }
 
-  // Refresh orders
+  // Refresh orders manually
   Future<void> refreshOrders() async {
     await _loadOrders();
-  }
-
-  // Start polling for new orders (fallback if WebSocket fails)
-  void _startOrderPolling() {
-    _stopOrderPolling();
-    _pollingTimer = Timer.periodic(Duration(seconds: 3), (timer) async {
-      if (!_isLoading) {
-        await _checkForNewOrders();
-      }
-    });
-  }
-
-  // Check for new orders by comparing with previous list
-  Future<void> _checkForNewOrders() async {
-    try {
-      // Only check for orders if user is staff
-      final currentUser = _apiService.currentUser;
-      if (currentUser == null || (!currentUser.isStaff && !currentUser.isAdmin)) {
-        // User is not staff, stop polling
-        _stopOrderPolling();
-        return;
-      }
-
-      final currentOrders = await _apiService.getAllOrders();
-
-      // Sort orders by time
-      currentOrders.sort((a, b) {
-        if (a.orderTime == null && b.orderTime == null) return 0;
-        if (a.orderTime == null) return 1;
-        if (b.orderTime == null) return -1;
-        return b.orderTime!.compareTo(a.orderTime!);
-      });
-
-      // Check if there are new orders
-      if (_allOrders.isNotEmpty && currentOrders.isNotEmpty) {
-        final latestCurrentOrder = currentOrders.first;
-        final latestKnownOrder = _allOrders.first;
-
-        if (latestCurrentOrder.idOrder != latestKnownOrder.idOrder) {
-          // Update orders list
-          _allOrders = currentOrders;
-
-          // Show notification and play sound
-          _showNewOrderNotification(latestCurrentOrder);
-          _playNotificationSound();
-
-          // Announce new order
-          _speechService.announceNewOrder(
-            orderId: latestCurrentOrder.idOrder!,
-            tableNumber: latestCurrentOrder.tableNumber,
-            location: latestCurrentOrder.location,
-            totalAmount: latestCurrentOrder.totalAmount,
-          );
-
-          notifyListeners();
-          return;
-        }
-      }
-
-      // Update orders list if different
-      if (_allOrders.length != currentOrders.length) {
-        _allOrders = currentOrders;
-        notifyListeners();
-      }
-    } catch (e) {
-      print('Error checking for new orders: $e');
-    }
-  }
-
-  // Stop order polling
-  void _stopOrderPolling() {
-    _pollingTimer?.cancel();
-    _pollingTimer = null;
   }
 
   // Test speech
@@ -349,7 +272,6 @@ class StaffProvider with ChangeNotifier {
 
   // Clear all staff data (called during logout)
   void clearStaffData() {
-    _stopOrderPolling();
     _allOrders = [];
     _isLoading = false;
     _error = null;
@@ -361,7 +283,7 @@ class StaffProvider with ChangeNotifier {
   // Dispose resources
   @override
   void dispose() {
-    _stopOrderPolling();
+    _webSocketService.disconnect();
     super.dispose();
   }
 }

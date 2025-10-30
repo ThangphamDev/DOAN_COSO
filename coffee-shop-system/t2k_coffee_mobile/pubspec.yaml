@@ -40,6 +40,8 @@ dependencies:
   
   # WebSocket support
   web_socket_channel: ^2.4.0
+  # STOMP over WebSocket
+  stomp_dart_client: ^0.4.4
   
   # State management
   provider: ^6.1.1
@@ -80,6 +82,9 @@ dependencies:
   
   # Audio player for notification sounds
   audioplayers: ^5.2.1
+
+  # Local notifications
+  flutter_local_notifications: ^17.2.3
 
 dev_dependencies:
   flutter_test:

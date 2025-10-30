@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'providers/auth_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/staff_provider.dart';
+import 'providers/customer_order_provider.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
@@ -36,6 +37,7 @@ class T2KCoffeeApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => StaffProvider()),
+        ChangeNotifierProvider(create: (_) => CustomerOrderProvider()),
       ],
       child: MaterialApp.router(
         title: 'T2K Coffee',

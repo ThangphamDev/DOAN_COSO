@@ -107,6 +107,9 @@ public class WebSocketService {
                 for (String sessionId : customerSessionIds) {
                     messagingTemplate.convertAndSendToUser(sessionId, "/queue/notifications", message);
                 }
+
+                // Also broadcast to a customer-specific topic to avoid Principal dependency
+                messagingTemplate.convertAndSend("/topic/customer/" + customerId + "/orders", message);
             }
         }
     }
@@ -132,6 +135,9 @@ public class WebSocketService {
                 for (String sessionId : customerSessionIds) {
                     messagingTemplate.convertAndSendToUser(sessionId, "/queue/notifications", message);
                 }
+
+                // Also broadcast to a customer-specific topic
+                messagingTemplate.convertAndSend("/topic/customer/" + customerId + "/orders", message);
             }
         }
     }

@@ -1,16 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:web_socket_channel/status.dart' as status;
+import 'package:stomp_dart_client/stomp.dart';
+import 'package:stomp_dart_client/stomp_config.dart';
+import 'package:stomp_dart_client/stomp_frame.dart';
 import '../models/websocket_message.dart';
 import '../utils/api_config.dart';
+import 'api_service.dart';
 
 class WebSocketService {
   static final WebSocketService _instance = WebSocketService._internal();
   factory WebSocketService() => _instance;
   WebSocketService._internal();
 
-  WebSocketChannel? _channel;
+  StompClient? _stompClient;
   Timer? _heartbeatTimer;
   Timer? _reconnectTimer;
   int _reconnectAttempts = 0;
@@ -37,7 +39,7 @@ class WebSocketService {
   Stream<String> get connectionStatusStream =>
       _connectionStatusController.stream;
 
-  // Connect to WebSocket
+  // Connect to WebSocket (STOMP)
   Future<bool> connect({
     required String userId,
     required String userType,
@@ -54,33 +56,38 @@ class WebSocketService {
     _connectionStatusController.add('connecting');
 
     try {
-      final uri = Uri.parse(ApiConfig.wsUrl);
-      _channel = WebSocketChannel.connect(uri);
+      final token = ApiService().token;
+      final commonHeaders = <String, String>{
+        if (token != null) 'Authorization': 'Bearer $token',
+        if (ApiConfig.useNgrok) 'ngrok-skip-browser-warning': 'true',
+        'Accept': 'application/json',
+      };
 
-      // Listen to incoming messages
-      _channel!.stream.listen(
-        _handleMessage,
-        onError: _handleError,
-        onDone: _handleDisconnection,
+      _stompClient = StompClient(
+        config: StompConfig(
+          url: ApiConfig.wsUrl,
+          onConnect: _onStompConnect,
+          onWebSocketError: _handleError,
+          onStompError: (StompFrame f) => _handleError(f.body ?? 'stomp_error'),
+          onDisconnect: (f) => _handleDisconnection(),
+          heartbeatOutgoing: Duration(
+            milliseconds: ApiConfig.heartbeatIntervalMs,
+          ),
+          heartbeatIncoming: Duration(
+            milliseconds: ApiConfig.heartbeatIntervalMs,
+          ),
+          reconnectDelay: Duration(milliseconds: ApiConfig.reconnectDelayMs),
+          stompConnectHeaders: commonHeaders,
+          webSocketConnectHeaders: commonHeaders,
+        ),
       );
 
-      // Wait for connection to be established
-      await Future.delayed(Duration(milliseconds: 1000));
+      _stompClient!.activate();
 
-      if (_channel != null) {
-        _isConnected = true;
-        _isConnecting = false;
-        _reconnectAttempts = 0;
-        _connectionStatusController.add('connected');
+      // Wait a bit for connect callback
+      await Future.delayed(Duration(milliseconds: 800));
 
-        // Register user with server
-        await _registerUser();
-
-        // Start heartbeat
-        _startHeartbeat();
-
-        return true;
-      }
+      return _isConnected;
     } catch (e) {
       _handleError(e);
     }
@@ -95,15 +102,15 @@ class WebSocketService {
     _stopHeartbeat();
     _stopReconnectTimer();
 
-    if (_channel != null) {
+    if (_stompClient != null) {
       // Send disconnect message
       await _sendMessage(ApiConfig.disconnectDestination, {
         'userId': _userId,
         'userType': _userType,
       });
 
-      await _channel!.sink.close(status.normalClosure);
-      _channel = null;
+      _stompClient!.deactivate();
+      _stompClient = null;
     }
 
     _isConnected = false;
@@ -114,15 +121,19 @@ class WebSocketService {
   // Handle incoming messages
   void _handleMessage(dynamic message) {
     try {
-      final data = json.decode(message);
+      final data = message is String ? json.decode(message) : message;
       final wsMessage = WebSocketMessage.fromJson(data);
 
       _messageController.add(wsMessage);
 
       // Handle specific message types
-      if (wsMessage.type == 'ORDER_NOTIFICATION' && wsMessage.data != null) {
-        final notification = OrderNotification.fromJson(wsMessage.data);
-        _orderNotificationController.add(notification);
+      if (wsMessage.data != null) {
+        if (wsMessage.type == 'ORDER_NOTIFICATION' ||
+            wsMessage.type == 'ORDER_UPDATE' ||
+            wsMessage.type == 'ORDER_COMPLETED') {
+          final notification = OrderNotification.fromJson(wsMessage.data);
+          _orderNotificationController.add(notification);
+        }
       }
     } catch (e) {
       print('Error handling WebSocket message: $e');
@@ -169,8 +180,8 @@ class WebSocketService {
     );
   }
 
-  // Register user with server
-  Future<void> _registerUser() async {
+  // Register user with server via STOMP and subscribe to topics
+  Future<void> _registerUserAndSubscribe() async {
     if (_userId != null && _userType != null) {
       await _sendMessage(ApiConfig.registerDestination, {
         'userId': _userId,
@@ -178,22 +189,26 @@ class WebSocketService {
         'deviceId': _deviceId,
       });
 
-      // Subscribe to relevant topics based on user type
-      if (_userType == 'STAFF' || _userType == 'ADMIN') {
-        // Staff should listen to staff orders topic
-        await _sendMessage('/topic/staff/orders', {
-          'action': 'subscribe',
-          'userId': _userId,
-          'userType': _userType,
-        });
+      // Subscribe using STOMP
+      if (_stompClient != null) {
+        if (_userType == 'STAFF' || _userType == 'ADMIN') {
+          _stompClient!.subscribe(
+            destination: ApiConfig.staffOrdersTopic,
+            callback: (frame) => _handleMessage(frame.body),
+          );
+        } else if (_userType == 'CUSTOMER') {
+          // Subscribe to customer-specific topic broadcasted by backend
+          _stompClient!.subscribe(
+            destination: '/topic/customer/' + _userId! + '/orders',
+            callback: (frame) => _handleMessage(frame.body),
+          );
+        }
+        // Optionally subscribe to global notifications if used
+        _stompClient!.subscribe(
+          destination: ApiConfig.notificationsTopic,
+          callback: (frame) => _handleMessage(frame.body),
+        );
       }
-
-      // All users should listen to notifications
-      await _sendMessage('/queue/notifications', {
-        'action': 'subscribe',
-        'userId': _userId,
-        'userType': _userType,
-      });
     }
   }
 
@@ -202,10 +217,10 @@ class WebSocketService {
     String destination,
     Map<String, dynamic> data,
   ) async {
-    if (_channel != null && _isConnected) {
+    if (_stompClient != null && _isConnected) {
       try {
         final message = json.encode(data);
-        _channel!.sink.add(message);
+        _stompClient!.send(destination: destination, body: message);
       } catch (e) {
         print('Error sending WebSocket message: $e');
       }
@@ -272,5 +287,15 @@ class WebSocketService {
     _messageController.close();
     _orderNotificationController.close();
     _connectionStatusController.close();
+  }
+
+  // STOMP onConnect callback
+  void _onStompConnect(StompFrame frame) async {
+    _isConnected = true;
+    _isConnecting = false;
+    _reconnectAttempts = 0;
+    _connectionStatusController.add('connected');
+    await _registerUserAndSubscribe();
+    _startHeartbeat();
   }
 }
