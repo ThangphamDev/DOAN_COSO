@@ -194,36 +194,38 @@ public class CafeOrderController {
                 if (productItems != null && !productItems.isEmpty()) {
                     System.out.println("DEBUG - Bước 2: Xử lý " + productItems.size() + " sản phẩm");
                     
-                    // Tạo map để tổng hợp sản phẩm trùng lặp
-                    Map<Integer, Integer> productQuantities = new HashMap<>();
-                    Map<Integer, BigDecimal> productPrices = new HashMap<>();
-                    
-                    // Tổng hợp số lượng cho mỗi sản phẩm
+                    // Xử lý từng sản phẩm (không gộp để giữ nguyên variants)
                     for (Map<String, Object> item : productItems) {
                         Integer productId = Integer.parseInt(item.get("productId").toString());
                         Integer quantity = Integer.parseInt(item.get("quantity").toString());
                         BigDecimal unitPrice = new BigDecimal(item.get("unitPrice").toString());
                         
-                        // Tích lũy số lượng nếu sản phẩm trùng lặp
-                        productQuantities.put(productId, 
-                            productQuantities.getOrDefault(productId, 0) + quantity);
-                        
-                        // Lưu lại giá sản phẩm (lấy giá cuối cùng nếu có nhiều)
-                        productPrices.put(productId, unitPrice);
-                    }
-                    
-                    // Xử lý từng sản phẩm đã tổng hợp
-                    for (Map.Entry<Integer, Integer> entry : productQuantities.entrySet()) {
-                        Integer productId = entry.getKey();
-                        Integer quantity = entry.getValue();
-                        BigDecimal unitPrice = productPrices.get(productId);
+                        // Lấy variants nếu có
+                        String size = item.containsKey("size") && item.get("size") != null 
+                            ? item.get("size").toString() : null;
+                        String icePercent = item.containsKey("icePercent") && item.get("icePercent") != null
+                            ? item.get("icePercent").toString() 
+                            : (item.containsKey("ice_percent") && item.get("ice_percent") != null
+                                ? item.get("ice_percent").toString() : null);
+                        String sugarPercent = item.containsKey("sugarPercent") && item.get("sugarPercent") != null
+                            ? item.get("sugarPercent").toString()
+                            : (item.containsKey("sugar_percent") && item.get("sugar_percent") != null
+                                ? item.get("sugar_percent").toString() : null);
+                        String toppings = item.containsKey("toppings") && item.get("toppings") != null
+                            ? item.get("toppings").toString() : null;
                         
                         System.out.println("DEBUG - Xử lý sản phẩm: id=" + productId + 
                                           ", quantity=" + quantity + 
-                                          ", price=" + unitPrice);
+                                          ", price=" + unitPrice +
+                                          ", size=" + size +
+                                          ", icePercent=" + icePercent +
+                                          ", sugarPercent=" + sugarPercent +
+                                          ", toppings=" + toppings);
                         
-                        // Thêm chi tiết đơn hàng trong một giao dịch riêng
-                        boolean added = cafeOrderService.addOrderDetail(savedOrder, productId, quantity, unitPrice);
+                        // Thêm chi tiết đơn hàng với variants trong một giao dịch riêng
+                        boolean added = cafeOrderService.addOrderDetailWithVariants(
+                            savedOrder, productId, quantity, unitPrice, 
+                            size, icePercent, sugarPercent, toppings);
                         
                         if (!added) {
                             failedProducts.add(productId.toString());

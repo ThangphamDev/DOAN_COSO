@@ -31,4 +31,22 @@ public class OrderDetail {
     
     @Column(name = "Subtotal", insertable = false, updatable = false)
     private BigDecimal subtotal;
+    
+    @Column(name = "size")
+    private String size;
+    
+    @Column(name = "ice_percent")
+    private String icePercent;
+    
+    @Column(name = "sugar_percent")
+    private String sugarPercent;
+    
+    @Column(name = "toppings")
+    private String toppings;
+    
+    @Column(name = "additional_price")
+    private BigDecimal additionalPrice;
+    
+    @Column(name = "variant_note")
+    private String variantNote;
 } 

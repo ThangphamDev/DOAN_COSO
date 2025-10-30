@@ -159,6 +159,13 @@ public class CafeOrderService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean addOrderDetail(CafeOrder order, Integer productId, Integer quantity, BigDecimal unitPrice) {
+        return addOrderDetailWithVariants(order, productId, quantity, unitPrice, null, null, null, null);
+    }
+    
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public boolean addOrderDetailWithVariants(CafeOrder order, Integer productId, Integer quantity, 
+                                             BigDecimal unitPrice, String size, String icePercent, 
+                                             String sugarPercent, String toppings) {
         try {
             // Kiểm tra sản phẩm tồn tại
             Optional<Product> productOpt = productRepository.findById(productId);
@@ -173,7 +180,11 @@ public class CafeOrderService {
             
             System.out.println("DEBUG - Adding OrderDetail: productId=" + productId + 
                               ", orderId=" + orderId + 
-                              ", quantity=" + quantity);
+                              ", quantity=" + quantity +
+                              ", size=" + size +
+                              ", icePercent=" + icePercent +
+                              ", sugarPercent=" + sugarPercent +
+                              ", toppings=" + toppings);
             
             // Tạo OrderDetailId
             OrderDetailId orderDetailId = new OrderDetailId(productId, orderId);
@@ -187,6 +198,10 @@ public class CafeOrderService {
                     // Cập nhật thông tin
                     detail.setQuantity(quantity);
                     detail.setUnitPrice(unitPrice);
+                    detail.setSize(size);
+                    detail.setIcePercent(icePercent);
+                    detail.setSugarPercent(sugarPercent);
+                    detail.setToppings(toppings);
                     // Lưu OrderDetail
                     orderDetailRepository.save(detail);
                     System.out.println("DEBUG - Updated existing OrderDetail");
@@ -207,13 +222,19 @@ public class CafeOrderService {
             newDetail.setQuantity(quantity);
             newDetail.setUnitPrice(unitPrice);
             
+            // Set variants
+            newDetail.setSize(size != null && !size.isEmpty() ? size : "S");
+            newDetail.setIcePercent(icePercent != null && !icePercent.isEmpty() ? icePercent : "100");
+            newDetail.setSugarPercent(sugarPercent != null && !sugarPercent.isEmpty() ? sugarPercent : "100");
+            newDetail.setToppings(toppings);
+            
             // Lưu OrderDetail
             OrderDetail savedDetail = orderDetailRepository.save(newDetail);
             System.out.println("DEBUG - Created new OrderDetail with id: " + savedDetail.getId());
             
             return true;
         } catch (Exception e) {
-            System.err.println("ERROR in addOrderDetail: " + e.getMessage());
+            System.err.println("ERROR in addOrderDetailWithVariants: " + e.getMessage());
             e.printStackTrace();
             return false;
         }

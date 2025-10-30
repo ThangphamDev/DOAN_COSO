@@ -201,15 +201,31 @@ class CartProvider with ChangeNotifier {
 
   // Convert cart items to order format
   List<Map<String, dynamic>> toOrderItems() {
-    return _items
-        .map(
-          (item) => {
-            'productId': item.productId,
-            'quantity': item.quantity,
-            'unitPrice': item.price,
-          },
-        )
-        .toList();
+    return _items.map((item) {
+      final orderItem = <String, dynamic>{
+        'productId': item.productId,
+        'quantity': item.quantity,
+        'unitPrice': item.price,
+      };
+
+      // Add variants if they exist
+      if (item.variants.size != null && item.variants.size!.isNotEmpty) {
+        orderItem['size'] = item.variants.size;
+      }
+      if (item.variants.ice != null && item.variants.ice!.isNotEmpty) {
+        orderItem['icePercent'] = item.variants.ice;
+      }
+      if (item.variants.sugar != null && item.variants.sugar!.isNotEmpty) {
+        orderItem['sugarPercent'] = item.variants.sugar;
+      }
+      if (item.variants.toppings != null &&
+          item.variants.toppings!.isNotEmpty) {
+        // Convert toppings list to JSON string
+        orderItem['toppings'] = json.encode(item.variants.toppings);
+      }
+
+      return orderItem;
+    }).toList();
   }
 
   // Helper method to compare variants
