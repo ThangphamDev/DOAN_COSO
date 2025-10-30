@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/staff_provider.dart';
 import '../../utils/app_theme.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
@@ -396,7 +397,13 @@ class ProfileScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () async {
+              // Stop staff polling and clear privileged data
+              final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+              staffProvider.clearStaffData();
+
+              // Clear authentication token
               await authProvider.logout();
+
               if (context.mounted) {
                 Navigator.of(context).pop();
                 context.go('/login');

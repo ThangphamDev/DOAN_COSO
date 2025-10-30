@@ -99,7 +99,8 @@ class CartProvider with ChangeNotifier {
 
   // Clear cart
   void clearCart() {
-    _items.clear();
+    _items = [];
+    _isLoading = false;
     notifyListeners();
   }
 

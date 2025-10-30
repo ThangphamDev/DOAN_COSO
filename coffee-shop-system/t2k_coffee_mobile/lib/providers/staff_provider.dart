@@ -41,6 +41,13 @@ class StaffProvider with ChangeNotifier {
     _setLoading(true);
 
     try {
+      // Check if user is staff before initializing
+      final currentUser = _apiService.currentUser;
+      if (currentUser == null || (!currentUser.isStaff && !currentUser.isAdmin)) {
+        _setError('User is not authorized for staff operations');
+        return;
+      }
+
       // Initialize speech service
       await _speechService.initialize();
 
@@ -255,6 +262,14 @@ class StaffProvider with ChangeNotifier {
   // Check for new orders by comparing with previous list
   Future<void> _checkForNewOrders() async {
     try {
+      // Only check for orders if user is staff
+      final currentUser = _apiService.currentUser;
+      if (currentUser == null || (!currentUser.isStaff && !currentUser.isAdmin)) {
+        // User is not staff, stop polling
+        _stopOrderPolling();
+        return;
+      }
+
       final currentOrders = await _apiService.getAllOrders();
 
       // Sort orders by time
@@ -332,12 +347,21 @@ class StaffProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // Clear all staff data (called during logout)
+  void clearStaffData() {
+    _stopOrderPolling();
+    _allOrders = [];
+    _isLoading = false;
+    _error = null;
+    _isConnected = false;
+    _staffName = null;
+    notifyListeners();
+  }
+
   // Dispose resources
   @override
   void dispose() {
     _stopOrderPolling();
-    _webSocketService.dispose();
-    _speechService.dispose();
     super.dispose();
   }
 }

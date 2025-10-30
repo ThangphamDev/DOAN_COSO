@@ -412,7 +412,13 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
           ),
           TextButton(
             onPressed: () async {
+              // Stop staff polling and clear privileged data
+              final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+              staffProvider.clearStaffData();
+
+              // Clear authentication token
               await authProvider.logout();
+
               if (context.mounted) {
                 Navigator.of(context).pop();
                 context.go('/login');

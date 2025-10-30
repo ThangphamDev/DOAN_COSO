@@ -43,6 +43,17 @@ class _OrdersScreenState extends State<OrdersScreen>
     });
 
     try {
+      // Check if user is logged in before making request
+      if (!_apiService.isLoggedIn) {
+        if (mounted) {
+          setState(() {
+            _error = 'Vui lòng đăng nhập để xem đơn hàng';
+            _isLoading = false;
+          });
+        }
+        return;
+      }
+
       final orders = await _apiService.getOrders();
 
       // Sắp xếp đơn hàng theo thời gian mới nhất trước

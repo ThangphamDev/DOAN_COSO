@@ -28,21 +28,35 @@ class ApiService {
 
   // Load token from shared preferences
   Future<void> _loadTokenFromStorage() async {
-    final prefs = await SharedPreferences.getInstance();
-    _token = prefs.getString('auth_token');
-    final userJson = prefs.getString('current_user');
-    if (userJson != null) {
-      _currentUser = User.fromJson(json.decode(userJson));
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _token = prefs.getString('auth_token');
+      final userJson = prefs.getString('current_user');
+      if (userJson != null) {
+        _currentUser = User.fromJson(json.decode(userJson));
+      }
+      print('Token loaded: ${_token != null ? "YES" : "NO"}');
+      print('User loaded: ${_currentUser != null ? "YES (ID: ${_currentUser?.idAccount})" : "NO"}');
+    } catch (e) {
+      print('Error loading token from storage: $e');
+      _token = null;
+      _currentUser = null;
     }
   }
 
   // Save token to shared preferences
   Future<void> _saveTokenToStorage(String token, User user) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('auth_token', token);
-    await prefs.setString('current_user', json.encode(user.toJson()));
-    _token = token;
-    _currentUser = user;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('auth_token', token);
+      await prefs.setString('current_user', json.encode(user.toJson()));
+      _token = token;
+      _currentUser = user;
+      print('Token saved successfully. User ID: ${user.idAccount}');
+    } catch (e) {
+      print('Error saving token to storage: $e');
+      throw Exception('Failed to save authentication data');
+    }
   }
 
   // Clear token from storage
@@ -257,8 +271,12 @@ class ApiService {
   // Orders - Get orders for current user
   Future<List<Order>> getOrders() async {
     try {
-      // Get current user ID from token
-      final userId = await _getUserIdFromToken();
+      // First try to get userId from currentUser, fallback to token
+      int? userId = _currentUser?.idAccount;
+      if (userId == null) {
+        userId = await _getUserIdFromToken();
+      }
+
       if (userId == null) {
         throw Exception('User not authenticated');
       }
@@ -428,6 +446,11 @@ class ApiService {
   // Get user ID from JWT token
   Future<int?> _getUserIdFromToken() async {
     try {
+      // First check if we have currentUser with ID
+      if (_currentUser?.idAccount != null) {
+        return _currentUser!.idAccount;
+      }
+
       if (_token == null) return null;
 
       // Decode JWT token to get user ID
@@ -452,7 +475,8 @@ class ApiService {
       return payloadMap['userId'] as int?;
     } catch (e) {
       print('Error decoding token: $e');
-      return null;
+      // Fallback to currentUser if available
+      return _currentUser?.idAccount;
     }
   }
 }
