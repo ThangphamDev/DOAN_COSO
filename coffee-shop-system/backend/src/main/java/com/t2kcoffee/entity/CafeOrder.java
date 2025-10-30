@@ -49,7 +49,6 @@ public class CafeOrder {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderDetail> orderDetails;
     
-    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
-    @JsonIgnore
+    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Payment payment;
 } 

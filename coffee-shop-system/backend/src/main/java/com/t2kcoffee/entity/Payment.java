@@ -2,6 +2,7 @@ package com.t2kcoffee.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.Date;
 
 @Entity
@@ -15,15 +16,16 @@ public class Payment {
 
     @OneToOne
     @JoinColumn(name = "ID_Order")
+    @JsonIgnore
     private CafeOrder order;
     
-    @Column(name = "Create_At")
+    @Column(name = "create_at")
     @Temporal(TemporalType.TIMESTAMP)
     private Date createAt;
     
-    @Column(name = "Payment_Method")
+    @Column(name = "payment_method")
     private String paymentMethod;
     
-    @Column(name = "Payment_Status")
+    @Column(name = "payment_status")
     private String paymentStatus;
 } 
