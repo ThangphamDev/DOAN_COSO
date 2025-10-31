@@ -5,9 +5,9 @@ class ApiConfig {
 
   // Ngrok URLs (update these when ngrok URL changes)
   static const String ngrokBaseUrl =
-      'https://gullably-nonpsychological-leisha.ngrok-free.dev';
+      'https://progenitive-retha-etiologically.ngrok-free.dev';
   static const String ngrokWsUrl =
-      'wss://gullably-nonpsychological-leisha.ngrok-free.dev/ws';
+      'wss://progenitive-retha-etiologically.ngrok-free.dev/ws';
 
   // Use ngrok for mobile testing, local for web testing
   static const bool useNgrok = true;

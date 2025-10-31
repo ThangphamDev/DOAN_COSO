@@ -74,17 +74,39 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function fetchCategoriesAndProducts() {
+        // Fetch categories first
         fetch(`${API.BASE_URL}${API.CATEGORIES}`)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(categories => {
+                console.log('Categories loaded:', categories);
                 renderCategories(categories);
-                let allProducts = [];
-                categories.forEach(category => {
-                    if (category.products && Array.isArray(category.products)) {
-                        category.products.forEach(product => {
-                            product.idCategory = category.idCategory;
-                            allProducts.push(product);
-                        });
+                window._categories = categories;  // Store categories for later use
+                
+                // Fetch products separately since CategoryDTO doesn't include products
+                return fetch(`${API.BASE_URL}${API.PRODUCTS}`);
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(allProducts => {
+                console.log('Products loaded:', allProducts);
+                // Assign category info to products if needed
+                const categories = window._categories || [];
+                allProducts.forEach(product => {
+                    if (product.categoryId && categories.length > 0) {
+                        const category = categories.find(c => (c.id || c.idCategory) === product.categoryId);
+                        if (category) {
+                            product.idCategory = product.categoryId || category.idCategory;
+                            product.category = category;
+                        }
                     }
                 });
                 displayProducts(allProducts);
@@ -92,6 +114,16 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Lỗi khi tải danh mục và sản phẩm:', error);
+                // Show error message to user
+                const menuItemsContainer = document.querySelector('.menu-items');
+                if (menuItemsContainer) {
+                    menuItemsContainer.innerHTML = `
+                        <div class="error-message" style="text-align: center; padding: 20px; color: red;">
+                            <p>Không thể tải dữ liệu. Vui lòng kiểm tra kết nối và thử lại.</p>
+                            <p style="font-size: 12px; color: #666;">${error.message}</p>
+                        </div>
+                    `;
+                }
             });
     }
     
@@ -110,16 +142,15 @@ document.addEventListener('DOMContentLoaded', function() {
             let categoryId;
             let categoryName;
             
-            if (category.ID_Category !== undefined) {
-                categoryId = category.ID_Category;
-                categoryName = category.category_name || 'Danh mục';
-            } else if (category.idCategory !== undefined) {
-                categoryId = category.idCategory;
-                categoryName = category.categoryName || 'Danh mục';
-            } else {
+            // Support multiple field names for backward compatibility
+            categoryId = category.id || category.idCategory || category.ID_Category;
+            categoryName = category.name || category.categoryName || category.category_name || 'Danh mục';
+            
+            if (!categoryId) {
                 console.warn('Không tìm thấy ID danh mục:', category);
                 return; 
             }
+            
             const tab = document.createElement('button');
             tab.className = 'category-tab';
             tab.textContent = categoryName;

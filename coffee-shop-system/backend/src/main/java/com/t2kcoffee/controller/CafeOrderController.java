@@ -5,6 +5,10 @@ import com.t2kcoffee.entity.OrderDetail;
 import com.t2kcoffee.entity.Product;
 import com.t2kcoffee.entity.Payment;
 import com.t2kcoffee.entity.Account;
+import com.t2kcoffee.dto.CafeOrderDTO;
+import com.t2kcoffee.dto.OrderDetailDTO;
+import com.t2kcoffee.dto.ProductDTO;
+import com.t2kcoffee.dto.PaymentDTO;
 import com.t2kcoffee.service.CafeOrderService;
 import com.t2kcoffee.service.ProductService;
 import com.t2kcoffee.service.AccountService;
@@ -38,51 +42,142 @@ public class CafeOrderController {
         this.accountService = accountService;
     }
 
+    // Hàm chuyển đổi Product -> ProductDTO
+    private ProductDTO toProductDTO(Product product) {
+        if (product == null) return null;
+        ProductDTO dto = new ProductDTO();
+        dto.setIdProduct(product.getIdProduct());
+        dto.setProductName(product.getProductName());
+        dto.setPrice(product.getPrice());
+        dto.setDescription(product.getDescription());
+        dto.setIsAvailable(product.getIsAvailable());
+        dto.setImage(product.getImage());
+        if (product.getCategory() != null) {
+            dto.setCategoryId(product.getCategory().getIdCategory());
+            dto.setCategoryName(product.getCategory().getCategoryName());
+        }
+        return dto;
+    }
+
+    // Hàm chuyển đổi Payment -> PaymentDTO
+    private PaymentDTO toPaymentDTO(Payment payment) {
+        if (payment == null) return null;
+        PaymentDTO dto = new PaymentDTO();
+        dto.setIdPayment(payment.getIdPayment());
+        dto.setCreateAt(payment.getCreateAt());
+        dto.setPaymentMethod(payment.getPaymentMethod());
+        dto.setPaymentStatus(payment.getPaymentStatus());
+        return dto;
+    }
+
+    // Hàm chuyển đổi OrderDetail -> OrderDetailDTO
+    private OrderDetailDTO toOrderDetailDTO(OrderDetail detail) {
+        if (detail == null) return null;
+        OrderDetailDTO dto = new OrderDetailDTO();
+        dto.setProductId(detail.getId() != null ? detail.getId().getIdProduct() : null);
+        dto.setOrderId(detail.getId() != null ? detail.getId().getIdOrder() : null);
+        dto.setProduct(toProductDTO(detail.getProduct()));  // Product info đầy đủ
+        dto.setQuantity(detail.getQuantity());
+        dto.setUnitPrice(detail.getUnitPrice());
+        dto.setSubtotal(detail.getSubtotal());
+        dto.setSize(detail.getSize());
+        dto.setIcePercent(detail.getIcePercent());
+        dto.setSugarPercent(detail.getSugarPercent());
+        dto.setToppings(detail.getToppings());
+        dto.setAdditionalPrice(detail.getAdditionalPrice());
+        dto.setVariantNote(detail.getVariantNote());
+        return dto;
+    }
+
+    // Hàm chuyển đổi CafeOrder -> CafeOrderDTO
+    private CafeOrderDTO toCafeOrderDTO(CafeOrder order) {
+        if (order == null) return null;
+        CafeOrderDTO dto = new CafeOrderDTO();
+        dto.setIdOrder(order.getIdOrder());
+        if (order.getTable() != null) {
+            dto.setIdTable(order.getTable().getIdTable());
+            dto.setTableNumber(order.getTable().getTableNumber() != null 
+                ? order.getTable().getTableNumber().toString() 
+                : null);
+        }
+        dto.setQuantity(order.getQuantity());
+        dto.setOrderTime(order.getOrderTime());
+        dto.setTotalAmount(order.getTotalAmount());
+        dto.setNote(order.getNote());
+        dto.setStatus(order.getStatus());
+        if (order.getAccount() != null) {
+            dto.setIdAccount(order.getAccount().getIdAccount());
+            dto.setCustomerName(order.getAccount().getFullName());
+        }
+        if (order.getPromotion() != null) {
+            dto.setIdPromotion(order.getPromotion().getIdPromotion());
+        }
+        dto.setPayment(toPaymentDTO(order.getPayment()));
+        
+        // Convert orderDetails với Product info đầy đủ
+        if (order.getOrderDetails() != null && !order.getOrderDetails().isEmpty()) {
+            dto.setOrderDetails(order.getOrderDetails().stream()
+                .map(this::toOrderDetailDTO)
+                .collect(java.util.stream.Collectors.toList()));
+        }
+        
+        return dto;
+    }
+
     @GetMapping("/today")
     public ResponseEntity<Map<String, Object>> getTodayOrders() {
         return ResponseEntity.ok(cafeOrderService.getTodayOrders());
     }
 
     @GetMapping
-    public ResponseEntity<List<CafeOrder>> getAllOrders() {
+    public ResponseEntity<List<CafeOrderDTO>> getAllOrders() {
         List<CafeOrder> orders = cafeOrderService.getAllOrders();
-        return new ResponseEntity<>(orders, HttpStatus.OK);
+        List<CafeOrderDTO> dtos = orders.stream()
+            .map(this::toCafeOrderDTO)
+            .collect(java.util.stream.Collectors.toList());
+        return new ResponseEntity<>(dtos, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CafeOrder> getOrderById(@PathVariable Integer id) {
+    public ResponseEntity<CafeOrderDTO> getOrderById(@PathVariable Integer id) {
         Optional<CafeOrder> order = cafeOrderService.getOrderById(id);
-        return order.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
+        return order.map(value -> new ResponseEntity<>(toCafeOrderDTO(value), HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @GetMapping("/account/{accountId}")
-    public ResponseEntity<List<CafeOrder>> getOrdersByAccountId(@PathVariable Integer accountId) {
+    public ResponseEntity<List<CafeOrderDTO>> getOrdersByAccountId(@PathVariable Integer accountId) {
         List<CafeOrder> orders = cafeOrderService.getOrdersByAccountId(accountId);
-        return new ResponseEntity<>(orders, HttpStatus.OK);
+        List<CafeOrderDTO> dtos = orders.stream()
+            .map(this::toCafeOrderDTO)
+            .collect(java.util.stream.Collectors.toList());
+        return new ResponseEntity<>(dtos, HttpStatus.OK);
     }
 
     @GetMapping("/table/{tableId}")
-    public ResponseEntity<List<CafeOrder>> getOrdersByTableId(@PathVariable Integer tableId) {
+    public ResponseEntity<List<CafeOrderDTO>> getOrdersByTableId(@PathVariable Integer tableId) {
         List<CafeOrder> orders = cafeOrderService.getOrdersByTableId(tableId);
-        return new ResponseEntity<>(orders, HttpStatus.OK);
+        List<CafeOrderDTO> dtos = orders.stream()
+            .map(this::toCafeOrderDTO)
+            .collect(java.util.stream.Collectors.toList());
+        return new ResponseEntity<>(dtos, HttpStatus.OK);
     }
 
     @GetMapping("/date-range")
-    public ResponseEntity<List<CafeOrder>> getOrdersInDateRange(
+    public ResponseEntity<List<CafeOrderDTO>> getOrdersInDateRange(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date endDate) {
         
         List<CafeOrder> orders = cafeOrderService.getOrdersInDateRange(startDate, endDate);
-        return new ResponseEntity<>(orders, HttpStatus.OK);
+        List<CafeOrderDTO> dtos = orders.stream()
+            .map(this::toCafeOrderDTO)
+            .collect(java.util.stream.Collectors.toList());
+        return new ResponseEntity<>(dtos, HttpStatus.OK);
     }
 
     @PostMapping
     public ResponseEntity<?> createOrder(@RequestBody Map<String, Object> requestData) {
         try {
-            // Log để debug
-            System.out.println("DEBUG - Đơn hàng mới nhận được: " + requestData);
-            
             // Tạo đơn hàng mới
             CafeOrder order = new CafeOrder();
             
@@ -246,11 +341,11 @@ public class CafeOrderController {
                 return new ResponseEntity<>(errorMessage, HttpStatus.PARTIAL_CONTENT);
             }
             
-            // Bước 3: Lấy đơn hàng đã cập nhật đầy đủ
-            System.out.println("DEBUG - Bước 3: Lấy đơn hàng đã cập nhật");
+            // Bước 3: Lấy đơn hàng đã cập nhật đầy đủ và convert to DTO
             CafeOrder finalOrder = cafeOrderService.getOrderById(savedOrder.getIdOrder()).orElse(savedOrder);
-            
-            return new ResponseEntity<>(finalOrder, HttpStatus.CREATED);
+            CafeOrderDTO dto = toCafeOrderDTO(finalOrder);
+
+            return new ResponseEntity<>(dto, HttpStatus.CREATED);
         } catch (Exception e) {
             System.err.println("ERROR trong createOrder: " + e.getMessage());
             e.printStackTrace();
@@ -259,10 +354,12 @@ public class CafeOrderController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CafeOrder> updateOrder(@PathVariable Integer id, @RequestBody CafeOrder order) {
+    public ResponseEntity<CafeOrderDTO> updateOrder(@PathVariable Integer id, @RequestBody CafeOrder order) {
         CafeOrder updatedOrder = cafeOrderService.updateOrder(id, order);
         if (updatedOrder != null) {
-            return new ResponseEntity<>(updatedOrder, HttpStatus.OK);
+            // Convert to DTO with full product info
+            CafeOrderDTO dto = toCafeOrderDTO(updatedOrder);
+            return new ResponseEntity<>(dto, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -281,16 +378,22 @@ public class CafeOrderController {
 
     // Thêm endpoint để lấy đơn hàng theo trạng thái
     @GetMapping("/status/{status}")
-    public ResponseEntity<List<CafeOrder>> getOrdersByStatus(@PathVariable String status) {
+    public ResponseEntity<List<CafeOrderDTO>> getOrdersByStatus(@PathVariable String status) {
         List<CafeOrder> orders = cafeOrderService.getOrdersByStatus(status);
-        return new ResponseEntity<>(orders, HttpStatus.OK);
+        List<CafeOrderDTO> dtos = orders.stream()
+            .map(this::toCafeOrderDTO)
+            .collect(java.util.stream.Collectors.toList());
+        return new ResponseEntity<>(dtos, HttpStatus.OK);
     }
-    
+
     // Thêm endpoint để lấy đơn hàng gần đây
     @GetMapping("/recent")
-    public ResponseEntity<List<CafeOrder>> getRecentOrders() {
+    public ResponseEntity<List<CafeOrderDTO>> getRecentOrders() {
         List<CafeOrder> recentOrders = cafeOrderService.getRecentOrders(10);
-        return new ResponseEntity<>(recentOrders, HttpStatus.OK);
+        List<CafeOrderDTO> dtos = recentOrders.stream()
+            .map(this::toCafeOrderDTO)
+            .collect(java.util.stream.Collectors.toList());
+        return new ResponseEntity<>(dtos, HttpStatus.OK);
     }
     
     // Thêm endpoint để kiểm tra trạng thái đơn hàng
@@ -307,19 +410,21 @@ public class CafeOrderController {
     
     // Thêm endpoint để cập nhật trạng thái đơn hàng
     @PutMapping("/{id}/status")
-    public ResponseEntity<CafeOrder> updateOrderStatus(
-            @PathVariable Integer id, 
+    public ResponseEntity<CafeOrderDTO> updateOrderStatus(
+            @PathVariable Integer id,
             @RequestBody Map<String, String> statusUpdate) {
-        
+
         if (!statusUpdate.containsKey("status")) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        
+
         String newStatus = statusUpdate.get("status");
         CafeOrder updatedOrder = cafeOrderService.updateOrderStatus(id, newStatus);
-        
+
         if (updatedOrder != null) {
-            return new ResponseEntity<>(updatedOrder, HttpStatus.OK);
+            // Convert to DTO with full product info
+            CafeOrderDTO dto = toCafeOrderDTO(updatedOrder);
+            return new ResponseEntity<>(dto, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -330,31 +435,30 @@ public class CafeOrderController {
     public ResponseEntity<?> updatePaymentInfo(
             @PathVariable Integer id,
             @RequestBody Map<String, Object> paymentInfo) {
-        
+
         try {
-            // Log thông tin để debug
-            System.out.println("Cập nhật thanh toán cho đơn hàng " + id + ": " + paymentInfo);
-            
             // Lấy thông tin thanh toán từ request
-            String paymentMethod = paymentInfo.containsKey("paymentMethod") 
-                ? paymentInfo.get("paymentMethod").toString() 
+            String paymentMethod = paymentInfo.containsKey("paymentMethod")
+                ? paymentInfo.get("paymentMethod").toString()
                 : "cash";
-                
-            String paymentStatus = paymentInfo.containsKey("paymentStatus") 
-                ? paymentInfo.get("paymentStatus").toString() 
+
+            String paymentStatus = paymentInfo.containsKey("paymentStatus")
+                ? paymentInfo.get("paymentStatus").toString()
                 : "pending";
-                
+
             // Gọi service để cập nhật thanh toán
             CafeOrder updatedOrder = cafeOrderService.updatePaymentInfo(id, paymentMethod, paymentStatus);
-            
+
             if (updatedOrder != null) {
-                return new ResponseEntity<>(updatedOrder, HttpStatus.OK);
+                // Convert to DTO with full product info
+                CafeOrderDTO dto = toCafeOrderDTO(updatedOrder);
+                return new ResponseEntity<>(dto, HttpStatus.OK);
             } else {
                 return new ResponseEntity<>("Không tìm thấy đơn hàng với ID: " + id, HttpStatus.NOT_FOUND);
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return new ResponseEntity<>("Lỗi khi cập nhật thông tin thanh toán: " + e.getMessage(), 
+            return new ResponseEntity<>("Lỗi khi cập nhật thông tin thanh toán: " + e.getMessage(),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

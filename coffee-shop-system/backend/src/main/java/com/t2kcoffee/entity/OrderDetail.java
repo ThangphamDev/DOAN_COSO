@@ -15,6 +15,7 @@ public class OrderDetail {
     @ManyToOne
     @MapsId("idProduct")
     @JoinColumn(name = "ID_Product")
+    @JsonIgnore
     private Product product;
     
     @ManyToOne

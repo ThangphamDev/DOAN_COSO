@@ -429,11 +429,11 @@ async function loadCategories(token) {
                 const data = await response.json();
                 console.log('API Categories - Data:', data);
                 
-                if (data && data.length > 0) {
+                if (data && Array.isArray(data) && data.length > 0) {
                     data.forEach(category => {
                         const option = document.createElement('option');
                         option.value = category.id || category.idCategory;
-                        option.textContent = category.name;
+                        option.textContent = category.name || category.categoryName || 'Danh mục';  // Support both field names
                         productCategorySelect.appendChild(option);
                     });
                 } else {

@@ -109,20 +109,36 @@ async function loadCategories() {
         categories = await response.json();
         renderCategories();
         
+        // Fetch products separately since CategoryDTO doesn't include products
         let allProducts = [];
-        categories.forEach(category => {
-            if (category.products && Array.isArray(category.products)) {
-                category.products.forEach(product => {
-                    if (product.isAvailable === true || 
-                        product.status === 'active' || 
-                        product.status === true || 
-                        product.status === 1) {
-                        product.idCategory = category.idCategory;
-                        allProducts.push(product);
+        try {
+            const productsResponse = await fetch(`${ENDPOINTS.PRODUCTS || '/api/products'}`, {
+                method: 'GET',
+                headers: getAuthHeaders()
+            });
+            if (productsResponse.ok) {
+                allProducts = await productsResponse.json();
+                // Assign category info to products
+                allProducts.forEach(product => {
+                    if (product.categoryId && categories.length > 0) {
+                        const category = categories.find(c => (c.id || c.idCategory) === product.categoryId);
+                        if (category) {
+                            product.idCategory = product.categoryId;
+                            product.category = category;
+                        }
                     }
                 });
+                // Filter available products
+                allProducts = allProducts.filter(product => 
+                    product.isAvailable === true || 
+                    product.status === 'active' || 
+                    product.status === true || 
+                    product.status === 1
+                );
             }
-        });
+        } catch (productError) {
+            console.error('Error loading products:', productError);
+        }
         
         if (allProducts.length === 0) {
             showNotification('Không có sản phẩm nào đang bán', 'info');
