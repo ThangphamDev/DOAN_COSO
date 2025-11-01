@@ -6,11 +6,7 @@ class ModernOrderCard extends StatelessWidget {
   final Order order;
   final VoidCallback onTap;
 
-  const ModernOrderCard({
-    super.key,
-    required this.order,
-    required this.onTap,
-  });
+  const ModernOrderCard({super.key, required this.order, required this.onTap});
 
   Color _getStatusColor() {
     switch (order.status?.toLowerCase()) {
@@ -114,11 +110,7 @@ class ModernOrderCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            _getStatusIcon(),
-                            size: 14,
-                            color: statusColor,
-                          ),
+                          Icon(_getStatusIcon(), size: 14, color: statusColor),
                           const SizedBox(width: 4),
                           Text(
                             order.statusText,
@@ -163,6 +155,14 @@ class ModernOrderCard extends StatelessWidget {
                   Icons.payment_rounded,
                   order.payment?.paymentMethodText ?? 'Chưa xác định',
                 ),
+                if (order.earnedRewardPoints > 0) ...[
+                  const SizedBox(height: 8),
+                  _buildInfoRow(
+                    Icons.stars,
+                    '+${order.earnedRewardPoints} điểm tích lũy',
+                    iconColor: AppTheme.accentColor,
+                  ),
+                ],
                 const SizedBox(height: 16),
                 // Total amount
                 Container(
@@ -206,7 +206,7 @@ class ModernOrderCard extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String text) {
+  Widget _buildInfoRow(IconData icon, String text, {Color? iconColor}) {
     return Row(
       children: [
         Container(
@@ -218,16 +218,19 @@ class ModernOrderCard extends StatelessWidget {
           child: Icon(
             icon,
             size: 16,
-            color: AppTheme.primaryColor,
+            color: iconColor ?? AppTheme.primaryColor,
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: AppTheme.textPrimary,
+              color: iconColor ?? AppTheme.textPrimary,
+              fontWeight: iconColor != null
+                  ? FontWeight.w500
+                  : FontWeight.normal,
             ),
           ),
         ),

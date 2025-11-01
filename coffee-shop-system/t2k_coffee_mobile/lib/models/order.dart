@@ -154,6 +154,13 @@ class Order {
   bool get isCancelled => status?.toLowerCase() == 'cancelled';
 
   String get displayLocation {
+    // Kiểm tra nếu có tableNumber từ DTO (String) - ưu tiên
+    if (tableNumber != null &&
+        tableNumber!.isNotEmpty &&
+        tableNumber != 'takeaway') {
+      return 'Bàn $tableNumber';
+    }
+
     // Kiểm tra nếu có table object (dine-in)
     if (table != null && table!.tableNumber != null) {
       String locationText = 'Bàn ${table!.tableNumber}';
@@ -165,6 +172,12 @@ class Order {
 
     // Nếu không có table, mặc định là takeaway
     return 'Mang đi';
+  }
+
+  // Tính số điểm tích lũy cho đơn hàng (1 điểm cho mỗi 10,000 VND)
+  int get earnedRewardPoints {
+    if (totalAmount == null || totalAmount! <= 0) return 0;
+    return (totalAmount! / 10000).floor().toInt();
   }
 }
 

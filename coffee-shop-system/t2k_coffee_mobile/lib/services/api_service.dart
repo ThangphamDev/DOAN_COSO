@@ -305,6 +305,63 @@ class ApiService {
     }
   }
 
+  // Update reward points (set new total points)
+  Future<bool> updateRewardPoints(int accountId, int points) async {
+    try {
+      final response = await _makeRequest(
+        'PUT',
+        '${ApiConfig.accountsEndpoint}/$accountId/reward-points',
+        body: json.encode({'points': points}),
+      );
+      _handleResponse(response);
+
+      // Update current user's reward points if it's the same user
+      if (_currentUser?.idAccount == accountId) {
+        _currentUser = _currentUser!.copyWith(rewardPoints: points);
+        // Save updated user to storage
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(
+          'current_user',
+          json.encode(_currentUser!.toJson()),
+        );
+      }
+      return true;
+    } catch (e) {
+      throw Exception('Failed to update reward points: $e');
+    }
+  }
+
+  // Add reward points (add to current points)
+  Future<bool> addRewardPoints(int accountId, int points) async {
+    try {
+      final response = await _makeRequest(
+        'PUT',
+        '${ApiConfig.accountsEndpoint}/$accountId/reward-points/add',
+        body: json.encode({'points': points}),
+      );
+      final data = _handleResponse(response);
+
+      // Update current user's reward points if it's the same user
+      if (_currentUser?.idAccount == accountId &&
+          data is Map<String, dynamic>) {
+        final totalPoints =
+            (data['totalPoints'] ?? data['rewardPoints']) as int?;
+        if (totalPoints != null) {
+          _currentUser = _currentUser!.copyWith(rewardPoints: totalPoints);
+          // Save updated user to storage
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(
+            'current_user',
+            json.encode(_currentUser!.toJson()),
+          );
+        }
+      }
+      return true;
+    } catch (e) {
+      throw Exception('Failed to add reward points: $e');
+    }
+  }
+
   // Products
   Future<List<Product>> getProducts() async {
     try {

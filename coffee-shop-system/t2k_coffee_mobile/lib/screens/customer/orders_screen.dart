@@ -24,7 +24,10 @@ class _OrdersScreenState extends State<OrdersScreen>
 
     // Initialize customer order provider
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final orderProvider = Provider.of<CustomerOrderProvider>(context, listen: false);
+      final orderProvider = Provider.of<CustomerOrderProvider>(
+        context,
+        listen: false,
+      );
       orderProvider.initialize();
     });
   }
@@ -102,8 +105,9 @@ class _OrdersScreenState extends State<OrdersScreen>
 
     // Calculate processing orders (processing + preparing + ready)
     final processingOrders = orderProvider.orders
-        .where((order) =>
-            order.isProcessing || order.isPreparing || order.isReady)
+        .where(
+          (order) => order.isProcessing || order.isPreparing || order.isReady,
+        )
         .toList();
 
     // Calculate completed orders (completed + cancelled)
@@ -153,7 +157,10 @@ class _OrdersScreenState extends State<OrdersScreen>
     );
   }
 
-  Widget _buildOrdersList(List<Order> orders, CustomerOrderProvider orderProvider) {
+  Widget _buildOrdersList(
+    List<Order> orders,
+    CustomerOrderProvider orderProvider,
+  ) {
     if (orders.isEmpty) {
       return Center(
         child: Column(
@@ -282,6 +289,13 @@ class OrderDetailsBottomSheet extends StatelessWidget {
             _buildInfoRow('Vị trí:', order.displayLocation),
             if (order.payment != null)
               _buildInfoRow('Thanh toán:', order.payment!.paymentMethodText),
+            if (order.earnedRewardPoints > 0)
+              _buildInfoRow(
+                'Điểm tích lũy:',
+                '+${order.earnedRewardPoints} điểm',
+                icon: Icons.stars,
+                iconColor: AppTheme.accentColor,
+              ),
 
             const SizedBox(height: 16),
 
@@ -368,30 +382,51 @@ class OrderDetailsBottomSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(
+    String label,
+    String value, {
+    IconData? icon,
+    Color? iconColor,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppTheme.textSecondary,
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(
+                  icon,
+                  size: 16,
+                  color: iconColor ?? AppTheme.textSecondary,
+                ),
+                const SizedBox(width: 4),
+              ],
+              SizedBox(
+                width: 90,
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: AppTheme.textPrimary,
+                color: iconColor ?? AppTheme.textPrimary,
                 fontWeight: FontWeight.w500,
               ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
             ),
           ),
         ],
