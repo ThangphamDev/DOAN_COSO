@@ -42,6 +42,40 @@ class AuthProvider with ChangeNotifier {
 
       if (result['token'] != null) {
         _currentUser = _apiService.currentUser;
+
+        // Fetch full account details after login (including reward points and profile info)
+        if (_currentUser?.idAccount != null) {
+          try {
+            // Try to fetch full account first (includes phone, address, reward points)
+            final fullAccount = await _apiService.getAccount(
+              _currentUser!.idAccount!,
+            );
+            if (fullAccount != null) {
+              _currentUser = fullAccount;
+            } else {
+              // Fallback: only fetch reward points if getAccount fails
+              final points = await _apiService.getRewardPoints(
+                _currentUser!.idAccount!,
+              );
+              if (points != null) {
+                _currentUser = _currentUser!.copyWith(rewardPoints: points);
+              }
+            }
+          } catch (e) {
+            // If fetching account fails, try to get at least reward points
+            try {
+              final points = await _apiService.getRewardPoints(
+                _currentUser!.idAccount!,
+              );
+              if (points != null) {
+                _currentUser = _currentUser!.copyWith(rewardPoints: points);
+              }
+            } catch (pointsError) {
+              // If both fail, continue with basic user data
+            }
+          }
+        }
+
         notifyListeners();
         return true;
       } else {
@@ -77,22 +111,31 @@ class AuthProvider with ChangeNotifier {
     String? phone,
     String? address,
   }) async {
-    if (_currentUser == null) return false;
+    if (_currentUser == null || _currentUser!.idAccount == null) {
+      _setError('User not logged in');
+      return false;
+    }
 
     _setLoading(true);
     _clearError();
 
     try {
-      // This would typically call an API to update the profile
-      // For now, we'll just update the local user object
-      _currentUser = _currentUser!.copyWith(
-        fullName: fullName ?? _currentUser!.fullName,
-        phone: phone ?? _currentUser!.phone,
-        address: address ?? _currentUser!.address,
+      // Call API to update profile (similar to FE web)
+      final updatedUser = await _apiService.updateAccount(
+        _currentUser!.idAccount!,
+        fullName: fullName,
+        phone: phone,
+        address: address,
       );
 
-      notifyListeners();
-      return true;
+      if (updatedUser != null) {
+        _currentUser = updatedUser;
+        notifyListeners();
+        return true;
+      } else {
+        _setError('Failed to update profile: No response from server');
+        return false;
+      }
     } catch (e) {
       _setError('Failed to update profile: $e');
       return false;
@@ -138,7 +181,60 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // Update reward points
+  // Refresh user data from API
+  Future<bool> refreshUserData() async {
+    if (_currentUser == null || _currentUser!.idAccount == null) {
+      return false;
+    }
+
+    _setLoading(true);
+    _clearError();
+
+    try {
+      // Fetch full account details including reward points
+      final updatedUser = await _apiService.getAccount(
+        _currentUser!.idAccount!,
+      );
+      if (updatedUser != null) {
+        _currentUser = updatedUser;
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      _setError('Failed to refresh user data: $e');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Refresh reward points only (optimized - similar to FE web)
+  Future<bool> refreshRewardPoints() async {
+    if (_currentUser == null || _currentUser!.idAccount == null) {
+      return false;
+    }
+
+    _setLoading(true);
+    _clearError();
+
+    try {
+      final points = await _apiService.getRewardPoints(
+        _currentUser!.idAccount!,
+      );
+      // Always update (even if 0) - getRewardPoints returns 0 on error
+      _currentUser = _currentUser!.copyWith(rewardPoints: points ?? 0);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      // Don't set error for reward points failure (non-critical)
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Update reward points (local only)
   void updateRewardPoints(int points) {
     if (_currentUser != null) {
       _currentUser = _currentUser!.copyWith(rewardPoints: points);

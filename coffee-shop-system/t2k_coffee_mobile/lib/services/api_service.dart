@@ -35,12 +35,7 @@ class ApiService {
       if (userJson != null) {
         _currentUser = User.fromJson(json.decode(userJson));
       }
-      print('Token loaded: ${_token != null ? "YES" : "NO"}');
-      print(
-        'User loaded: ${_currentUser != null ? "YES (ID: ${_currentUser?.idAccount})" : "NO"}',
-      );
     } catch (e) {
-      print('Error loading token from storage: $e');
       _token = null;
       _currentUser = null;
     }
@@ -54,9 +49,7 @@ class ApiService {
       await prefs.setString('current_user', json.encode(user.toJson()));
       _token = token;
       _currentUser = user;
-      print('Token saved successfully. User ID: ${user.idAccount}');
     } catch (e) {
-      print('Error saving token to storage: $e');
       throw Exception('Failed to save authentication data');
     }
   }
@@ -206,6 +199,112 @@ class ApiService {
     await _clearTokenFromStorage();
   }
 
+  // Get account details
+  Future<User?> getAccount(int accountId) async {
+    try {
+      final response = await _makeRequest(
+        'GET',
+        '${ApiConfig.accountsEndpoint}/$accountId',
+      );
+      final data = _handleResponse(response);
+
+      if (data is Map<String, dynamic>) {
+        final user = User.fromJson(data);
+
+        // Update current user if it's the same user
+        if (_currentUser?.idAccount == accountId) {
+          _currentUser = user;
+          // Save updated user to storage
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('current_user', json.encode(user.toJson()));
+        }
+        return user;
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Failed to fetch account: $e');
+    }
+  }
+
+  // Update account (for profile update)
+  Future<User?> updateAccount(
+    int accountId, {
+    String? fullName,
+    String? phone,
+    String? address,
+  }) async {
+    try {
+      final accountData = <String, dynamic>{};
+      if (fullName != null) accountData['fullName'] = fullName;
+      if (phone != null) accountData['phone'] = phone;
+      if (address != null) accountData['address'] = address;
+
+      // Preserve existing data that shouldn't change
+      if (_currentUser != null) {
+        accountData['userName'] = _currentUser!.userName;
+        accountData['role'] = _currentUser!.role;
+        accountData['rewardPoints'] = _currentUser!.rewardPoints ?? 0;
+      }
+
+      final response = await _makeRequest(
+        'PUT',
+        '${ApiConfig.accountsEndpoint}/$accountId',
+        body: json.encode(accountData),
+      );
+
+      final data = _handleResponse(response);
+      if (data is Map<String, dynamic>) {
+        final updatedUser = User.fromJson(data);
+
+        // Update current user if it's the same user
+        if (_currentUser?.idAccount == accountId) {
+          _currentUser = updatedUser;
+          // Save updated user to storage
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(
+            'current_user',
+            json.encode(updatedUser.toJson()),
+          );
+        }
+        return updatedUser;
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Failed to update account: $e');
+    }
+  }
+
+  // Get reward points (optimized - similar to FE web getLoyaltyPoints)
+  Future<int?> getRewardPoints(int accountId) async {
+    try {
+      final response = await _makeRequest(
+        'GET',
+        '${ApiConfig.accountsEndpoint}/$accountId/reward-points',
+      );
+      final data = _handleResponse(response);
+      if (data is Map<String, dynamic>) {
+        // Support both camelCase and snake_case (from backend)
+        final points = (data['rewardPoints'] ?? data['reward_points']) as int?;
+
+        // Update current user's reward points if it's the same user
+        if (_currentUser?.idAccount == accountId && points != null) {
+          _currentUser = _currentUser!.copyWith(rewardPoints: points);
+          // Save updated user to storage
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(
+            'current_user',
+            json.encode(_currentUser!.toJson()),
+          );
+        }
+        return points ?? 0;
+      }
+      return 0;
+    } catch (e) {
+      // Return 0 on error (similar to FE web)
+      return 0;
+    }
+  }
+
   // Products
   Future<List<Product>> getProducts() async {
     try {
@@ -257,9 +356,6 @@ class ApiService {
       final response = await _makeRequest('GET', ApiConfig.categoriesEndpoint);
       final data = _handleResponse(response);
 
-      print('Categories data type: ${data.runtimeType}');
-      print('Categories data: $data');
-
       if (data is List) {
         return (data as List<dynamic>)
             .map((json) {
@@ -267,7 +363,6 @@ class ApiService {
               if (json is Map<String, dynamic>) {
                 return Category.fromJson(json);
               } else {
-                print('Warning: Invalid category data format: $json');
                 return null;
               }
             })
@@ -280,7 +375,6 @@ class ApiService {
       }
       return [];
     } catch (e) {
-      print('Error fetching categories: $e');
       throw Exception('Failed to fetch categories: $e');
     }
   }
@@ -491,7 +585,6 @@ class ApiService {
 
       return payloadMap['userId'] as int?;
     } catch (e) {
-      print('Error decoding token: $e');
       // Fallback to currentUser if available
       return _currentUser?.idAccount;
     }

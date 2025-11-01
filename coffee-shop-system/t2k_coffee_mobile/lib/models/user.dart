@@ -24,15 +24,31 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
+    // Support both camelCase and snake_case for rewardPoints
+    int? rewardPoints;
+    if (json['rewardPoints'] != null) {
+      rewardPoints = json['rewardPoints'] is int
+          ? json['rewardPoints'] as int
+          : int.tryParse(json['rewardPoints'].toString());
+    } else if (json['reward_points'] != null) {
+      rewardPoints = json['reward_points'] is int
+          ? json['reward_points'] as int
+          : int.tryParse(json['reward_points'].toString());
+    }
+
     return User(
-      idAccount: json['idAccount'] as int?,
-      userName: json['userName'] as String?,
-      fullName: json['fullName'] as String?,
+      idAccount: json['idAccount'] != null
+          ? (json['idAccount'] is int
+                ? json['idAccount'] as int
+                : int.tryParse(json['idAccount'].toString()))
+          : null,
+      userName: json['userName'] as String? ?? json['user_name'] as String?,
+      fullName: json['fullName'] as String? ?? json['full_name'] as String?,
       phone: json['phone'] as String?,
       address: json['address'] as String?,
       image: json['image'] as String?,
       role: json['role'] as String?,
-      rewardPoints: json['rewardPoints'] as int?,
+      rewardPoints: rewardPoints,
       status: json['status'] as String?,
     );
   }

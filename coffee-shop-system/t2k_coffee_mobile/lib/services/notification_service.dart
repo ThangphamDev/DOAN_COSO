@@ -15,7 +15,9 @@ class NotificationService {
   Future<void> initialize() async {
     if (_isInitialized) return;
 
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
@@ -40,29 +42,27 @@ class NotificationService {
 
   // Request notification permissions
   Future<void> _requestPermissions() async {
-    final androidPlugin =
-        _notifications.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+    final androidPlugin = _notifications
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
 
     if (androidPlugin != null) {
       await androidPlugin.requestNotificationsPermission();
     }
 
-    final iosPlugin = _notifications.resolvePlatformSpecificImplementation<
-        IOSFlutterLocalNotificationsPlugin>();
+    final iosPlugin = _notifications
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >();
 
     if (iosPlugin != null) {
-      await iosPlugin.requestPermissions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
+      await iosPlugin.requestPermissions(alert: true, badge: true, sound: true);
     }
   }
 
   // Handle notification tap
   void _onNotificationTapped(NotificationResponse response) {
-    print('Notification tapped: ${response.payload}');
     // Handle navigation based on payload
   }
 
@@ -133,7 +133,11 @@ class NotificationService {
   }
 
   // Get notification body based on status
-  String _getNotificationBody(int orderId, String status, String? customerName) {
+  String _getNotificationBody(
+    int orderId,
+    String status,
+    String? customerName,
+  ) {
     switch (status.toLowerCase()) {
       case 'processing':
         return 'Đơn hàng #$orderId đang được xử lý';
@@ -170,7 +174,7 @@ class NotificationService {
 
       await _audioPlayer.play(AssetSource(soundFile));
     } catch (e) {
-      print('Error playing notification sound: $e');
+      // Silent fail for notification sound
     }
   }
 
@@ -225,7 +229,7 @@ class NotificationService {
     try {
       await _audioPlayer.play(AssetSource('assets/sounds/new_order.mp3'));
     } catch (e) {
-      print('Error playing new order sound: $e');
+      // Silent fail for new order sound
     }
   }
 

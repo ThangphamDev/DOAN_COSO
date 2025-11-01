@@ -50,7 +50,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         });
       }
     } catch (e) {
-      print('Error loading tables: $e');
+      // Silent fail for table loading
     }
   }
 

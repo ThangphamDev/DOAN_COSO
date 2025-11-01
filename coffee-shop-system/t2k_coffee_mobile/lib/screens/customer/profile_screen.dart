@@ -8,8 +8,27 @@ import '../../utils/app_theme.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Refresh reward points when screen is opened (similar to FE web)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      if (authProvider.isLoggedIn &&
+          authProvider.currentUser?.idAccount != null) {
+        // Only refresh reward points, not full account data (optimized)
+        authProvider.refreshRewardPoints();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +39,21 @@ class ProfileScreen extends StatelessWidget {
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              final authProvider = Provider.of<AuthProvider>(
+                context,
+                listen: false,
+              );
+              if (authProvider.isLoggedIn) {
+                // Only refresh reward points (optimized like FE web)
+                authProvider.refreshRewardPoints();
+              }
+            },
+          ),
+        ],
       ),
       body: Consumer<AuthProvider>(
         builder: (context, authProvider, child) {
@@ -27,7 +61,17 @@ class ProfileScreen extends StatelessWidget {
             return _buildNotLoggedInView(context);
           }
 
-          return _buildProfileView(context, authProvider);
+          if (authProvider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          return RefreshIndicator(
+            onRefresh: () async {
+              // Only refresh reward points when pull-to-refresh (optimized)
+              await authProvider.refreshRewardPoints();
+            },
+            child: _buildProfileView(context, authProvider),
+          );
         },
       ),
     );
@@ -368,14 +412,25 @@ class ProfileScreen extends StatelessWidget {
                 address: addressController.text.trim(),
               );
 
-              if (success && context.mounted) {
+              if (context.mounted) {
                 Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Cập nhật thông tin thành công'),
-                    backgroundColor: AppTheme.successColor,
-                  ),
-                );
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Cập nhật thông tin thành công'),
+                      backgroundColor: AppTheme.successColor,
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        authProvider.error ?? 'Cập nhật thông tin thất bại',
+                      ),
+                      backgroundColor: AppTheme.errorColor,
+                    ),
+                  );
+                }
               }
             },
             child: const Text('Lưu'),
@@ -399,11 +454,17 @@ class ProfileScreen extends StatelessWidget {
           TextButton(
             onPressed: () async {
               // Stop staff polling and clear privileged data
-              final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+              final staffProvider = Provider.of<StaffProvider>(
+                context,
+                listen: false,
+              );
               staffProvider.clearStaffData();
 
               // Update cart to anonymous mode (userId = null)
-              final cartProvider = Provider.of<CartProvider>(context, listen: false);
+              final cartProvider = Provider.of<CartProvider>(
+                context,
+                listen: false,
+              );
               await cartProvider.updateUserId(null);
 
               // Clear authentication token

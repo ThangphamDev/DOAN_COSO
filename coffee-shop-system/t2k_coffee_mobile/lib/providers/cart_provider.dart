@@ -56,7 +56,7 @@ class CartProvider with ChangeNotifier {
       final cartData = _items.map((item) => item.toJson()).toList();
       await prefs.setString(cartKey, json.encode(cartData));
     } catch (e) {
-      print('Error saving cart: $e');
+      // Silent fail for cart save
     }
   }
 
@@ -75,7 +75,6 @@ class CartProvider with ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      print('Error loading cart: $e');
       _items = [];
     }
   }

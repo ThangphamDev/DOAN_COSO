@@ -59,6 +59,5 @@ class ApiConfig {
   static void updateNgrokUrl(String newUrl) {
     // This would typically be done through a configuration file or environment variable
     // For now, manually update the ngrokBaseUrl constant above
-    print('Please update ngrokBaseUrl to: $newUrl');
   }
 }

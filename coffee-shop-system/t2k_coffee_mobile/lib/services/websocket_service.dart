@@ -168,7 +168,7 @@ class WebSocketService {
         }
       }
     } catch (e) {
-      print('Error handling WebSocket message: $e');
+      // Silent fail for WebSocket message handling
     }
   }
 
@@ -254,7 +254,7 @@ class WebSocketService {
         final message = json.encode(data);
         _stompClient!.send(destination: destination, body: message);
       } catch (e) {
-        print('Error sending WebSocket message: $e');
+        // Silent fail for WebSocket send
       }
     }
   }

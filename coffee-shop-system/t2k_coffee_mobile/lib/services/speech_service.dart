@@ -33,7 +33,6 @@ class SpeechService {
       _isInitialized = true;
       return true;
     } catch (e) {
-      print('Error initializing speech services: $e');
       return false;
     }
   }
@@ -55,7 +54,6 @@ class SpeechService {
     });
 
     _flutterTts.setErrorHandler((msg) {
-      print('TTS Error: $msg');
       _isSpeaking = false;
     });
   }
@@ -71,11 +69,9 @@ class SpeechService {
     // Initialize speech to text
     final available = await _speechToText.initialize(
       onStatus: (status) {
-        print('STT Status: $status');
         _isListening = status == 'listening';
       },
       onError: (error) {
-        print('STT Error: $error');
         _isListening = false;
       },
     );
@@ -98,7 +94,7 @@ class SpeechService {
     try {
       await _flutterTts.speak(text);
     } catch (e) {
-      print('Error speaking: $e');
+      // Silent fail for speech
     }
   }
 
@@ -137,7 +133,6 @@ class SpeechService {
         listenMode: stt.ListenMode.confirmation,
       );
     } catch (e) {
-      print('Error starting speech recognition: $e');
       onError?.call(e.toString());
     }
   }

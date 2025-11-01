@@ -23,7 +23,6 @@ class Category {
               if (e is Map<String, dynamic>) {
                 return Product.fromJson(e);
               } else {
-                print('Warning: Invalid product data in category: $e');
                 return null;
               }
             })
