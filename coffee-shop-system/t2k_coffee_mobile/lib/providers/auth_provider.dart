@@ -174,7 +174,13 @@ class AuthProvider with ChangeNotifier {
         return false;
       }
     } catch (e) {
-      _setError('Đăng ký thất bại: $e');
+      // Hiển thị message từ exception (đã được parse từ backend)
+      final errorMessage = e.toString().replaceFirst('Exception: ', '');
+      _setError(
+        errorMessage.isNotEmpty
+            ? errorMessage
+            : 'Đăng ký thất bại. Vui lòng thử lại.',
+      );
       return false;
     } finally {
       _setLoading(false);

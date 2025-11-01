@@ -67,11 +67,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.ok) {
                 handleSuccessfulRegistration(data);
             } else {
-                if (response.status === 409) {
-                    showError('Tên đăng nhập đã tồn tại. Vui lòng chọn tên đăng nhập khác.');
-                } else {
-                    showError(data.message || 'Đăng ký thất bại. Vui lòng thử lại.');
-                }
+                // Hiển thị message từ backend (nếu có) hoặc message mặc định
+                const errorMessage = data?.message || 
+                    (response.status === 409 
+                        ? 'Tên đăng nhập đã tồn tại. Vui lòng chọn tên đăng nhập khác.'
+                        : 'Đăng ký thất bại. Vui lòng thử lại.');
+                showError(errorMessage);
             }
             
         } catch (error) {

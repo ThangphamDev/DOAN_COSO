@@ -81,7 +81,8 @@ class WebSocketService {
       final token = ApiService().token;
       final commonHeaders = <String, String>{
         if (token != null) 'Authorization': 'Bearer $token',
-        if (ApiConfig.useNgrok) 'ngrok-skip-browser-warning': 'true',
+        'ngrok-skip-browser-warning':
+            'true', // Always needed since we use ngrok URLs
         'Accept': 'application/json',
       };
 

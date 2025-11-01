@@ -67,10 +67,8 @@ class ApiService {
   Map<String, String> _getHeaders({Map<String, String>? additionalHeaders}) {
     final headers = Map<String, String>.from(ApiConfig.defaultHeaders);
 
-    // Add ngrok bypass header for free tier
-    if (ApiConfig.useNgrok) {
-      headers['ngrok-skip-browser-warning'] = 'true';
-    }
+    // Add ngrok bypass header for free tier (always needed since we use ngrok URLs)
+    headers['ngrok-skip-browser-warning'] = 'true';
 
     if (_token != null) {
       headers['Authorization'] = 'Bearer $_token';
@@ -132,6 +130,16 @@ class ApiService {
       _clearTokenFromStorage();
       throw Exception('Unauthorized - Please login again');
     } else {
+      // Try to parse error message from response body
+      try {
+        final errorData = json.decode(response.body) as Map<String, dynamic>;
+        final message = errorData['message'] as String?;
+        if (message != null && message.isNotEmpty) {
+          throw Exception(message);
+        }
+      } catch (e) {
+        // If parsing fails, use default error message
+      }
       throw Exception('API Error: ${response.statusCode} - ${response.body}');
     }
   }

@@ -47,13 +47,21 @@ public class AccountController {
     }
 
     @PostMapping
-    public ResponseEntity<Account> createAccount(@RequestBody Account account) {
+    public ResponseEntity<?> createAccount(@RequestBody Account account) {
+        // Kiểm tra username đã tồn tại chưa
+        Optional<Account> existingAccount = accountService.getAccountByUsername(account.getUserName());
+        if (existingAccount.isPresent()) {
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Username đã tồn tại. Vui lòng chọn username khác.");
+            return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+        }
+        
         Account savedAccount = accountService.saveAccount(account);
         return new ResponseEntity<>(savedAccount, HttpStatus.CREATED);
     }
 
     @PostMapping("/with-image")
-    public ResponseEntity<Account> createAccountWithImage(
+    public ResponseEntity<?> createAccountWithImage(
             @RequestParam("userName") String userName,
             @RequestParam("fullName") String fullName,
             @RequestParam("passWord") String passWord,
@@ -62,6 +70,14 @@ public class AccountController {
             @RequestParam("role") String role,
             @RequestParam(required = false) String image) {
         try {
+            // Kiểm tra username đã tồn tại chưa
+            Optional<Account> existingAccount = accountService.getAccountByUsername(userName);
+            if (existingAccount.isPresent()) {
+                Map<String, String> response = new HashMap<>();
+                response.put("message", "Username đã tồn tại. Vui lòng chọn username khác.");
+                return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+            }
+            
             Account account = new Account();
             account.setUserName(userName);
             account.setFullName(fullName);
@@ -75,7 +91,9 @@ public class AccountController {
             Account savedAccount = accountService.saveAccount(account);
             return new ResponseEntity<>(savedAccount, HttpStatus.CREATED);
         } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Internal server error: " + e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

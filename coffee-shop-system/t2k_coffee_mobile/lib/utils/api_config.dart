@@ -1,19 +1,13 @@
 class ApiConfig {
-  // Local development URLs
-  static const String localBaseUrl = 'http://localhost:8081';
-  static const String localWsUrl = 'ws://localhost:8081/ws';
-
   // Ngrok URLs (update these when ngrok URL changes)
   static const String ngrokBaseUrl =
       'https://progenitive-retha-etiologically.ngrok-free.dev';
   static const String ngrokWsUrl =
       'wss://progenitive-retha-etiologically.ngrok-free.dev/ws';
 
-  // Use ngrok for mobile testing, local for web testing
-  static const bool useNgrok = true;
-
-  static String get baseUrl => useNgrok ? ngrokBaseUrl : localBaseUrl;
-  static String get wsUrl => useNgrok ? ngrokWsUrl : localWsUrl;
+  // Always use ngrok URLs for mobile app
+  static String get baseUrl => ngrokBaseUrl;
+  static String get wsUrl => ngrokWsUrl;
 
   // API Endpoints
   static const String loginEndpoint = '/api/accounts/login';
