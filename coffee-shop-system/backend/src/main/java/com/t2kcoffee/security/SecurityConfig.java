@@ -41,6 +41,12 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/accounts/*/reward-points").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/accounts/{id}").hasAnyAuthority("CUSTOMER", "STAFF", "ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/accounts/{id}").hasAnyAuthority("CUSTOMER", "STAFF", "ADMIN")
+                // MoMo Payment endpoints - notify and return are public (called by MoMo), create and status need authentication
+                // IMPORTANT: These must be BEFORE the general /api/** rules
+                .requestMatchers(HttpMethod.POST, "/api/momo/notify").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/momo/return").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/momo/create").hasAnyAuthority("CUSTOMER", "STAFF", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/momo/status/**").hasAnyAuthority("CUSTOMER", "STAFF", "ADMIN")
                 .requestMatchers("/api/dashboard/**").hasAuthority("ADMIN")
                 .requestMatchers("/api/system/**").hasAuthority("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/orders/account/**").hasAnyAuthority("CUSTOMER", "STAFF", "ADMIN")

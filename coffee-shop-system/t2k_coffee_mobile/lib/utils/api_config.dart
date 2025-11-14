@@ -1,9 +1,9 @@
 class ApiConfig {
   // Ngrok URLs (update these when ngrok URL changes)
   static const String ngrokBaseUrl =
-      'https://progenitive-retha-etiologically.ngrok-free.dev';
+      'https://elmer-untenacious-karry.ngrok-free.dev';
   static const String ngrokWsUrl =
-      'wss://progenitive-retha-etiologically.ngrok-free.dev/ws';
+      'wss://elmer-untenacious-karry.ngrok-free.dev/ws';
 
   // Always use ngrok URLs for mobile app
   static String get baseUrl => ngrokBaseUrl;

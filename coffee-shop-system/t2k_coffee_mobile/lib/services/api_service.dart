@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
@@ -616,6 +617,37 @@ class ApiService {
       return response.statusCode == 200;
     } catch (e) {
       return false;
+    }
+  }
+
+  // MoMo Payment
+  Future<Map<String, dynamic>> createMoMoPayment({
+    required int orderId,
+    required double amount,
+    String? orderInfo,
+  }) async {
+    try {
+      final response = await _makeRequest(
+        'POST',
+        '/api/momo/create',
+        body: json.encode({
+          'orderId': orderId,
+          'amount': amount,
+          'orderInfo': orderInfo ?? 'Thanh toan don hang #$orderId',
+        }),
+      );
+      return _handleResponse(response) as Map<String, dynamic>;
+    } catch (e) {
+      throw Exception('Failed to create MoMo payment: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> checkMoMoPaymentStatus(int orderId) async {
+    try {
+      final response = await _makeRequest('GET', '/api/momo/status/$orderId');
+      return _handleResponse(response) as Map<String, dynamic>;
+    } catch (e) {
+      throw Exception('Failed to check MoMo payment status: $e');
     }
   }
 

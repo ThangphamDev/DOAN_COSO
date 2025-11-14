@@ -85,6 +85,12 @@ dependencies:
 
   # Local notifications
   flutter_local_notifications: ^17.2.3
+  
+  # WebView for payment
+  webview_flutter: ^4.4.2
+  
+  # URL launcher for handling intent:// URLs
+  url_launcher: ^6.2.2
 
 dev_dependencies:
   flutter_test:

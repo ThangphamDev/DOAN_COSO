@@ -8,6 +8,7 @@ import '../../services/api_service.dart';
 import '../../utils/app_theme.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
+import 'momo_payment_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -16,10 +17,12 @@ class CheckoutScreen extends StatefulWidget {
   State<CheckoutScreen> createState() => _CheckoutScreenState();
 }
 
-class _CheckoutScreenState extends State<CheckoutScreen> {
+class _CheckoutScreenState extends State<CheckoutScreen>
+    with WidgetsBindingObserver {
   final ApiService _apiService = ApiService();
   final _formKey = GlobalKey<FormState>();
   final _noteController = TextEditingController();
+  int? _pendingMoMoOrderId;
 
   List<CafeTable> _tables = [];
   CafeTable? _selectedTable;
@@ -38,14 +41,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadTables();
     _loadRewardPoints();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _noteController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Khi app resume, check pending MoMo payment
+    if (state == AppLifecycleState.resumed && _pendingMoMoOrderId != null) {
+      _checkMoMoPaymentStatusAndNavigate(_pendingMoMoOrderId!);
+    }
   }
 
   Future<void> _loadTables() async {
@@ -137,6 +151,253 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         : maxDiscountPoints;
   }
 
+  // Kiểm tra payment status và navigate đến order success nếu thành công
+  Future<void> _checkMoMoPaymentStatusAndNavigate(int orderId) async {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Đang kiểm tra trạng thái thanh toán...'),
+          duration: Duration(seconds: 2),
+          backgroundColor: AppTheme.primaryColor,
+        ),
+      );
+    }
+
+    try {
+      // Polling backend để kiểm tra payment status
+      int checkCount = 0;
+      const maxChecks = 15; // Tối đa 15 lần (30 giây)
+      bool paymentCompleted = false;
+
+      while (checkCount < maxChecks && !paymentCompleted && mounted) {
+        await Future.delayed(const Duration(seconds: 2));
+
+        try {
+          final statusResponse = await _apiService.checkMoMoPaymentStatus(
+            orderId,
+          );
+          final paymentStatus = statusResponse['paymentStatus'] as String?;
+          final orderStatus = statusResponse['orderStatus'] as String?;
+
+          if (paymentStatus == 'completed' && orderStatus == 'processing') {
+            paymentCompleted = true;
+            break;
+          }
+        } catch (e) {
+          // Log error but continue polling
+          print('Error checking MoMo payment status: $e');
+        }
+
+        checkCount++;
+      }
+
+      if (mounted) {
+        if (paymentCompleted) {
+          final cartProvider = Provider.of<CartProvider>(
+            context,
+            listen: false,
+          );
+          final authProvider = Provider.of<AuthProvider>(
+            context,
+            listen: false,
+          );
+
+          // Refresh reward points
+          if (authProvider.isLoggedIn &&
+              authProvider.currentUser?.idAccount != null) {
+            try {
+              await authProvider.refreshRewardPoints();
+            } catch (e) {
+              // Silent fail
+            }
+          }
+
+          // Clear cart
+          cartProvider.clearCart();
+
+          // Đảm bảo token được load lại trước khi gọi API
+          await _apiService.initialize();
+
+          // Get updated order and navigate
+          try {
+            final updatedOrder = await _apiService.getOrder(orderId);
+            if (mounted) {
+              context.push('/customer/order-success', extra: updatedOrder);
+            }
+          } catch (e) {
+            // Nếu lỗi authentication, thử lại sau khi user login
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Lỗi khi tải thông tin đơn hàng: $e'),
+                  backgroundColor: AppTheme.errorColor,
+                  duration: const Duration(seconds: 5),
+                  action: SnackBarAction(
+                    label: 'Thử lại',
+                    textColor: Colors.white,
+                    onPressed: () {
+                      _checkMoMoPaymentStatusAndNavigate(orderId);
+                    },
+                  ),
+                ),
+              );
+            }
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Thanh toán chưa hoàn tất hoặc đã thất bại. Vui lòng kiểm tra lại.',
+              ),
+              backgroundColor: AppTheme.errorColor,
+              duration: Duration(seconds: 5),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi khi kiểm tra trạng thái: $e'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    }
+  }
+
+  // Method này đã được di chuyển vào MoMoPaymentScreen
+  // Giữ lại để tránh lỗi compile nếu có reference cũ
+  @Deprecated('Use _checkMoMoPaymentStatusAndNavigate instead')
+  Future<void> _checkPaymentStatusAndNavigate(int orderId) async {
+    try {
+      final statusResponse = await _apiService.checkMoMoPaymentStatus(orderId);
+      final paymentStatus = statusResponse['paymentStatus'] as String?;
+      final orderStatus = statusResponse['orderStatus'] as String?;
+
+      if (paymentStatus == 'completed' && orderStatus == 'processing') {
+        // Payment thành công!
+        final cartProvider = Provider.of<CartProvider>(context, listen: false);
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+        // Refresh reward points
+        if (authProvider.isLoggedIn &&
+            authProvider.currentUser?.idAccount != null) {
+          try {
+            await authProvider.refreshRewardPoints();
+          } catch (e) {
+            // Silent fail
+          }
+        }
+
+        // Clear cart
+        cartProvider.clearCart();
+
+        if (mounted) {
+          // Get updated order
+          final updatedOrder = await _apiService.getOrder(orderId);
+          context.push('/customer/order-success', extra: updatedOrder);
+        }
+      } else if (paymentStatus == 'failed') {
+        // Payment thất bại
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Thanh toán thất bại. Vui lòng thử lại.'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
+      } else {
+        // Payment đang pending, bắt đầu kiểm tra định kỳ
+        _checkPaymentStatusPeriodically(orderId);
+      }
+    } catch (e) {
+      // Lỗi khi kiểm tra, bắt đầu kiểm tra định kỳ
+      _checkPaymentStatusPeriodically(orderId);
+    }
+  }
+
+  // Kiểm tra payment status định kỳ sau khi mở MoMo payment
+  void _checkPaymentStatusPeriodically(int orderId) {
+    // Kiểm tra payment status mỗi 3 giây, tối đa 10 lần (30 giây)
+    int checkCount = 0;
+    const maxChecks = 10;
+
+    Future.delayed(const Duration(seconds: 3), () {
+      _checkPaymentStatus(orderId, checkCount, maxChecks);
+    });
+  }
+
+  Future<void> _checkPaymentStatus(
+    int orderId,
+    int checkCount,
+    int maxChecks,
+  ) async {
+    if (checkCount >= maxChecks) {
+      // Đã kiểm tra đủ lần, dừng lại
+      return;
+    }
+
+    try {
+      final statusResponse = await _apiService.checkMoMoPaymentStatus(orderId);
+      final paymentStatus = statusResponse['paymentStatus'] as String?;
+      final orderStatus = statusResponse['orderStatus'] as String?;
+
+      if (paymentStatus == 'completed' && orderStatus == 'processing') {
+        // Payment thành công!
+        final cartProvider = Provider.of<CartProvider>(context, listen: false);
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+        // Refresh reward points
+        if (authProvider.isLoggedIn &&
+            authProvider.currentUser?.idAccount != null) {
+          try {
+            await authProvider.refreshRewardPoints();
+          } catch (e) {
+            // Silent fail
+          }
+        }
+
+        // Clear cart
+        cartProvider.clearCart();
+
+        if (mounted) {
+          // Get updated order
+          final updatedOrder = await _apiService.getOrder(orderId);
+          context.push('/customer/order-success', extra: updatedOrder);
+        }
+        return; // Dừng kiểm tra
+      } else if (paymentStatus == 'failed') {
+        // Payment thất bại
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Thanh toán thất bại. Vui lòng thử lại.'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
+        return; // Dừng kiểm tra
+      }
+
+      // Chưa có kết quả, tiếp tục kiểm tra
+      if (mounted && checkCount < maxChecks - 1) {
+        Future.delayed(const Duration(seconds: 3), () {
+          _checkPaymentStatus(orderId, checkCount + 1, maxChecks);
+        });
+      }
+    } catch (e) {
+      // Lỗi khi kiểm tra, tiếp tục thử
+      if (mounted && checkCount < maxChecks - 1) {
+        Future.delayed(const Duration(seconds: 3), () {
+          _checkPaymentStatus(orderId, checkCount + 1, maxChecks);
+        });
+      }
+    }
+  }
+
   Future<void> _placeOrder() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -159,17 +420,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       );
 
       // Prepare order data
+      // For MoMo payment, set status to pending and paymentStatus to pending
+      final isMoMoPayment = _paymentMethod == 'transfer';
       final orderData = {
         'totalAmount': finalTotal,
         'note': _noteController.text.trim().isEmpty
             ? null
             : _noteController.text.trim(),
-        'status': 'processing',
+        'status': isMoMoPayment ? 'pending' : 'processing',
         'orderTime': DateTime.now().toIso8601String(),
         'productItems': cartProvider.toOrderItems(),
         'payment': {
           'paymentMethod': _paymentMethod,
-          'paymentStatus': 'completed',
+          'paymentStatus': isMoMoPayment ? 'pending' : 'completed',
           'createAt': DateTime.now().toIso8601String(),
         },
       };
@@ -206,22 +469,77 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       // Create order (backend will automatically add reward points based on totalAmount)
       final order = await _apiService.createOrder(orderData);
 
-      // Refresh reward points after order creation to get updated points
-      // (Backend automatically adds points: 1 point per 10,000 VND)
-      if (authProvider.isLoggedIn &&
-          authProvider.currentUser?.idAccount != null) {
+      // If MoMo payment, open payment screen
+      if (isMoMoPayment && mounted) {
         try {
-          await authProvider.refreshRewardPoints();
+          // Create MoMo payment request
+          final paymentResponse = await _apiService.createMoMoPayment(
+            orderId: order.idOrder!,
+            amount: finalTotal,
+            orderInfo: 'Thanh toan don hang #${order.idOrder}',
+          );
+
+          final payUrl = paymentResponse['payUrl'] as String?;
+          if (payUrl != null && payUrl.isNotEmpty) {
+            // Mở MoMo payment trong WebView
+            // User có thể quét mã QR hoặc thanh toán bằng ứng dụng MoMo
+            if (mounted) {
+              // Đóng checkout screen trước
+              Navigator.of(context).pop();
+
+              // Lưu orderId ngay để có thể check khi app resume
+              _pendingMoMoOrderId = order.idOrder!;
+
+              // Mở MoMo payment screen trong WebView
+              final returnedOrderId = await Navigator.of(context).push<int>(
+                MaterialPageRoute(
+                  builder: (context) => MoMoPaymentScreen(
+                    payUrl: payUrl,
+                    orderId: order.idOrder!,
+                  ),
+                ),
+              );
+
+              // Nếu WebView trả về orderId (detected return URL), bắt đầu polling ngay
+              // Nếu không (return URL mở browser ngoài), sẽ check khi app resume
+              if (returnedOrderId != null && mounted) {
+                // Bắt đầu polling ngay
+                await _checkMoMoPaymentStatusAndNavigate(returnedOrderId);
+              }
+              // Nếu returnedOrderId == null, đợi app resume để check
+            }
+          } else {
+            throw Exception('Không thể tạo yêu cầu thanh toán MoMo');
+          }
         } catch (e) {
-          // Silent fail - points will be refreshed when user checks profile
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Lỗi thanh toán MoMo: $e'),
+                backgroundColor: AppTheme.errorColor,
+              ),
+            );
+          }
         }
-      }
+      } else {
+        // Cash payment - proceed normally
+        // Refresh reward points after order creation to get updated points
+        // (Backend automatically adds points: 1 point per 10,000 VND)
+        if (authProvider.isLoggedIn &&
+            authProvider.currentUser?.idAccount != null) {
+          try {
+            await authProvider.refreshRewardPoints();
+          } catch (e) {
+            // Silent fail - points will be refreshed when user checks profile
+          }
+        }
 
-      // Clear cart
-      cartProvider.clearCart();
+        // Clear cart
+        cartProvider.clearCart();
 
-      if (mounted) {
-        context.push('/customer/order-success', extra: order);
+        if (mounted) {
+          context.push('/customer/order-success', extra: order);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -474,7 +792,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildPaymentMethodOption(
-                    'Chuyển khoản',
+                    'MoMo',
                     'transfer',
                     Icons.account_balance_wallet,
                   ),
