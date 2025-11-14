@@ -109,13 +109,9 @@ public class MoMoPaymentService {
                     order.getPayment().setPaymentStatus("pending");
                 }
                 
-                // Lưu requestId và momoOrderId vào note hoặc extraData
-                if (order.getNote() == null || order.getNote().isEmpty()) {
-                    order.setNote("MoMo RequestId: " + requestId + ", MoMo OrderId: " + momoOrderId);
-                } else {
-                    order.setNote(order.getNote() + " | MoMo RequestId: " + requestId + ", MoMo OrderId: " + momoOrderId);
-                }
-                
+                // Không lưu MoMo info vào note nữa (để UI sạch hơn)
+                // MoMo orderId và requestId đã được lưu trong response, không cần lưu vào note
+
                 cafeOrderRepository.save(order);
                 
                 // Trả về response
@@ -225,8 +221,9 @@ public class MoMoPaymentService {
                 }
             }
             
-            // Tìm order từ momoOrderId (lưu trong note)
             // Parse momoOrderId để lấy orderId thực
+            // Format: ORDER{orderId}_{timestamp}
+            // Ví dụ: ORDER751_1763118873271 -> orderId = 751
             Integer actualOrderId = null;
             if (orderId != null && orderId.startsWith("ORDER")) {
                 String[] parts = orderId.split("_");
@@ -234,30 +231,14 @@ public class MoMoPaymentService {
                     String orderPart = parts[0].replace("ORDER", "");
                     try {
                         actualOrderId = Integer.parseInt(orderPart);
+                        System.out.println("DEBUG - Parsed orderId from MoMo orderId: " + actualOrderId);
                     } catch (NumberFormatException e) {
-                        // Try to find by note - search for order with this MoMo orderId in note
-                        List<CafeOrder> orders = cafeOrderRepository.findAll();
-                        for (CafeOrder order : orders) {
-                            if (order.getNote() != null && order.getNote().contains("MoMo OrderId: " + orderId)) {
-                                actualOrderId = order.getIdOrder();
-                                break;
-                            }
-                        }
+                        System.err.println("ERROR - Cannot parse orderId from MoMo orderId: " + orderId);
+                        throw new RuntimeException("Invalid MoMo orderId format: " + orderId);
                     }
                 }
             }
-            
-            if (actualOrderId == null) {
-                // Last resort: try to find by searching all orders
-                List<CafeOrder> orders = cafeOrderRepository.findAll();
-                for (CafeOrder order : orders) {
-                    if (order.getNote() != null && order.getNote().contains(orderId)) {
-                        actualOrderId = order.getIdOrder();
-                        break;
-                    }
-                }
-            }
-            
+
             if (actualOrderId == null) {
                 throw new RuntimeException("Cannot find order from MoMo orderId: " + orderId);
             }

@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import '../../utils/app_theme.dart';
-import '../../services/api_service.dart';
-import '../../providers/cart_provider.dart';
-import '../../providers/auth_provider.dart';
 
 class MoMoPaymentScreen extends StatefulWidget {
   final String payUrl;
@@ -29,9 +24,6 @@ class _MoMoPaymentScreenState extends State<MoMoPaymentScreen>
   late final WebViewController _controller;
   bool _isLoading = true;
   String? _error;
-  final ApiService _apiService = ApiService();
-  int? _successOrderId;
-  bool _isCheckingStatus = false;
   bool _hasLaunchedMoMoApp = false;
 
   @override
@@ -52,13 +44,12 @@ class _MoMoPaymentScreenState extends State<MoMoPaymentScreen>
     super.didChangeAppLifecycleState(state);
     // Khi app resume (người dùng quay lại từ MoMo app/browser)
     if (state == AppLifecycleState.resumed && _hasLaunchedMoMoApp && mounted) {
-      // Đóng WebView ngay nếu vẫn đang mở
-      // Logic check payment status sẽ được xử lý bởi checkout_screen
+      // Đóng WebView và trả orderId về checkout screen để check payment status
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          // Đóng WebView (có thể đã đóng rồi, nhưng không sao)
           try {
-            Navigator.of(context).pop();
+            // Trả orderId về để checkout screen có thể check payment status
+            Navigator.of(context).pop(widget.orderId);
           } catch (e) {
             // WebView đã đóng rồi, không sao
           }
@@ -77,19 +68,19 @@ class _MoMoPaymentScreenState extends State<MoMoPaymentScreen>
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (String url) {
-            // Check if this is the return URL - đóng WebView ngay TRƯỚC khi set loading
+            // ✅ HANDLE RETURN URL NGAY TẠI ĐÂY - Prevent load trang JSON
             if (url.contains('/api/momo/return')) {
               final uri = Uri.parse(url);
               final resultCode = uri.queryParameters['resultCode'];
-              if (resultCode == '0' && !_hasLaunchedMoMoApp) {
-                // Đóng WebView ngay - không cho load trang JSON
-                // Không set loading state vì sẽ đóng ngay
+
+              // Nếu thanh toán thành công, đóng WebView ngay
+              if (resultCode == '0') {
                 _handlePaymentReturnAndCloseWebView(url);
-                return; // Không set loading state
               }
+              return; // Không set loading state
             }
 
-            // Chỉ set loading nếu không phải return URL
+            // Chỉ set loading nếu không phải return URL và chưa launch MoMo app
             if (!_hasLaunchedMoMoApp) {
               setState(() {
                 _isLoading = true;
@@ -110,16 +101,19 @@ class _MoMoPaymentScreenState extends State<MoMoPaymentScreen>
               return NavigationDecision.prevent;
             }
 
-            // Nếu là return URL với resultCode = '0', prevent navigation và đóng WebView ngay
-            // Phải check TRƯỚC các scheme khác để đóng ngay
+            // ✅ CHECK RETURN URL TRƯỚC TIÊN - Prevent load trang JSON
+            // Nếu là return URL, LUÔN prevent navigation và đóng WebView ngay
             if (url.contains('/api/momo/return')) {
               final uri = Uri.parse(url);
               final resultCode = uri.queryParameters['resultCode'];
-              if (resultCode == '0' && !_hasLaunchedMoMoApp) {
-                // Đóng WebView ngay lập tức - prevent load trang JSON
+
+              // Nếu thanh toán thành công (resultCode = 0), đóng WebView ngay
+              if (resultCode == '0') {
+                // Đóng WebView ngay lập tức - KHÔNG CHO load trang JSON
                 _handlePaymentReturnAndCloseWebView(url);
-                return NavigationDecision.prevent;
               }
+              // LUÔN prevent navigation để không load trang JSON
+              return NavigationDecision.prevent;
             }
 
             // Handle intent:// URLs - MoMo app deep links
@@ -134,6 +128,19 @@ class _MoMoPaymentScreenState extends State<MoMoPaymentScreen>
                 url.startsWith('tel://') ||
                 url.startsWith('sms://')) {
               _launchUrl(url);
+              return NavigationDecision.prevent;
+            }
+
+            // ✅ CRITICAL: Block external HTTP/HTTPS URLs nếu không phải từ MoMo domain
+            // Điều này giúp prevent việc mở browser ngoài cho return URL
+            if ((url.startsWith('http://') || url.startsWith('https://')) &&
+                !url.contains('momo.vn') &&
+                !url.contains('/api/momo/') &&
+                url.contains('resultCode')) {
+              // Có thể là return URL được redirect - prevent và handle
+              if (url.contains('/api/momo/return')) {
+                _handlePaymentReturnAndCloseWebView(url);
+              }
               return NavigationDecision.prevent;
             }
 
@@ -154,16 +161,12 @@ class _MoMoPaymentScreenState extends State<MoMoPaymentScreen>
             });
           },
           onUrlChange: (UrlChange change) {
-            if (change.url != null) {
-              // Check if this is the return URL
-              if (change.url!.contains('/api/momo/return')) {
-                final uri = Uri.parse(change.url!);
-                final resultCode = uri.queryParameters['resultCode'];
-                // Nếu payment thành công, đóng WebView ngay
-                if (resultCode == '0' && !_hasLaunchedMoMoApp) {
-                  _handlePaymentReturnAndCloseWebView(change.url!);
-                }
-              }
+            // ✅ KHÔNG CẦN XỬ LÝ - onNavigationRequest đã prevent và handle rồi
+            // Giữ lại callback này để monitor nếu cần debug
+            if (change.url != null &&
+                change.url!.contains('/api/momo/return')) {
+              // onNavigationRequest đã xử lý, không làm gì thêm
+              return;
             }
           },
         ),
@@ -195,140 +198,14 @@ class _MoMoPaymentScreenState extends State<MoMoPaymentScreen>
 
       // Set flag ngay lập tức để prevent navigation và mở browser ngoài
       _hasLaunchedMoMoApp = true;
-      _successOrderId = orderIdInt;
 
-      // Đóng WebView ngay lập tức - không đợi async
-      // Đóng ngay để prevent WebView load trang JSON
-      // Sử dụng Future.microtask để đảm bảo đóng ngay trong microtask queue
+      // Đóng WebView ngay lập tức và trả orderId về checkout screen
+      // Checkout screen sẽ xử lý việc check payment status và navigate
       Future.microtask(() {
         if (mounted) {
           Navigator.of(context).pop(orderIdInt);
         }
       });
-    }
-  }
-
-  Future<void> _checkPaymentStatusAndNavigate() async {
-    if (_isCheckingStatus) return;
-
-    // Ưu tiên _successOrderId, nếu null thì dùng widget.orderId
-    final orderIdToCheck = _successOrderId ?? widget.orderId;
-
-    setState(() {
-      _isCheckingStatus = true;
-    });
-
-    try {
-      // Polling backend để kiểm tra payment status
-      int checkCount = 0;
-      const maxChecks = 15; // Tối đa 15 lần (30 giây)
-      bool paymentCompleted = false;
-
-      while (checkCount < maxChecks && !paymentCompleted && mounted) {
-        await Future.delayed(const Duration(seconds: 2));
-
-        try {
-          final statusResponse = await _apiService.checkMoMoPaymentStatus(
-            orderIdToCheck,
-          );
-          final paymentStatus = statusResponse['paymentStatus'] as String?;
-          final orderStatus = statusResponse['orderStatus'] as String?;
-
-          if (paymentStatus == 'completed' && orderStatus == 'processing') {
-            paymentCompleted = true;
-            break;
-          }
-        } catch (e) {
-          // Log error but continue polling
-          print('Error checking MoMo payment status: $e');
-        }
-
-        checkCount++;
-      }
-
-      if (!mounted) return;
-
-      setState(() {
-        _isCheckingStatus = false;
-      });
-
-      if (paymentCompleted) {
-        // Lưu orderId để navigate
-        _successOrderId = orderIdToCheck;
-        // Navigate to order success screen (WebView đã đóng ở didChangeAppLifecycleState)
-        await _navigateToOrderSuccess();
-      } else {
-        // Nếu chưa cập nhật, vẫn hiển thị thông báo và cho phép xem đơn hàng
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Đang kiểm tra trạng thái thanh toán. Vui lòng đợi trong giây lát...',
-              ),
-              duration: Duration(seconds: 3),
-              backgroundColor: AppTheme.primaryColor,
-            ),
-          );
-          // Lưu orderId để navigate
-          _successOrderId = orderIdToCheck;
-          // Vẫn cho phép xem đơn hàng (WebView đã đóng ở didChangeAppLifecycleState)
-          await _navigateToOrderSuccess();
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isCheckingStatus = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Lỗi khi kiểm tra trạng thái: $e'),
-            backgroundColor: AppTheme.errorColor,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _navigateToOrderSuccess() async {
-    // Dùng _successOrderId nếu có, nếu không thì dùng widget.orderId
-    final orderId = _successOrderId ?? widget.orderId;
-
-    try {
-      // Đảm bảo token được load lại trước khi gọi API
-      await _apiService.initialize();
-
-      // Get updated order from backend
-      final order = await _apiService.getOrder(orderId);
-
-      final cartProvider = Provider.of<CartProvider>(context, listen: false);
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-      // Refresh reward points
-      if (authProvider.isLoggedIn &&
-          authProvider.currentUser?.idAccount != null) {
-        try {
-          await authProvider.refreshRewardPoints();
-        } catch (e) {
-          // Silent fail
-        }
-      }
-
-      // Clear cart
-      cartProvider.clearCart();
-
-      if (mounted) {
-        context.push('/customer/order-success', extra: order);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Lỗi khi tải thông tin đơn hàng: $e'),
-            backgroundColor: AppTheme.errorColor,
-          ),
-        );
-      }
     }
   }
 
@@ -508,6 +385,50 @@ class _MoMoPaymentScreenState extends State<MoMoPaymentScreen>
               _buildErrorScreen()
             else
               WebViewWidget(controller: _controller),
+
+          // ✅ Overlay chờ xác nhận khi đã launch MoMo app
+          if (_hasLaunchedMoMoApp)
+            Container(
+              color: Colors.white,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.phone_android,
+                      size: 64,
+                      color: AppTheme.primaryColor,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Đang chờ xác nhận từ MoMo...',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Vui lòng hoàn tất thanh toán trên ứng dụng MoMo',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    const CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppTheme.primaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          // Loading indicator cho WebView
           if (_isLoading && _error == null && !_hasLaunchedMoMoApp)
             Container(
               color: Colors.white,
@@ -516,25 +437,6 @@ class _MoMoPaymentScreenState extends State<MoMoPaymentScreen>
                   valueColor: AlwaysStoppedAnimation<Color>(
                     AppTheme.primaryColor,
                   ),
-                ),
-              ),
-            ),
-          if (_isCheckingStatus)
-            Container(
-              color: Colors.black54,
-              child: const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      'Đang kiểm tra trạng thái thanh toán...',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
-                  ],
                 ),
               ),
             ),
