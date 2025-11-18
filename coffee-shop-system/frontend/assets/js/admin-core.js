@@ -43,7 +43,8 @@ function checkAdminAuthentication() {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
     
-    if (!token || !role || !role.toLowerCase().includes('admin')) {
+    // Use RoleUtils to check admin access
+    if (!token || !role || !RoleUtils.isAdmin(role)) {
         console.warn('Người dùng chưa đăng nhập hoặc không phải admin - chuyển hướng đến trang đăng nhập');
         
         const currentPath = window.location.pathname;

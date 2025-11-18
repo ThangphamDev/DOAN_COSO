@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -38,9 +37,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             if (jwtUtil.validateToken(jwt, username)) {
-                String role = jwtUtil.extractRole(jwt);
+                String rolesString = jwtUtil.extractRole(jwt);
                 Integer userId = jwtUtil.extractUserId(jwt);
-                User userDetails = new User(username, "", Collections.singleton(() -> role));
+                
+                // Parse multiple roles (comma-separated)
+                String[] roles = rolesString != null ? rolesString.split(",") : new String[0];
+                var authorities = new java.util.ArrayList<org.springframework.security.core.GrantedAuthority>();
+                for (String role : roles) {
+                    String trimmedRole = role.trim();
+                    if (!trimmedRole.isEmpty()) {
+                        // Backward compatibility: convert old "Staff" to "STAFF_MANAGER"
+                        final String finalRole = "Staff".equalsIgnoreCase(trimmedRole) ? "STAFF_MANAGER" : trimmedRole;
+                        authorities.add(() -> finalRole.toUpperCase());
+                    }
+                }
+                
+                User userDetails = new User(username, "", authorities);
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

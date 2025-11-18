@@ -67,11 +67,27 @@ class _SplashScreenState extends State<SplashScreen>
 
   void _navigateToNextScreen(AuthProvider authProvider) {
     if (authProvider.isLoggedIn) {
-      // Navigate based on user role
-      if (authProvider.isStaff || authProvider.isAdmin) {
-        context.go('/staff');
+      final user = authProvider.currentUser;
+      if (user != null) {
+        // Check if user can choose role (Admin or Manager with multiple roles)
+        final canChoose = user.canManageStaff && user.roles.length > 1;
+
+        if (canChoose) {
+          // Show role selection screen
+          context.go('/role-selection');
+        } else {
+          // Automatically navigate based on role
+          // STAFF_KITCHEN -> /staff
+          // STAFF_ORDER -> /customer
+          // CUSTOMER -> /customer
+          if (user.canWorkInKitchen) {
+            context.go('/staff');
+          } else {
+            context.go('/customer');
+          }
+        }
       } else {
-        context.go('/customer');
+        context.go('/login');
       }
     } else {
       context.go('/login');

@@ -22,6 +22,17 @@ public class JwtUtil {
     public String extractRole(String token) {
         return (String) extractAllClaims(token).get("role");
     }
+    
+    /**
+     * Extract roles as array from comma-separated string
+     */
+    public String[] extractRoles(String token) {
+        String rolesString = extractRole(token);
+        if (rolesString == null || rolesString.trim().isEmpty()) {
+            return new String[0];
+        }
+        return rolesString.split(",");
+    }
 
     public Integer extractUserId(String token) {
         Object userId = extractAllClaims(token).get("userId");

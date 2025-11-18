@@ -44,8 +44,7 @@ class StaffProvider with ChangeNotifier {
     try {
       // Check if user is staff before initializing
       final currentUser = _apiService.currentUser;
-      if (currentUser == null ||
-          (!currentUser.isStaff && !currentUser.isAdmin)) {
+      if (currentUser == null || !currentUser.canAccessStaffPanel) {
         _setError('User is not authorized for staff operations');
         return;
       }

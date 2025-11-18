@@ -30,7 +30,10 @@ public class WebSocketService {
      * Register a user session
      */
     public void registerUserSession(String userId, String sessionId, String userType) {
-        if ("STAFF".equalsIgnoreCase(userType) || "ADMIN".equalsIgnoreCase(userType)) {
+        // Check if user has any staff role
+        boolean isStaff = isStaffRole(userType);
+        
+        if (isStaff || "ADMIN".equalsIgnoreCase(userType)) {
             staffSessions.add(sessionId);
         } else {
             customerSessions.computeIfAbsent(Integer.parseInt(userId), k -> new HashSet<>()).add(sessionId);
@@ -43,7 +46,9 @@ public class WebSocketService {
      * Unregister a user session
      */
     public void unregisterUserSession(String userId, String sessionId, String userType) {
-        if ("STAFF".equalsIgnoreCase(userType) || "ADMIN".equalsIgnoreCase(userType)) {
+        boolean isStaff = isStaffRole(userType);
+        
+        if (isStaff || "ADMIN".equalsIgnoreCase(userType)) {
             staffSessions.remove(sessionId);
         } else {
             Set<String> sessions = customerSessions.get(Integer.parseInt(userId));
@@ -62,6 +67,18 @@ public class WebSocketService {
                 userSessions.remove(userId);
             }
         }
+    }
+    
+    /**
+     * Check if userType contains any staff role (supports comma-separated roles)
+     */
+    private boolean isStaffRole(String userType) {
+        if (userType == null) return false;
+        String upperType = userType.toUpperCase();
+        return upperType.contains("STAFF_ORDER") || 
+               upperType.contains("STAFF_KITCHEN") || 
+               upperType.contains("STAFF_MANAGER") ||
+               upperType.contains("STAFF"); // Backward compatibility
     }
 
     /**

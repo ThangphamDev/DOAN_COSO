@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/role_utils.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/custom_button.dart';
 
@@ -44,11 +45,18 @@ class _LoginScreenState extends State<LoginScreen> {
       final cartProvider = Provider.of<CartProvider>(context, listen: false);
       await cartProvider.updateUserId(authProvider.currentUser?.idAccount);
 
-      // Navigate based on user role
-      if (authProvider.isStaff || authProvider.isAdmin) {
-        context.go('/staff');
+      // Navigate based on user role using RoleUtils
+      final userRole = authProvider.currentUser?.role;
+      final roles = RoleUtils.getAllRoles(userRole);
+      final isAdmin = RoleUtils.isAdmin(userRole);
+
+      // Admin always gets role selection, or users with multiple roles
+      if (isAdmin || roles.length > 1) {
+        context.go('/role-selection');
       } else {
-        context.go('/customer');
+        // Single role - auto-navigate
+        final route = RoleUtils.getAutomaticRoute(userRole);
+        context.go(route);
       }
     }
   }

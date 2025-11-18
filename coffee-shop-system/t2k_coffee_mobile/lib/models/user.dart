@@ -1,4 +1,5 @@
 import '../utils/api_config.dart';
+import '../utils/role_utils.dart';
 
 class User {
   final int? idAccount;
@@ -91,9 +92,29 @@ class User {
     );
   }
 
-  bool get isAdmin => role?.toUpperCase() == 'ADMIN';
-  bool get isStaff => role?.toUpperCase() == 'STAFF';
-  bool get isCustomer => role?.toUpperCase() == 'CUSTOMER' || role == null;
+  // Multi-role support
+  bool get isAdmin => RoleUtils.isAdmin(role);
+  bool get isStaff => RoleUtils.isStaff(role);
+  bool get isCustomer => RoleUtils.isCustomer(role);
+
+  // Specific staff role checks
+  bool get canTakeOrders => RoleUtils.canTakeOrders(role);
+  bool get canWorkInKitchen => RoleUtils.canWorkInKitchen(role);
+  bool get canManageStaff => RoleUtils.canManageStaff(role);
+
+  // UI access checks
+  bool get canAccessStaffPanel => RoleUtils.canAccessStaffPanel(role);
+  bool get canUseCustomerUI => RoleUtils.canUseCustomerUI(role);
+  bool get canUseStaffUI => RoleUtils.canUseStaffUI(role);
+
+  // Get all user roles
+  List<String> get roles => RoleUtils.getAllRoles(role);
+
+  // Get primary role
+  String? get primaryRole => RoleUtils.getPrimaryRole(role);
+
+  // Format roles for display
+  String get displayRoles => RoleUtils.formatRolesForDisplay(role);
 
   String get imageUrl {
     if (image == null || image!.isEmpty) {
