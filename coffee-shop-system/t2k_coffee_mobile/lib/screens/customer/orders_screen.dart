@@ -292,9 +292,13 @@ class OrderDetailsBottomSheet extends StatelessWidget {
             if (order.earnedRewardPoints > 0)
               _buildInfoRow(
                 'Điểm tích lũy:',
-                '+${order.earnedRewardPoints} điểm',
+                order.isCompleted
+                    ? '+${order.earnedRewardPoints} điểm'
+                    : '+${order.earnedRewardPoints} điểm (sau khi hoàn thành)',
                 icon: Icons.stars,
-                iconColor: AppTheme.accentColor,
+                iconColor: order.isCompleted
+                    ? AppTheme.accentColor
+                    : AppTheme.textSecondary,
               ),
 
             const SizedBox(height: 16),

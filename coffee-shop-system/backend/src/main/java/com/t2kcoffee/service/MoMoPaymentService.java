@@ -20,16 +20,19 @@ public class MoMoPaymentService {
     private final MoMoConfig momoConfig;
     private final CafeOrderRepository cafeOrderRepository;
     private final PaymentService paymentService;
+    private final WebSocketService webSocketService;
     private final RestTemplate restTemplate;
     
     @Autowired
     public MoMoPaymentService(
             MoMoConfig momoConfig,
             CafeOrderRepository cafeOrderRepository,
-            PaymentService paymentService) {
+            PaymentService paymentService,
+            WebSocketService webSocketService) {
         this.momoConfig = momoConfig;
         this.cafeOrderRepository = cafeOrderRepository;
         this.paymentService = paymentService;
+        this.webSocketService = webSocketService;
         this.restTemplate = new RestTemplate();
     }
     
@@ -262,10 +265,20 @@ public class MoMoPaymentService {
             if ("0".equals(resultCode)) {
                 // Payment successful
                 order.getPayment().setPaymentStatus("completed");
+                // Chuyển status sang processing (chưa completed)
+                // Staff sẽ xử lý và chuyển sang completed sau
                 order.setStatus("processing");
+                
+                // Lưu order trước khi gửi thông báo
+                cafeOrderRepository.save(order);
+                
+                // Gửi thông báo đơn hàng mới đến staff (vì bây giờ mới thanh toán xong)
+                webSocketService.notifyStaffNewOrder(order);
             } else {
                 // Payment failed
                 order.getPayment().setPaymentStatus("failed");
+                // Giữ nguyên status pending hoặc chuyển sang cancelled
+                order.setStatus("cancelled");
             }
             
             cafeOrderRepository.save(order);

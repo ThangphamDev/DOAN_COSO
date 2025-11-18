@@ -227,13 +227,32 @@ class _CheckoutScreenState extends State<CheckoutScreen>
             listen: false,
           );
 
-          // Refresh reward points
-          if (authProvider.isLoggedIn &&
-              authProvider.currentUser?.idAccount != null) {
+          // TRỪ ĐIỂM THƯỞNG SAU KHI THANH TOÁN THÀNH CÔNG
+          if (_pointsApplied && _pointsToUse > 0 && authProvider.isLoggedIn) {
             try {
+              final currentPoints = authProvider.currentUser?.rewardPoints ?? 0;
+              final remainingPoints = (currentPoints - _pointsToUse)
+                  .clamp(0, double.infinity)
+                  .toInt();
+              await _apiService.updateRewardPoints(
+                authProvider.currentUser!.idAccount!,
+                remainingPoints,
+              );
+              // Refresh để cập nhật UI
               await authProvider.refreshRewardPoints();
             } catch (e) {
-              // Silent fail
+              print('Error updating reward points: $e');
+              // Log error but don't fail the flow
+            }
+          } else {
+            // Refresh reward points để hiển thị đúng
+            if (authProvider.isLoggedIn &&
+                authProvider.currentUser?.idAccount != null) {
+              try {
+                await authProvider.refreshRewardPoints();
+              } catch (e) {
+                // Silent fail
+              }
             }
           }
 
@@ -267,9 +286,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
               // Show thông báo
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text(
-                    'Thanh toán thành công! Đơn hàng đã được tạo.',
-                  ),
+                  content: Text('Thanh toán thành công! Đơn hàng đã được tạo.'),
                   backgroundColor: AppTheme.successColor,
                   duration: Duration(seconds: 3),
                 ),
@@ -313,7 +330,6 @@ class _CheckoutScreenState extends State<CheckoutScreen>
       }
     }
   }
-
 
   Future<void> _placeOrder() async {
     if (!_formKey.currentState!.validate()) {
@@ -367,23 +383,12 @@ class _CheckoutScreenState extends State<CheckoutScreen>
         orderData['accountId'] = authProvider.currentUser!.idAccount;
       }
 
-      // Subtract reward points BEFORE creating order (if applied)
-      if (_pointsApplied && _pointsToUse > 0 && authProvider.isLoggedIn) {
-        try {
-          final currentPoints = authProvider.currentUser?.rewardPoints ?? 0;
-          final remainingPoints = (currentPoints - _pointsToUse)
-              .clamp(0, double.infinity)
-              .toInt();
-          await _apiService.updateRewardPoints(
-            authProvider.currentUser!.idAccount!,
-            remainingPoints,
-          );
-        } catch (e) {
-          // Log error but don't fail the order
-        }
-      }
+      // KHÔNG trừ điểm trước khi tạo đơn nữa
+      // Điểm sẽ chỉ được trừ SAU KHI thanh toán MoMo thành công
+      // (xem logic trong _checkMoMoPaymentStatusAndNavigate)
 
-      // Create order (backend will automatically add reward points based on totalAmount)
+      // Create order (backend sẽ KHÔNG tự động cộng điểm nữa)
+      // Điểm chỉ được cộng khi đơn chuyển sang 'completed'
       final order = await _apiService.createOrder(orderData);
 
       // If MoMo payment, open payment screen
@@ -436,14 +441,33 @@ class _CheckoutScreenState extends State<CheckoutScreen>
         }
       } else {
         // Cash payment - proceed normally
-        // Refresh reward points after order creation to get updated points
-        // (Backend automatically adds points: 1 point per 10,000 VND)
-        if (authProvider.isLoggedIn &&
-            authProvider.currentUser?.idAccount != null) {
+        // TRỪ ĐIỂM THƯỞNG SAU KHI ĐẶT HÀNG (cho cash payment)
+        if (_pointsApplied && _pointsToUse > 0 && authProvider.isLoggedIn) {
           try {
+            final currentPoints = authProvider.currentUser?.rewardPoints ?? 0;
+            final remainingPoints = (currentPoints - _pointsToUse)
+                .clamp(0, double.infinity)
+                .toInt();
+            await _apiService.updateRewardPoints(
+              authProvider.currentUser!.idAccount!,
+              remainingPoints,
+            );
+            // Refresh để cập nhật UI
             await authProvider.refreshRewardPoints();
           } catch (e) {
-            // Silent fail - points will be refreshed when user checks profile
+            print('Error updating reward points: $e');
+            // Log error but don't fail the order
+          }
+        } else {
+          // Refresh reward points để hiển thị đúng
+          // (Backend KHÔNG tự động cộng điểm nữa, chỉ cộng khi completed)
+          if (authProvider.isLoggedIn &&
+              authProvider.currentUser?.idAccount != null) {
+            try {
+              await authProvider.refreshRewardPoints();
+            } catch (e) {
+              // Silent fail - points will be refreshed when user checks profile
+            }
           }
         }
 

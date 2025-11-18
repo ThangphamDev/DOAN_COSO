@@ -76,8 +76,14 @@ public class CafeOrderService {
     @Transactional
     public CafeOrder createOrder(CafeOrder order) {
         // Nếu có payment thì mặc định paymentStatus là 'completed'
+        // TRỪ KHI là MoMo payment (sẽ giữ nguyên pending)
         if (order.getPayment() != null) {
-            order.getPayment().setPaymentStatus("completed");
+            String paymentMethod = order.getPayment().getPaymentMethod();
+            // Chỉ set completed cho cash payment, MoMo giữ nguyên pending
+            if (!"momo".equalsIgnoreCase(paymentMethod) && 
+                !"transfer".equalsIgnoreCase(paymentMethod)) {
+                order.getPayment().setPaymentStatus("completed");
+            }
         }
         // Set order time to current time if not set
         if (order.getOrderTime() == null) {
@@ -95,13 +101,15 @@ public class CafeOrderService {
             cafeTableRepository.updateTableStatus(tableId, "Occupied");
         }
         
-        // Tích điểm thưởng cho khách hàng nếu đơn hàng có liên kết với tài khoản
-        if (savedOrder.getAccount() != null && savedOrder.getTotalAmount() != null) {
-            addRewardPointsForOrder(savedOrder);
-        }
+        // KHÔNG tích điểm thưởng ngay khi tạo đơn
+        // Điểm chỉ được cộng khi đơn hàng chuyển sang trạng thái 'completed'
+        // (xem updateOrderStatus method)
         
         // Gửi thông báo đơn hàng mới đến staff qua WebSocket
-        webSocketService.notifyStaffNewOrder(savedOrder);
+        // CHỈ gửi nếu không phải pending (tức là đã thanh toán)
+        if (!"pending".equalsIgnoreCase(savedOrder.getStatus())) {
+            webSocketService.notifyStaffNewOrder(savedOrder);
+        }
 
         return savedOrder;
     }
@@ -258,7 +266,6 @@ public class CafeOrderService {
         Optional<CafeOrder> orderOpt = cafeOrderRepository.findById(orderId);
         if (orderOpt.isPresent()) {
             CafeOrder order = orderOpt.get();
-            String oldStatus = order.getStatus();
             order.setStatus(status);
             
             CafeOrder updatedOrder = cafeOrderRepository.save(order);
@@ -266,9 +273,14 @@ public class CafeOrderService {
             // Gửi thông báo cập nhật trạng thái đến customer
             webSocketService.notifyCustomerOrderUpdate(updatedOrder);
             
-            // Nếu đơn hàng hoàn thành, gửi thông báo đặc biệt
+            // Nếu đơn hàng hoàn thành, gửi thông báo đặc biệt và CỘNG ĐIỂM THƯỞNG
             if ("COMPLETED".equalsIgnoreCase(status)) {
                 webSocketService.notifyCustomerOrderCompleted(updatedOrder);
+                
+                // Tích điểm thưởng khi đơn hàng hoàn thành
+                if (updatedOrder.getAccount() != null && updatedOrder.getTotalAmount() != null) {
+                    addRewardPointsForOrder(updatedOrder);
+                }
             }
             
             return updatedOrder;
