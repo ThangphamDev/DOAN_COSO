@@ -29,7 +29,8 @@ class CustomerOrderProvider with ChangeNotifier {
       _orders.where((order) => order.isProcessing).toList();
   List<Order> get preparingOrders =>
       _orders.where((order) => order.isPreparing).toList();
-  List<Order> get readyOrders => _orders.where((order) => order.isReady).toList();
+  List<Order> get readyOrders =>
+      _orders.where((order) => order.isReady).toList();
   List<Order> get completedOrders =>
       _orders.where((order) => order.isCompleted).toList();
 
@@ -58,7 +59,8 @@ class CustomerOrderProvider with ChangeNotifier {
   // Load orders from API
   Future<void> _loadOrders() async {
     try {
-      final orders = await _apiService.getOrders();
+      // Nếu là staff, lấy tất cả đơn hàng; nếu là customer, chỉ lấy đơn của mình
+      final orders = await _apiService.getOrdersForCurrentUser();
 
       // Sort orders by time (newest first)
       orders.sort((a, b) {
@@ -95,16 +97,13 @@ class CustomerOrderProvider with ChangeNotifier {
         _isConnected = true;
 
         // Listen to order notifications
-        _orderNotificationSubscription =
-            _webSocketService.orderNotificationStream.listen(
-          _handleOrderNotification,
-        );
+        _orderNotificationSubscription = _webSocketService
+            .orderNotificationStream
+            .listen(_handleOrderNotification);
 
         // Listen to connection status
-        _connectionStatusSubscription =
-            _webSocketService.connectionStatusStream.listen(
-          _handleConnectionStatus,
-        );
+        _connectionStatusSubscription = _webSocketService.connectionStatusStream
+            .listen(_handleConnectionStatus);
 
         notifyListeners();
       }

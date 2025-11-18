@@ -44,6 +44,10 @@ public class AccountService {
     public Optional<Account> getAccountByUsername(String username) {
         return accountRepository.findByUserName(username);
     }
+    
+    public Optional<Account> getAccountByPhone(String phone) {
+        return accountRepository.findByPhone(phone);
+    }
 
     public boolean authenticate(String username, String password) {
         Optional<Account> accountOpt = accountRepository.findByUserName(username);

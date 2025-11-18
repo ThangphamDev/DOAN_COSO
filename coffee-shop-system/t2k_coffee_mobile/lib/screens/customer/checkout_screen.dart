@@ -22,6 +22,8 @@ class _CheckoutScreenState extends State<CheckoutScreen>
   final ApiService _apiService = ApiService();
   final _formKey = GlobalKey<FormState>();
   final _noteController = TextEditingController();
+  final _customerPhoneController =
+      TextEditingController(); // For staff to input customer phone
   int? _pendingMoMoOrderId;
 
   List<CafeTable> _tables = [];
@@ -38,6 +40,10 @@ class _CheckoutScreenState extends State<CheckoutScreen>
   bool _pointsApplied = false;
   static const double _pointsValue = 100.0; // 1 điểm = 100đ (10 điểm = 1000đ)
 
+  // Customer lookup for staff
+  int? _customerAccountId; // ID tài khoản khách hàng (dùng cho staff)
+  bool _isLoadingCustomer = false;
+
   @override
   void initState() {
     super.initState();
@@ -50,6 +56,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _noteController.dispose();
+    _customerPhoneController.dispose();
     super.dispose();
   }
 
@@ -77,6 +84,12 @@ class _CheckoutScreenState extends State<CheckoutScreen>
 
   Future<void> _loadRewardPoints() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    // Nếu là staff, không load điểm của staff mà chờ nhập SĐT khách hàng
+    if (authProvider.currentUser?.canTakeOrders == true) {
+      return; // Staff sẽ nhập SĐT khách để load điểm
+    }
+
     if (!authProvider.isLoggedIn ||
         authProvider.currentUser?.idAccount == null) {
       return;
@@ -89,10 +102,69 @@ class _CheckoutScreenState extends State<CheckoutScreen>
       if (mounted) {
         setState(() {
           _availablePoints = points ?? 0;
+          _customerAccountId = authProvider.currentUser!.idAccount;
         });
       }
     } catch (e) {
       // Silent fail for reward points loading
+    }
+  }
+
+  Future<void> _loadCustomerByPhone(String phone) async {
+    if (phone.trim().isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _isLoadingCustomer = true;
+      _availablePoints = 0;
+      _customerAccountId = null;
+      _pointsToUse = 0;
+      _previewDiscount = 0;
+      _pointsDiscount = 0;
+      _pointsApplied = false;
+    });
+
+    try {
+      // Tìm khách hàng theo SĐT
+      final customer = await _apiService.getAccountByPhone(phone.trim());
+
+      if (customer == null) {
+        throw Exception('Không tìm thấy khách hàng');
+      }
+
+      // Load điểm của khách hàng
+      final points = await _apiService.getRewardPoints(customer.idAccount!);
+
+      if (mounted) {
+        setState(() {
+          _customerAccountId = customer.idAccount;
+          _availablePoints = points ?? 0;
+          _isLoadingCustomer = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Tìm thấy khách hàng: ${customer.fullName} - ${_availablePoints} điểm',
+            ),
+            backgroundColor: AppTheme.successColor,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingCustomer = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Không tìm thấy khách hàng với SĐT: $phone'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
     }
   }
 
@@ -380,7 +452,15 @@ class _CheckoutScreenState extends State<CheckoutScreen>
 
       // Add account information if logged in
       if (authProvider.isLoggedIn) {
-        orderData['accountId'] = authProvider.currentUser!.idAccount;
+        // Nếu là staff và đã nhập SĐT khách hàng, dùng ID khách hàng
+        if (_customerAccountId != null) {
+          orderData['accountId'] = _customerAccountId;
+        }
+        // Nếu là customer (không phải staff), dùng ID của customer
+        else if (!authProvider.currentUser!.isStaff) {
+          orderData['accountId'] = authProvider.currentUser!.idAccount;
+        }
+        // Nếu là staff nhưng KHÔNG nhập SĐT khách → KHÔNG tích điểm (bỏ qua accountId)
       }
 
       // KHÔNG trừ điểm trước khi tạo đơn nữa
@@ -519,6 +599,8 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                     _buildOrderTypeSection(),
                     const SizedBox(height: 24),
                     _buildTableSelectionSection(),
+                    const SizedBox(height: 24),
+                    _buildCustomerPhoneSection(), // For staff to enter customer phone
                     const SizedBox(height: 24),
                     _buildRewardPointsSection(),
                     const SizedBox(height: 24),
@@ -795,6 +877,90 @@ class _CheckoutScreenState extends State<CheckoutScreen>
     );
   }
 
+  Widget _buildCustomerPhoneSection() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    // Chỉ hiển thị cho staff
+    if (!authProvider.currentUser!.canTakeOrders) {
+      return const SizedBox.shrink();
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.phone, color: AppTheme.primaryColor, size: 24),
+                const SizedBox(width: 8),
+                const Text(
+                  'Số điện thoại khách hàng',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: CustomTextField(
+                    controller: _customerPhoneController,
+                    hint: 'Nhập SĐT để tra cứu điểm',
+                    keyboardType: TextInputType.phone,
+                    prefixIcon: Icons.phone_outlined,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                CustomButton(
+                  text: 'Tìm',
+                  onPressed: _isLoadingCustomer
+                      ? null
+                      : () =>
+                            _loadCustomerByPhone(_customerPhoneController.text),
+                  isLoading: _isLoadingCustomer,
+                  width: 80,
+                ),
+              ],
+            ),
+            if (_customerAccountId != null) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.successColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.check_circle,
+                      color: AppTheme.successColor,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Khách hàng có $_availablePoints điểm',
+                      style: const TextStyle(
+                        color: AppTheme.successColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildNoteSection() {
     return Card(
       child: Padding(
@@ -825,6 +991,13 @@ class _CheckoutScreenState extends State<CheckoutScreen>
 
   Widget _buildRewardPointsSection() {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    // Nếu là staff và chưa nhập SĐT khách hàng, không hiện phần này
+    if (authProvider.currentUser!.canTakeOrders && _customerAccountId == null) {
+      return const SizedBox.shrink();
+    }
+
+    // Nếu không đăng nhập hoặc không có điểm, không hiện
     if (!authProvider.isLoggedIn || _availablePoints <= 0) {
       return const SizedBox.shrink();
     }

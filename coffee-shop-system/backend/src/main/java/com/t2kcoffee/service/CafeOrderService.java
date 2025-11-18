@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.annotation.Propagation;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -368,10 +369,17 @@ public class CafeOrderService {
     /**
      * Tích điểm thưởng cho khách hàng dựa trên giá trị đơn hàng
      * Quy đổi: 1 điểm cho mỗi 10,000 VND
+     * CHỈ tích điểm cho CUSTOMER, KHÔNG tích cho STAFF
      */
     private void addRewardPointsForOrder(CafeOrder order) {
         if (order.getAccount() == null || order.getTotalAmount() == null) {
             return;
+        }
+        
+        // Kiểm tra role: CHỈ tích điểm cho CUSTOMER
+        String role = order.getAccount().getRole();
+        if (role == null || role.startsWith("STAFF_")) {
+            return; // Không tích điểm cho staff
         }
         
         // Lấy ID tài khoản
@@ -380,7 +388,7 @@ public class CafeOrderService {
         // Tính số điểm thưởng: 1 điểm cho mỗi 10,000 VND
         BigDecimal amount = order.getTotalAmount();
         BigDecimal pointsPerUnit = new BigDecimal("10000");
-        Integer points = amount.divide(pointsPerUnit, 0, BigDecimal.ROUND_DOWN).intValue();
+        Integer points = amount.divide(pointsPerUnit, 0, RoundingMode.DOWN).intValue();
         
         if (points > 0) {
             // Gọi service để thêm điểm thưởng

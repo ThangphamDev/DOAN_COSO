@@ -235,6 +235,24 @@ class ApiService {
     }
   }
 
+  // Get account by phone number
+  Future<User?> getAccountByPhone(String phone) async {
+    try {
+      final response = await _makeRequest(
+        'GET',
+        '${ApiConfig.accountsEndpoint}/phone/$phone',
+      );
+      final data = _handleResponse(response);
+
+      if (data is Map<String, dynamic>) {
+        return User.fromJson(data);
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Customer not found with phone: $phone');
+    }
+  }
+
   // Update account (for profile update)
   Future<User?> updateAccount(
     int accountId, {
@@ -469,6 +487,22 @@ class ApiService {
       return [];
     } catch (e) {
       throw Exception('Failed to fetch orders: $e');
+    }
+  }
+
+  // Orders - Get orders for current user (staff sees all, customer sees own)
+  Future<List<Order>> getOrdersForCurrentUser() async {
+    try {
+      // Check if current user is staff
+      if (_currentUser?.isStaff == true) {
+        // Staff xem tất cả đơn hàng
+        return await getAllOrders();
+      } else {
+        // Customer chỉ xem đơn của mình
+        return await getOrders();
+      }
+    } catch (e) {
+      throw Exception('Failed to fetch orders for current user: $e');
     }
   }
 

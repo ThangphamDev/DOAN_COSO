@@ -45,6 +45,13 @@ public class AccountController {
         return account.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
+    
+    @GetMapping("/phone/{phone}")
+    public ResponseEntity<Account> getAccountByPhone(@PathVariable String phone) {
+        Optional<Account> account = accountService.getAccountByPhone(phone);
+        return account.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
 
     @PostMapping
     public ResponseEntity<?> createAccount(@RequestBody Account account) {
