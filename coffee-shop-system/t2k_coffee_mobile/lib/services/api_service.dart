@@ -569,6 +569,15 @@ class ApiService {
     }
   }
 
+  // Cancel order (wrapper for updateOrderStatus with 'cancelled' status)
+  Future<Order> cancelOrder(int orderId) async {
+    try {
+      return await updateOrderStatus(orderId, 'cancelled');
+    } catch (e) {
+      throw Exception('Failed to cancel order: $e');
+    }
+  }
+
   Future<Order> updatePaymentInfo(
     int orderId,
     String paymentMethod,

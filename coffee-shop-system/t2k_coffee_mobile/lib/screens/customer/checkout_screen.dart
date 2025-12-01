@@ -273,7 +273,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
 
       // Polling backend để kiểm tra payment status
       int checkCount = 0;
-      const maxChecks = 15; // Tối đa 15 lần (30 giây)
+      const maxChecks = 5; // Tối đa 5 lần (10 giây)
       bool paymentCompleted = false;
 
       while (checkCount < maxChecks && !paymentCompleted && mounted) {
@@ -403,23 +403,56 @@ class _CheckoutScreenState extends State<CheckoutScreen>
             }
           }
         } else {
-          // Payment chưa hoàn tất - cho phép user thử lại hoặc quay lại
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text(
-                'Thanh toán chưa hoàn tất. Vui lòng kiểm tra lại hoặc chọn phương thức thanh toán khác.',
-              ),
-              backgroundColor: AppTheme.errorColor,
-              duration: const Duration(seconds: 5),
-              action: SnackBarAction(
-                label: 'Kiểm tra lại',
-                textColor: Colors.white,
-                onPressed: () {
-                  _checkMoMoPaymentStatusAndNavigate(orderId);
-                },
-              ),
-            ),
-          );
+          // ✅ Payment chưa hoàn tất sau 30s - HỦY ĐỠN HÀNG
+          print('[Checkout] Payment not completed - Cancelling order $orderId');
+
+          try {
+            // Hủy đơn hàng trên backend
+            await _apiService.cancelOrder(orderId);
+            print('[Checkout] Order $orderId cancelled successfully');
+
+            // Clear pending order ID
+            _pendingMoMoOrderId = null;
+
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text(
+                    'Thanh toán không thành công. Đơn hàng đã được hủy.\nVui lòng đặt hàng lại.',
+                  ),
+                  backgroundColor: AppTheme.errorColor,
+                  duration: const Duration(seconds: 5),
+                  action: SnackBarAction(
+                    label: 'Đóng',
+                    textColor: Colors.white,
+                    onPressed: () {},
+                  ),
+                ),
+              );
+            }
+          } catch (cancelError) {
+            print('[Checkout] Error cancelling order: $cancelError');
+
+            // Nếu lỗi khi hủy, vẫn thông báo cho user
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text(
+                    'Thanh toán chưa hoàn tất. Vui lòng kiểm tra lại hoặc liên hệ hỗ trợ.',
+                  ),
+                  backgroundColor: AppTheme.errorColor,
+                  duration: const Duration(seconds: 5),
+                  action: SnackBarAction(
+                    label: 'Kiểm tra lại',
+                    textColor: Colors.white,
+                    onPressed: () {
+                      _checkMoMoPaymentStatusAndNavigate(orderId);
+                    },
+                  ),
+                ),
+              );
+            }
+          }
         }
       }
     } catch (e) {
@@ -536,8 +569,46 @@ class _CheckoutScreenState extends State<CheckoutScreen>
               // LUÔN check payment status khi MoMoPaymentScreen đóng
               // (dù là do return URL, app resume, hoặc user back)
               if (mounted) {
-                final orderIdToCheck = returnedOrderId ?? order.idOrder!;
-                await _checkMoMoPaymentStatusAndNavigate(orderIdToCheck);
+                // Check if user cancelled payment (returnedOrderId == -1)
+                if (returnedOrderId == -1) {
+                  debugPrint(
+                    'User cancelled MoMo payment for order ${order.idOrder}',
+                  );
+
+                  // Cancel the order immediately
+                  try {
+                    await _apiService.cancelOrder(order.idOrder!);
+                    _pendingMoMoOrderId = null;
+
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Đã hủy thanh toán và đơn hàng'),
+                          backgroundColor: AppTheme.warningColor,
+                          duration: Duration(seconds: 3),
+                        ),
+                      );
+
+                      // Return to previous screen
+                      Navigator.of(context).pop();
+                    }
+                  } catch (e) {
+                    debugPrint('Failed to cancel order: $e');
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Lỗi khi hủy đơn hàng: $e'),
+                          backgroundColor: AppTheme.errorColor,
+                          duration: const Duration(seconds: 3),
+                        ),
+                      );
+                    }
+                  }
+                } else {
+                  // Normal flow - check payment status
+                  final orderIdToCheck = returnedOrderId ?? order.idOrder!;
+                  await _checkMoMoPaymentStatusAndNavigate(orderIdToCheck);
+                }
               }
             }
           } else {
