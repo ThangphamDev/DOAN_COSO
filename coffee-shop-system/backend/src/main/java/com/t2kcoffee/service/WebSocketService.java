@@ -141,6 +141,30 @@ public class WebSocketService {
     }
 
     /**
+     * Send new order notification to customer
+     * This notifies customer when they create a new order so it appears in their order list immediately
+     */
+    public void notifyCustomerNewOrder(CafeOrder order) {
+        if (order.getAccount() != null) {
+            Integer customerId = order.getAccount().getIdAccount();
+            System.out.println("[WebSocket] Notifying customer " + customerId + " about their new order #" + order.getIdOrder());
+            
+            OrderNotification notification = new OrderNotification(
+                "NEW_ORDER", 
+                order, 
+                "Đơn hàng #" + order.getIdOrder() + " của bạn đã được tạo thành công",
+                "HIGH"
+            );
+            
+            WebSocketMessage message = new WebSocketMessage("ORDER_NOTIFICATION", notification);
+            
+            // Broadcast to customer-specific topic
+            messagingTemplate.convertAndSend("/topic/customer/" + customerId + "/orders", message);
+            System.out.println("[WebSocket] Broadcast new order to /topic/customer/" + customerId + "/orders");
+        }
+    }
+
+    /**
      * Send order status update to customer
      */
     public void notifyCustomerOrderUpdate(CafeOrder order) {

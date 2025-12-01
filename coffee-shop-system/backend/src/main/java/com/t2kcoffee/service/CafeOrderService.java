@@ -106,10 +106,15 @@ public class CafeOrderService {
         // Điểm chỉ được cộng khi đơn hàng chuyển sang trạng thái 'completed'
         // (xem updateOrderStatus method)
         
-        // Gửi thông báo đơn hàng mới đến staff qua WebSocket
+        // Gửi thông báo đơn hàng mới qua WebSocket
         // CHỈ gửi nếu không phải pending (tức là đã thanh toán)
         if (!"pending".equalsIgnoreCase(savedOrder.getStatus())) {
+            // Notify staff about new order (for staff order management screen)
             webSocketService.notifyStaffNewOrder(savedOrder);
+            
+            // Notify customer about their new order (for customer order list screen)
+            // This allows customer to see their order immediately without refreshing
+            webSocketService.notifyCustomerNewOrder(savedOrder);
         }
 
         return savedOrder;

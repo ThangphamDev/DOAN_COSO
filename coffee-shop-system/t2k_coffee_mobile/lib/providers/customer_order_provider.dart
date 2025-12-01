@@ -145,19 +145,36 @@ class CustomerOrderProvider with ChangeNotifier {
         }
       }
     } else if (notification.isNewOrder) {
-      // This shouldn't happen for customers, but handle it anyway
+      // Handle new order notification
+      // For STAFF: receives all new orders from any customer
+      // For CUSTOMER: receives their own new order (so it appears immediately after creation)
       final newOrder = Order.fromJson(notification.order);
-      _orders.insert(0, newOrder);
 
-      // Sort orders
-      _orders.sort((a, b) {
-        if (a.orderTime == null && b.orderTime == null) return 0;
-        if (a.orderTime == null) return 1;
-        if (b.orderTime == null) return -1;
-        return b.orderTime!.compareTo(a.orderTime!);
-      });
+      // Check if order already exists to avoid duplicates
+      final existingIndex = _orders.indexWhere(
+        (order) => order.idOrder == newOrder.idOrder,
+      );
 
-      notifyListeners();
+      if (existingIndex < 0) {
+        // Only add if not already in list
+        _orders.insert(0, newOrder);
+
+        // Sort orders
+        _orders.sort((a, b) {
+          if (a.orderTime == null && b.orderTime == null) return 0;
+          if (a.orderTime == null) return 1;
+          if (b.orderTime == null) return -1;
+          return b.orderTime!.compareTo(a.orderTime!);
+        });
+
+        notifyListeners();
+
+        // Show notification for new order
+        _notificationService.showOrderStatusNotification(
+          orderId: newOrder.idOrder!,
+          status: 'Đơn hàng mới',
+        );
+      }
     }
   }
 
