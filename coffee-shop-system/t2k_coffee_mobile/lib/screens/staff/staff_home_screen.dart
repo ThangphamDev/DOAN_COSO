@@ -19,16 +19,37 @@ class StaffHomeScreen extends StatefulWidget {
   State<StaffHomeScreen> createState() => _StaffHomeScreenState();
 }
 
-class _StaffHomeScreenState extends State<StaffHomeScreen> {
+class _StaffHomeScreenState extends State<StaffHomeScreen>
+    with WidgetsBindingObserver {
   Order? _lastNewOrder;
   bool _showNotification = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeStaffServices();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    // ✅ Khi app resume, reconnect WebSocket để nhận realtime updates
+    if (state == AppLifecycleState.resumed && mounted) {
+      print('[StaffHome] App resumed - checking WebSocket connection...');
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      // Refresh orders để reconnect WebSocket nếu cần
+      staffProvider.refreshOrders();
+    }
   }
 
   Future<void> _initializeStaffServices() async {

@@ -18,7 +18,8 @@ class CustomerHomeScreen extends StatefulWidget {
   State<CustomerHomeScreen> createState() => _CustomerHomeScreenState();
 }
 
-class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
+class _CustomerHomeScreenState extends State<CustomerHomeScreen>
+    with WidgetsBindingObserver {
   int _currentIndex = 0;
   late PageController _pageController;
   late List<Widget> _screens;
@@ -27,6 +28,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _pageController = PageController();
 
     // Check if user can manage tables (ADMIN, STAFF_ORDER, STAFF_MANAGER)
@@ -65,8 +67,25 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _pageController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    // ✅ Khi app resume, reconnect WebSocket để nhận realtime updates
+    if (state == AppLifecycleState.resumed && mounted) {
+      print('[CustomerHome] App resumed - checking WebSocket connection...');
+      final orderProvider = Provider.of<CustomerOrderProvider>(
+        context,
+        listen: false,
+      );
+      // Reconnect WebSocket nếu bị disconnect
+      orderProvider.initialize(forceRefresh: false);
+    }
   }
 
   void _onTabTapped(int index) {

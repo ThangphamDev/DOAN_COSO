@@ -7,12 +7,14 @@ class MoMoPaymentScreen extends StatefulWidget {
   final String payUrl;
   final int orderId;
   final Function(bool success, int orderId)? onPaymentComplete;
+  final String? userRole;
 
   const MoMoPaymentScreen({
     super.key,
     required this.payUrl,
     required this.orderId,
     this.onPaymentComplete,
+    this.userRole,
   });
 
   @override
@@ -21,7 +23,7 @@ class MoMoPaymentScreen extends StatefulWidget {
 
 class _MoMoPaymentScreenState extends State<MoMoPaymentScreen>
     with WidgetsBindingObserver {
-  late final WebViewController _controller;
+  WebViewController? _controller;
   bool _isLoading = true;
   String? _error;
   bool _hasLaunchedMoMoApp = false;
@@ -30,7 +32,13 @@ class _MoMoPaymentScreenState extends State<MoMoPaymentScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _initializeWebView();
+
+    // Nếu là staff/admin, mở trực tiếp trên browser thay vì WebView
+    if (!_shouldLaunchMoMoApp()) {
+      _openInBrowser();
+    } else {
+      _initializeWebView();
+    }
   }
 
   @override
@@ -117,16 +125,25 @@ class _MoMoPaymentScreenState extends State<MoMoPaymentScreen>
             }
 
             // Handle intent:// URLs - MoMo app deep links
+            // Chỉ mở app MoMo nếu là CUSTOMER, các role khác (STAFF, ADMIN) chỉ xem QR
             if (url.startsWith('intent://')) {
-              _handleIntentUrl(url);
+              if (_shouldLaunchMoMoApp()) {
+                _handleIntentUrl(url);
+              }
               return NavigationDecision
                   .prevent; // Prevent WebView from trying to load intent://
             }
 
             // Handle other special schemes
-            if (url.startsWith('momo://') ||
-                url.startsWith('tel://') ||
-                url.startsWith('sms://')) {
+            // Chỉ mở app MoMo nếu là CUSTOMER
+            if (url.startsWith('momo://')) {
+              if (_shouldLaunchMoMoApp()) {
+                _launchUrl(url);
+              }
+              return NavigationDecision.prevent;
+            }
+
+            if (url.startsWith('tel://') || url.startsWith('sms://')) {
               _launchUrl(url);
               return NavigationDecision.prevent;
             }
@@ -184,6 +201,59 @@ class _MoMoPaymentScreenState extends State<MoMoPaymentScreen>
               'Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36',
         },
       );
+  }
+
+  /// Check if user should be allowed to launch MoMo app
+  /// Returns true only for CUSTOMER role, false for STAFF/ADMIN roles
+  bool _shouldLaunchMoMoApp() {
+    // Nếu không truyền role hoặc là CUSTOMER thì cho phép mở app
+    if (widget.userRole == null || widget.userRole == 'CUSTOMER') {
+      return true;
+    }
+    // Các role khác (ADMIN, STAFF_ORDER, STAFF_KITCHEN, STAFF_MANAGER) chỉ xem QR
+    return false;
+  }
+
+  /// Mở trang thanh toán MoMo trên browser ngoài cho staff/admin
+  Future<void> _openInBrowser() async {
+    try {
+      setState(() {
+        _hasLaunchedMoMoApp = true;
+        _isLoading = false;
+      });
+
+      final uri = Uri.parse(widget.payUrl);
+
+      // Mở browser với mode externalApplication
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!launched) {
+        throw Exception('Không thể mở browser');
+      }
+
+      // Hiển thị thông báo
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Đã mở trang thanh toán trên browser. Sau khi thanh toán xong, vui lòng quay lại app.',
+            ),
+            duration: const Duration(seconds: 5),
+            backgroundColor: AppTheme.primaryColor,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = 'Không thể mở browser: $e';
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   void _handlePaymentReturnAndCloseWebView(String url) {
@@ -370,7 +440,9 @@ class _MoMoPaymentScreenState extends State<MoMoPaymentScreen>
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
-        title: const Text('Thanh toán MoMo'),
+        title: Text(
+          _shouldLaunchMoMoApp() ? 'Thanh toán MoMo' : 'Quét mã QR MoMo',
+        ),
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -384,46 +456,111 @@ class _MoMoPaymentScreenState extends State<MoMoPaymentScreen>
             if (_error != null)
               _buildErrorScreen()
             else
-              WebViewWidget(controller: _controller),
+              Column(
+                children: [
+                  // Hiển thị banner hướng dẫn cho staff/admin
+                  if (!_shouldLaunchMoMoApp())
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withOpacity(0.1),
+                        border: Border(
+                          bottom: BorderSide(
+                            color: AppTheme.primaryColor.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.qr_code_scanner,
+                            color: AppTheme.primaryColor,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Vui lòng quét mã QR bên dưới bằng ứng dụng MoMo trên điện thoại khách hàng',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppTheme.primaryColor,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (_controller != null)
+                    Expanded(child: WebViewWidget(controller: _controller!)),
+                ],
+              ),
 
-          // ✅ Overlay chờ xác nhận khi đã launch MoMo app
+          // ✅ Overlay chờ xác nhận khi đã launch MoMo app/browser
           if (_hasLaunchedMoMoApp)
             Container(
               color: Colors.white,
               child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.phone_android,
-                      size: 64,
-                      color: AppTheme.primaryColor,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Đang chờ xác nhận từ MoMo...',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.textPrimary,
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        _shouldLaunchMoMoApp()
+                            ? Icons.phone_android
+                            : Icons.open_in_browser,
+                        size: 64,
+                        color: AppTheme.primaryColor,
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Vui lòng hoàn tất thanh toán trên ứng dụng MoMo',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppTheme.textSecondary,
+                      const SizedBox(height: 16),
+                      Text(
+                        _shouldLaunchMoMoApp()
+                            ? 'Đang chờ xác nhận từ MoMo...'
+                            : 'Đang chờ thanh toán trên browser...',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          color: AppTheme.textPrimary,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-                    const CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        AppTheme.primaryColor,
+                      const SizedBox(height: 8),
+                      Text(
+                        _shouldLaunchMoMoApp()
+                            ? 'Vui lòng hoàn tất thanh toán trên ứng dụng MoMo'
+                            : 'Vui lòng hoàn tất thanh toán trên browser.\nSau khi thanh toán xong, quay lại app để tiếp tục.',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: AppTheme.textSecondary,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 24),
+                      const CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppTheme.primaryColor,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop(widget.orderId);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 12,
+                          ),
+                        ),
+                        child: const Text('Đã thanh toán - Kiểm tra ngay'),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -463,7 +600,7 @@ class _MoMoPaymentScreenState extends State<MoMoPaymentScreen>
               setState(() {
                 _error = null;
               });
-              _controller.reload();
+              _controller?.reload();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryColor,

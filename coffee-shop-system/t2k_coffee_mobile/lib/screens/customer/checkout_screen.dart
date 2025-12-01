@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/customer_order_provider.dart';
 import '../../models/table.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_theme.dart';
@@ -63,9 +64,26 @@ class _CheckoutScreenState extends State<CheckoutScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    // Khi app resume, check pending MoMo payment
-    if (state == AppLifecycleState.resumed && _pendingMoMoOrderId != null) {
-      _checkMoMoPaymentStatusAndNavigate(_pendingMoMoOrderId!);
+
+    // Khi app resume từ MoMo app/browser
+    if (state == AppLifecycleState.resumed) {
+      // ✅ RECONNECT WEBSOCKET khi app resume
+      // Quan trọng để không bị disconnect sau khi mở MoMo app/browser
+      try {
+        final orderProvider = Provider.of<CustomerOrderProvider>(
+          context,
+          listen: false,
+        );
+        orderProvider.initialize(forceRefresh: false); // Reconnect nếu cần
+        print('[Checkout] WebSocket check/reconnect on app resume');
+      } catch (e) {
+        print('[Checkout] Error reconnecting WebSocket on resume: $e');
+      }
+
+      // Check pending MoMo payment nếu có
+      if (_pendingMoMoOrderId != null) {
+        _checkMoMoPaymentStatusAndNavigate(_pendingMoMoOrderId!);
+      }
     }
   }
 
@@ -334,6 +352,21 @@ class _CheckoutScreenState extends State<CheckoutScreen>
           // Đảm bảo token được load lại trước khi gọi API
           await _apiService.initialize();
 
+          // ✅ RECONNECT WEBSOCKET sau khi thanh toán MoMo thành công
+          // Quan trọng để staff nhận được realtime update
+          try {
+            final orderProvider = Provider.of<CustomerOrderProvider>(
+              context,
+              listen: false,
+            );
+            // Force refresh để reconnect WebSocket và load lại orders
+            await orderProvider.initialize(forceRefresh: true);
+            print('[Checkout] WebSocket reconnected after MoMo payment');
+          } catch (e) {
+            print('[Checkout] Error reconnecting WebSocket: $e');
+            // Không fail flow chính nếu WebSocket lỗi
+          }
+
           // Get updated order and navigate
           try {
             final updatedOrder = await _apiService.getOrder(orderId);
@@ -495,6 +528,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                   builder: (context) => MoMoPaymentScreen(
                     payUrl: payUrl,
                     orderId: order.idOrder!,
+                    userRole: authProvider.currentUser?.role,
                   ),
                 ),
               );
