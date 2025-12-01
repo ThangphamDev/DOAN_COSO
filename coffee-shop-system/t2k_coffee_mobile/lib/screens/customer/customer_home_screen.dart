@@ -4,6 +4,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/customer_order_provider.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/role_utils.dart';
 import 'modern_menu_screen.dart';
 import 'cart_screen.dart';
 import 'orders_screen.dart';
@@ -21,16 +22,16 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   int _currentIndex = 0;
   late PageController _pageController;
   late List<Widget> _screens;
-  late bool _isStaffOrder;
+  late bool _canManageTables;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
 
-    // Check if user is STAFF_ORDER
+    // Check if user can manage tables (ADMIN, STAFF_ORDER, STAFF_MANAGER)
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    _isStaffOrder = authProvider.currentUser?.role == 'STAFF_ORDER';
+    _canManageTables = RoleUtils.canTakeOrders(authProvider.currentUser?.role);
 
     // Build screens list based on role
     _screens = [
@@ -40,8 +41,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       const ProfileScreen(),
     ];
 
-    // Add table management for STAFF_ORDER
-    if (_isStaffOrder) {
+    // Add table management for authorized roles
+    if (_canManageTables) {
       _screens.insert(3, const TableManagementScreen());
     }
 
@@ -138,8 +139,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       ),
     ];
 
-    // Add table management for STAFF_ORDER before profile
-    if (_isStaffOrder) {
+    // Add table management for authorized roles (ADMIN, STAFF_ORDER, STAFF_MANAGER) before profile
+    if (_canManageTables) {
       items.add(
         BottomNavigationBarItem(
           icon: _buildNavIcon(Icons.table_restaurant, 3),
@@ -151,7 +152,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     // Profile always last
     items.add(
       BottomNavigationBarItem(
-        icon: _buildNavIcon(Icons.person, _isStaffOrder ? 4 : 3),
+        icon: _buildNavIcon(Icons.person, _canManageTables ? 4 : 3),
         label: 'Hồ sơ',
       ),
     );
