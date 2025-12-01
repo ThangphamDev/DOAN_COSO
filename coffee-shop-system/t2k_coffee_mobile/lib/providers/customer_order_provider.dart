@@ -86,10 +86,11 @@ class CustomerOrderProvider with ChangeNotifier {
         throw Exception('User not logged in');
       }
 
-      // Connect to WebSocket
+      // Connect to WebSocket - use actual user role instead of hardcoded 'CUSTOMER'
+      // This allows staff roles (STAFF_ORDER, STAFF_MANAGER, etc.) to subscribe to staff topics
       final connected = await _webSocketService.connect(
         userId: currentUser.idAccount.toString(),
-        userType: 'CUSTOMER',
+        userType: currentUser.role ?? 'CUSTOMER',
         deviceId: 'mobile_device',
       );
 

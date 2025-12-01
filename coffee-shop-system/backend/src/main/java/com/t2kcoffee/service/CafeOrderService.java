@@ -274,6 +274,10 @@ public class CafeOrderService {
             // Gửi thông báo cập nhật trạng thái đến customer
             webSocketService.notifyCustomerOrderUpdate(updatedOrder);
             
+            // Gửi thông báo cập nhật trạng thái đến tất cả staff
+            // Điều này cho phép các staff khác (đang xem trang đơn hàng) nhận được updates realtime
+            webSocketService.notifyStaffOrderUpdate(updatedOrder);
+            
             // Nếu đơn hàng hoàn thành, gửi thông báo đặc biệt và CỘNG ĐIỂM THƯỞNG
             if ("COMPLETED".equalsIgnoreCase(status)) {
                 webSocketService.notifyCustomerOrderCompleted(updatedOrder);

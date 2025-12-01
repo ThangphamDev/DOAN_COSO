@@ -119,6 +119,28 @@ public class WebSocketService {
     }
 
     /**
+     * Send order status update to all staff members
+     * This notifies staff when order status changes (e.g., from another staff member)
+     */
+    public void notifyStaffOrderUpdate(CafeOrder order) {
+        System.out.println("[WebSocket] Notifying staff about order #" + order.getIdOrder() + " status update: " + order.getStatus());
+        System.out.println("[WebSocket] Active staff sessions: " + staffSessions.size());
+        
+        OrderNotification notification = new OrderNotification(
+            "ORDER_UPDATED", 
+            order, 
+            "Đơn hàng #" + order.getIdOrder() + " đã được cập nhật trạng thái: " + order.getStatus(),
+            "MEDIUM"
+        );
+        
+        WebSocketMessage message = new WebSocketMessage("ORDER_UPDATE", notification);
+        
+        // Broadcast to staff topic - all staff subscribed to this topic will receive
+        messagingTemplate.convertAndSend("/topic/staff/orders", message);
+        System.out.println("[WebSocket] Broadcast order update to /topic/staff/orders");
+    }
+
+    /**
      * Send order status update to customer
      */
     public void notifyCustomerOrderUpdate(CafeOrder order) {
