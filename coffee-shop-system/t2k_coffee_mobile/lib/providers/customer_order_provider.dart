@@ -15,6 +15,7 @@ class CustomerOrderProvider with ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   bool _isConnected = false;
+  bool _isInitialized = false; // Flag to prevent re-initialization
   StreamSubscription? _orderNotificationSubscription;
   StreamSubscription? _connectionStatusSubscription;
 
@@ -23,6 +24,7 @@ class CustomerOrderProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isConnected => _isConnected;
+  bool get isInitialized => _isInitialized;
 
   // Get orders by status
   List<Order> get processingOrders =>
@@ -35,19 +37,34 @@ class CustomerOrderProvider with ChangeNotifier {
       _orders.where((order) => order.isCompleted).toList();
 
   // Initialize customer order tracking
-  Future<void> initialize() async {
+  // This will only run once per provider lifecycle
+  Future<void> initialize({bool forceRefresh = false}) async {
+    // Skip if already initialized and not forcing refresh
+    if (_isInitialized && !forceRefresh) {
+      print('[CustomerOrderProvider] Already initialized, skipping...');
+      // Just reconnect WebSocket if disconnected
+      if (!_isConnected) {
+        await _connectWebSocket();
+      }
+      return;
+    }
+
+    print('[CustomerOrderProvider] Initializing...');
     _setLoading(true);
 
     try {
       // Initialize notification service
       await _notificationService.initialize();
 
-      // Load initial orders
-      await _loadOrders();
+      // Load initial orders only if not initialized or forcing refresh
+      if (!_isInitialized || forceRefresh) {
+        await _loadOrders();
+      }
 
-      // Connect to WebSocket
+      // Connect to WebSocket (will skip if already connected)
       await _connectWebSocket();
 
+      _isInitialized = true;
       _clearError();
     } catch (e) {
       _setError('Failed to initialize: $e');
@@ -79,12 +96,20 @@ class CustomerOrderProvider with ChangeNotifier {
 
   // Connect to WebSocket
   Future<void> _connectWebSocket() async {
+    // Skip if already connected
+    if (_isConnected && _webSocketService.isConnected) {
+      print('[CustomerOrderProvider] WebSocket already connected, skipping...');
+      return;
+    }
+
     try {
       // Get current user info
       final currentUser = _apiService.currentUser;
       if (currentUser == null) {
         throw Exception('User not logged in');
       }
+
+      print('[CustomerOrderProvider] Connecting to WebSocket...');
 
       // Connect to WebSocket - use actual user role instead of hardcoded 'CUSTOMER'
       // This allows staff roles (STAFF_ORDER, STAFF_MANAGER, etc.) to subscribe to staff topics
@@ -97,6 +122,10 @@ class CustomerOrderProvider with ChangeNotifier {
       if (connected) {
         _isConnected = true;
 
+        // Cancel old subscriptions if any
+        await _orderNotificationSubscription?.cancel();
+        await _connectionStatusSubscription?.cancel();
+
         // Listen to order notifications
         _orderNotificationSubscription = _webSocketService
             .orderNotificationStream
@@ -106,6 +135,7 @@ class CustomerOrderProvider with ChangeNotifier {
         _connectionStatusSubscription = _webSocketService.connectionStatusStream
             .listen(_handleConnectionStatus);
 
+        print('[CustomerOrderProvider] WebSocket connected successfully');
         notifyListeners();
       }
     } catch (e) {
@@ -191,9 +221,17 @@ class CustomerOrderProvider with ChangeNotifier {
     }
   }
 
-  // Refresh orders
+  // Refresh orders (manual refresh via pull-to-refresh)
   Future<void> refreshOrders() async {
+    print('[CustomerOrderProvider] Manual refresh triggered');
     await _loadOrders();
+  }
+
+  // Force re-initialize (use when user logs out and back in)
+  Future<void> forceReinitialize() async {
+    print('[CustomerOrderProvider] Force re-initialize triggered');
+    _isInitialized = false;
+    await initialize(forceRefresh: true);
   }
 
   // Track specific order
@@ -220,11 +258,12 @@ class CustomerOrderProvider with ChangeNotifier {
     // Disconnect WebSocket
     await _webSocketService.disconnect();
 
-    // Clear all data
+    // Clear all data and reset initialization flag
     _orders = [];
     _isLoading = false;
     _error = null;
     _isConnected = false;
+    _isInitialized = false; // Reset flag so next login will initialize properly
 
     notifyListeners();
     print('[CustomerOrderProvider] Order data cleared');
