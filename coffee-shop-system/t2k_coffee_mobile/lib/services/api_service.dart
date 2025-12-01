@@ -495,12 +495,12 @@ class ApiService {
     }
   }
 
-  // Orders - Get orders for current user (staff sees all, customer sees own)
+  // Orders - Get orders for current user (staff/admin sees all, customer sees own)
   Future<List<Order>> getOrdersForCurrentUser() async {
     try {
-      // Check if current user is staff
-      if (_currentUser?.isStaff == true) {
-        // Staff xem tất cả đơn hàng
+      // Check if current user is staff OR admin
+      if (_currentUser?.isStaff == true || _currentUser?.isAdmin == true) {
+        // Staff/Admin xem tất cả đơn hàng
         return await getAllOrders();
       } else {
         // Customer chỉ xem đơn của mình
