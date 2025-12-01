@@ -413,16 +413,24 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
           ),
           TextButton(
             onPressed: () async {
-              // Stop staff polling and clear privileged data
-              final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+              // IMPORTANT: Clear data in correct order to prevent race conditions
+
+              // 1. Stop staff provider and disconnect WebSocket
+              final staffProvider = Provider.of<StaffProvider>(
+                context,
+                listen: false,
+              );
               staffProvider.clearStaffData();
 
-              // Update cart to anonymous mode (userId = null)
-              final cartProvider = Provider.of<CartProvider>(context, listen: false);
-              await cartProvider.updateUserId(null);
-
-              // Clear authentication token
+              // 2. Clear authentication
               await authProvider.logout();
+
+              // 3. Update cart to anonymous mode
+              final cartProvider = Provider.of<CartProvider>(
+                context,
+                listen: false,
+              );
+              await cartProvider.updateUserId(null);
 
               if (context.mounted) {
                 Navigator.of(context).pop();

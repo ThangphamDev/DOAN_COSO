@@ -30,13 +30,21 @@ public class WebSocketService {
      * Register a user session
      */
     public void registerUserSession(String userId, String sessionId, String userType) {
+        System.out.println("[WebSocket] Registering user: " + userId + ", type: " + userType + ", session: " + sessionId);
+        
         // Check if user has any staff role
         boolean isStaff = isStaffRole(userType);
         
         if (isStaff || "ADMIN".equalsIgnoreCase(userType)) {
             staffSessions.add(sessionId);
+            System.out.println("[WebSocket] Added to staff sessions. Total staff: " + staffSessions.size());
         } else {
-            customerSessions.computeIfAbsent(Integer.parseInt(userId), k -> new HashSet<>()).add(sessionId);
+            try {
+                customerSessions.computeIfAbsent(Integer.parseInt(userId), k -> new HashSet<>()).add(sessionId);
+                System.out.println("[WebSocket] Added to customer sessions. Total customers: " + customerSessions.size());
+            } catch (NumberFormatException e) {
+                System.err.println("[WebSocket] Invalid userId format: " + userId);
+            }
         }
         
         userSessions.computeIfAbsent(userId, k -> new HashSet<>()).add(sessionId);
@@ -46,17 +54,24 @@ public class WebSocketService {
      * Unregister a user session
      */
     public void unregisterUserSession(String userId, String sessionId, String userType) {
+        System.out.println("[WebSocket] Unregistering user: " + userId + ", session: " + sessionId);
+        
         boolean isStaff = isStaffRole(userType);
         
         if (isStaff || "ADMIN".equalsIgnoreCase(userType)) {
             staffSessions.remove(sessionId);
+            System.out.println("[WebSocket] Removed from staff sessions. Remaining: " + staffSessions.size());
         } else {
-            Set<String> sessions = customerSessions.get(Integer.parseInt(userId));
-            if (sessions != null) {
-                sessions.remove(sessionId);
-                if (sessions.isEmpty()) {
-                    customerSessions.remove(Integer.parseInt(userId));
+            try {
+                Set<String> sessions = customerSessions.get(Integer.parseInt(userId));
+                if (sessions != null) {
+                    sessions.remove(sessionId);
+                    if (sessions.isEmpty()) {
+                        customerSessions.remove(Integer.parseInt(userId));
+                    }
                 }
+            } catch (NumberFormatException e) {
+                System.err.println("[WebSocket] Invalid userId format: " + userId);
             }
         }
         
@@ -85,6 +100,9 @@ public class WebSocketService {
      * Send order notification to all staff members
      */
     public void notifyStaffNewOrder(CafeOrder order) {
+        System.out.println("[WebSocket] Notifying staff about new order #" + order.getIdOrder());
+        System.out.println("[WebSocket] Active staff sessions: " + staffSessions.size());
+        
         OrderNotification notification = new OrderNotification(
             "NEW_ORDER", 
             order, 
@@ -95,13 +113,9 @@ public class WebSocketService {
         
         WebSocketMessage message = new WebSocketMessage("ORDER_NOTIFICATION", notification);
         
-        // Send to all staff sessions
-        for (String sessionId : staffSessions) {
-            messagingTemplate.convertAndSendToUser(sessionId, "/queue/notifications", message);
-        }
-        
-        // Also broadcast to staff topic
+        // Broadcast to staff topic - all staff subscribed to this topic will receive
         messagingTemplate.convertAndSend("/topic/staff/orders", message);
+        System.out.println("[WebSocket] Broadcast to /topic/staff/orders");
     }
 
     /**
@@ -110,24 +124,19 @@ public class WebSocketService {
     public void notifyCustomerOrderUpdate(CafeOrder order) {
         if (order.getAccount() != null) {
             Integer customerId = order.getAccount().getIdAccount();
-            Set<String> customerSessionIds = customerSessions.get(customerId);
+            System.out.println("[WebSocket] Notifying customer " + customerId + " about order #" + order.getIdOrder() + " status: " + order.getStatus());
             
-            if (customerSessionIds != null && !customerSessionIds.isEmpty()) {
-                OrderNotification notification = new OrderNotification(
-                    "ORDER_UPDATED", 
-                    order, 
-                    "Đơn hàng #" + order.getIdOrder() + " đã được cập nhật trạng thái: " + order.getStatus()
-                );
-                
-                WebSocketMessage message = new WebSocketMessage("ORDER_UPDATE", notification);
-                
-                for (String sessionId : customerSessionIds) {
-                    messagingTemplate.convertAndSendToUser(sessionId, "/queue/notifications", message);
-                }
-
-                // Also broadcast to a customer-specific topic to avoid Principal dependency
-                messagingTemplate.convertAndSend("/topic/customer/" + customerId + "/orders", message);
-            }
+            OrderNotification notification = new OrderNotification(
+                "ORDER_UPDATED", 
+                order, 
+                "Đơn hàng #" + order.getIdOrder() + " đã được cập nhật trạng thái: " + order.getStatus()
+            );
+            
+            WebSocketMessage message = new WebSocketMessage("ORDER_UPDATE", notification);
+            
+            // Broadcast to customer-specific topic
+            messagingTemplate.convertAndSend("/topic/customer/" + customerId + "/orders", message);
+            System.out.println("[WebSocket] Broadcast to /topic/customer/" + customerId + "/orders");
         }
     }
 
@@ -137,25 +146,20 @@ public class WebSocketService {
     public void notifyCustomerOrderCompleted(CafeOrder order) {
         if (order.getAccount() != null) {
             Integer customerId = order.getAccount().getIdAccount();
-            Set<String> customerSessionIds = customerSessions.get(customerId);
+            System.out.println("[WebSocket] Notifying customer " + customerId + " that order #" + order.getIdOrder() + " is completed");
             
-            if (customerSessionIds != null && !customerSessionIds.isEmpty()) {
-                OrderNotification notification = new OrderNotification(
-                    "ORDER_COMPLETED", 
-                    order, 
-                    "Đơn hàng #" + order.getIdOrder() + " đã sẵn sàng!",
-                    "HIGH"
-                );
-                
-                WebSocketMessage message = new WebSocketMessage("ORDER_COMPLETED", notification);
-                
-                for (String sessionId : customerSessionIds) {
-                    messagingTemplate.convertAndSendToUser(sessionId, "/queue/notifications", message);
-                }
-
-                // Also broadcast to a customer-specific topic
-                messagingTemplate.convertAndSend("/topic/customer/" + customerId + "/orders", message);
-            }
+            OrderNotification notification = new OrderNotification(
+                "ORDER_COMPLETED", 
+                order, 
+                "Đơn hàng #" + order.getIdOrder() + " đã sẵn sàng!",
+                "HIGH"
+            );
+            
+            WebSocketMessage message = new WebSocketMessage("ORDER_COMPLETED", notification);
+            
+            // Broadcast to customer-specific topic
+            messagingTemplate.convertAndSend("/topic/customer/" + customerId + "/orders", message);
+            System.out.println("[WebSocket] Broadcast to /topic/customer/" + customerId + "/orders");
         }
     }
 
@@ -171,13 +175,10 @@ public class WebSocketService {
      * Send notification to specific user
      */
     public void sendNotificationToUser(String userId, String message, String type) {
-        Set<String> sessions = userSessions.get(userId);
-        if (sessions != null) {
-            WebSocketMessage wsMessage = new WebSocketMessage(type, message);
-            for (String sessionId : sessions) {
-                messagingTemplate.convertAndSendToUser(sessionId, "/queue/notifications", wsMessage);
-            }
-        }
+        System.out.println("[WebSocket] Sending notification to user: " + userId);
+        WebSocketMessage wsMessage = new WebSocketMessage(type, message);
+        // Use userId as Principal name for user-specific messages
+        messagingTemplate.convertAndSendToUser(userId, "/queue/notifications", wsMessage);
     }
 
     /**

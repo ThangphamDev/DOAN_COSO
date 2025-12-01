@@ -122,8 +122,13 @@ class WebSocketService {
 
   // Disconnect from WebSocket
   Future<void> disconnect() async {
+    print('[WebSocket] Disconnecting...');
+
     _stopHeartbeat();
     _stopReconnectTimer();
+
+    // Reset reconnect attempts to prevent auto-reconnect
+    _reconnectAttempts = ApiConfig.maxReconnectAttempts;
 
     if (_stompClient != null) {
       try {
@@ -146,9 +151,15 @@ class WebSocketService {
       _stompClient = null;
     }
 
+    // Reset all state
     _isConnected = false;
     _isConnecting = false;
+    _userId = null;
+    _userType = null;
+    _deviceId = null;
+
     _connectionStatusController.add('disconnected');
+    print('[WebSocket] Disconnected and state reset');
   }
 
   // Handle incoming messages
@@ -195,18 +206,30 @@ class WebSocketService {
 
   // Attempt to reconnect
   void _attemptReconnect() {
-    if (_reconnectAttempts >= ApiConfig.maxReconnectAttempts) {
-      _connectionStatusController.add('failed');
+    // Don't reconnect if max attempts reached or if manually disconnected (userId cleared)
+    if (_reconnectAttempts >= ApiConfig.maxReconnectAttempts ||
+        _userId == null) {
+      if (_reconnectAttempts >= ApiConfig.maxReconnectAttempts) {
+        _connectionStatusController.add('failed');
+        print('[WebSocket] Max reconnect attempts reached, giving up');
+      } else {
+        print(
+          '[WebSocket] UserId is null, not attempting reconnect (user logged out)',
+        );
+      }
       return;
     }
 
     _stopReconnectTimer();
     _reconnectAttempts++;
 
+    print('[WebSocket] Scheduling reconnect attempt #$_reconnectAttempts');
+
     _reconnectTimer = Timer(
       Duration(milliseconds: ApiConfig.reconnectDelayMs * _reconnectAttempts),
       () {
         if (_userId != null && _userType != null) {
+          print('[WebSocket] Attempting reconnect for user $_userId');
           connect(userId: _userId!, userType: _userType!, deviceId: _deviceId);
         }
       },
@@ -224,7 +247,10 @@ class WebSocketService {
 
       // Subscribe using STOMP
       if (_stompClient != null) {
-        if (_userType == 'STAFF' || _userType == 'ADMIN') {
+        // Check if user has any staff role (supports comma-separated roles)
+        final isStaff = _isStaffRole(_userType);
+
+        if (isStaff || _userType == 'ADMIN') {
           _stompClient!.subscribe(
             destination: ApiConfig.staffOrdersTopic,
             callback: (frame) => _handleMessage(frame.body),
@@ -336,5 +362,16 @@ class WebSocketService {
       // If registration fails, disconnect and try again
       _handleError(e);
     }
+  }
+
+  /// Check if userType contains any staff role (supports comma-separated roles)
+  /// Matches backend WebSocketService.isStaffRole() logic
+  bool _isStaffRole(String? userType) {
+    if (userType == null) return false;
+    final upperType = userType.toUpperCase();
+    return upperType.contains('STAFF_ORDER') ||
+        upperType.contains('STAFF_KITCHEN') ||
+        upperType.contains('STAFF_MANAGER') ||
+        upperType.contains('STAFF'); // Backward compatibility
   }
 }

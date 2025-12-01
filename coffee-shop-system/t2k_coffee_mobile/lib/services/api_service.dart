@@ -107,6 +107,11 @@ class ApiService {
             .put(Uri.parse(url), headers: requestHeaders, body: body)
             .timeout(Duration(milliseconds: ApiConfig.connectTimeout));
         break;
+      case 'PATCH':
+        response = await http
+            .patch(Uri.parse(url), headers: requestHeaders, body: body)
+            .timeout(Duration(milliseconds: ApiConfig.connectTimeout));
+        break;
       case 'DELETE':
         response = await http
             .delete(Uri.parse(url), headers: requestHeaders)

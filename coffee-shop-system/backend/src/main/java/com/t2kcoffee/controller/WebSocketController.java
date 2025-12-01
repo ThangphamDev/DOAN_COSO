@@ -21,18 +21,25 @@ public class WebSocketController {
      * Handle user registration for WebSocket
      */
     @MessageMapping("/register")
-    @SendTo("/topic/notifications")
-    public WebSocketMessage registerUser(@Payload Map<String, String> registrationData, 
+    public void registerUser(@Payload Map<String, String> registrationData, 
                                        SimpMessageHeaderAccessor headerAccessor) {
         String userId = registrationData.get("userId");
         String userType = registrationData.get("userType");
         String sessionId = headerAccessor.getSessionId();
         
+        System.out.println("[WebSocketController] Register request - User: " + userId + ", Type: " + userType + ", Session: " + sessionId);
+        
+        // Store in session attributes for auto-cleanup on disconnect
+        headerAccessor.getSessionAttributes().put("userId", userId);
+        headerAccessor.getSessionAttributes().put("userType", userType);
+        
         // Register the user session
         webSocketService.registerUserSession(userId, sessionId, userType);
         
-        return new WebSocketMessage("USER_REGISTERED", 
+        // Send confirmation directly to the user who registered
+        WebSocketMessage confirmMsg = new WebSocketMessage("USER_REGISTERED", 
             "User " + userId + " registered as " + userType);
+        webSocketService.sendNotificationToUser(userId, confirmMsg.getData().toString(), "USER_REGISTERED");
     }
 
     /**

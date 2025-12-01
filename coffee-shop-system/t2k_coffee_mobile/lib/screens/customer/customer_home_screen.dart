@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
+import '../../providers/customer_order_provider.dart';
 import '../../utils/app_theme.dart';
 import 'modern_menu_screen.dart';
 import 'cart_screen.dart';
 import 'orders_screen.dart';
 import 'profile_screen.dart';
+import 'table_management_screen.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -18,24 +20,45 @@ class CustomerHomeScreen extends StatefulWidget {
 class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   int _currentIndex = 0;
   late PageController _pageController;
-
-  final List<Widget> _screens = [
-    const ModernMenuScreen(),
-    const CartScreen(),
-    const OrdersScreen(),
-    const ProfileScreen(),
-  ];
+  late List<Widget> _screens;
+  late bool _isStaffOrder;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
 
-    // Load cart for current user
+    // Check if user is STAFF_ORDER
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    _isStaffOrder = authProvider.currentUser?.role == 'STAFF_ORDER';
+
+    // Build screens list based on role
+    _screens = [
+      const ModernMenuScreen(),
+      const CartScreen(),
+      const OrdersScreen(),
+      const ProfileScreen(),
+    ];
+
+    // Add table management for STAFF_ORDER
+    if (_isStaffOrder) {
+      _screens.insert(3, const TableManagementScreen());
+    }
+
+    // Load cart for current user and initialize WebSocket for real-time updates
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final cartProvider = Provider.of<CartProvider>(context, listen: false);
       cartProvider.initialize(authProvider.currentUser?.idAccount);
+
+      // Initialize customer order provider to connect WebSocket immediately after login
+      final orderProvider = Provider.of<CustomerOrderProvider>(
+        context,
+        listen: false,
+      );
+      orderProvider.initialize();
+      print(
+        '[CustomerHomeScreen] CustomerOrderProvider initialized for WebSocket connection',
+      );
     });
   }
 
@@ -93,27 +116,47 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             fontSize: 12,
             fontWeight: FontWeight.normal,
           ),
-          items: [
-            BottomNavigationBarItem(
-              icon: _buildNavIcon(Icons.restaurant_menu, 0),
-              label: 'Menu',
-            ),
-            BottomNavigationBarItem(
-              icon: _buildNavIcon(Icons.shopping_cart, 1),
-              label: 'Giỏ hàng',
-            ),
-            BottomNavigationBarItem(
-              icon: _buildNavIcon(Icons.receipt_long, 2),
-              label: 'Đơn hàng',
-            ),
-            BottomNavigationBarItem(
-              icon: _buildNavIcon(Icons.person, 3),
-              label: 'Hồ sơ',
-            ),
-          ],
+          items: _buildNavItems(),
         ),
       ),
     );
+  }
+
+  List<BottomNavigationBarItem> _buildNavItems() {
+    final items = [
+      BottomNavigationBarItem(
+        icon: _buildNavIcon(Icons.restaurant_menu, 0),
+        label: 'Menu',
+      ),
+      BottomNavigationBarItem(
+        icon: _buildNavIcon(Icons.shopping_cart, 1),
+        label: 'Giỏ hàng',
+      ),
+      BottomNavigationBarItem(
+        icon: _buildNavIcon(Icons.receipt_long, 2),
+        label: 'Đơn hàng',
+      ),
+    ];
+
+    // Add table management for STAFF_ORDER before profile
+    if (_isStaffOrder) {
+      items.add(
+        BottomNavigationBarItem(
+          icon: _buildNavIcon(Icons.table_restaurant, 3),
+          label: 'Quản lý bàn',
+        ),
+      );
+    }
+
+    // Profile always last
+    items.add(
+      BottomNavigationBarItem(
+        icon: _buildNavIcon(Icons.person, _isStaffOrder ? 4 : 3),
+        label: 'Hồ sơ',
+      ),
+    );
+
+    return items;
   }
 
   Widget _buildNavIcon(IconData icon, int index) {

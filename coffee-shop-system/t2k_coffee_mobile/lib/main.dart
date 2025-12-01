@@ -17,6 +17,7 @@ import 'screens/customer/profile_screen.dart';
 import 'screens/customer/checkout_screen.dart';
 import 'screens/customer/order_success_screen.dart';
 import 'screens/customer/product_detail_screen.dart';
+import 'screens/customer/table_management_screen.dart';
 import 'screens/staff/staff_home_screen.dart';
 import 'screens/staff/orders_management_screen.dart';
 import 'screens/staff/staff_order_detail_screen.dart';
@@ -102,6 +103,10 @@ final GoRouter _router = GoRouter(
             final product = state.extra as Product;
             return ProductDetailScreen(product: product);
           },
+        ),
+        GoRoute(
+          path: 'tables',
+          builder: (context, state) => const TableManagementScreen(),
         ),
       ],
     ),

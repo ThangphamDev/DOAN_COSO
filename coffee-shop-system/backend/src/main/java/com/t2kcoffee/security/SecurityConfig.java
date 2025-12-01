@@ -32,6 +32,8 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
             .authorizeHttpRequests(auth -> auth
+                // WebSocket endpoints - must be before other rules
+                .requestMatchers("/ws/**", "/app/**", "/topic/**", "/queue/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**", "/api/promotions/**", "/api/tables/**", "/api/variants/**", "/api/accounts/*/reward-points", "/uploads/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/orders/**").permitAll()
                 .requestMatchers(HttpMethod.PUT, "/api/orders/**").permitAll()

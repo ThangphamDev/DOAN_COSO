@@ -187,18 +187,29 @@ class CustomerOrderProvider with ChangeNotifier {
     }
   }
 
-  // Clear all data
-  void clearData() {
-    _orderNotificationSubscription?.cancel();
-    _connectionStatusSubscription?.cancel();
-    _webSocketService.disconnect();
+  // Clear all data (called during logout)
+  Future<void> clearData() async {
+    print(
+      '[CustomerOrderProvider] Clearing order data and disconnecting WebSocket',
+    );
 
+    // Cancel subscriptions first
+    await _orderNotificationSubscription?.cancel();
+    await _connectionStatusSubscription?.cancel();
+    _orderNotificationSubscription = null;
+    _connectionStatusSubscription = null;
+
+    // Disconnect WebSocket
+    await _webSocketService.disconnect();
+
+    // Clear all data
     _orders = [];
     _isLoading = false;
     _error = null;
     _isConnected = false;
 
     notifyListeners();
+    print('[CustomerOrderProvider] Order data cleared');
   }
 
   // Helper methods

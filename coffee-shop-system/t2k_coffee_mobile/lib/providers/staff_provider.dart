@@ -99,9 +99,10 @@ class StaffProvider with ChangeNotifier {
       _staffName = currentUser.fullName ?? 'Staff';
 
       // Connect to WebSocket (force reconnect to ensure clean connection)
+      // Send actual user role (STAFF_ORDER, STAFF_KITCHEN, etc.) instead of hardcoded 'STAFF'
       final connected = await _webSocketService.connect(
         userId: currentUser.idAccount.toString(),
-        userType: 'STAFF',
+        userType: currentUser.role ?? 'STAFF', // Use actual role from user
         deviceId: 'mobile_device',
         forceReconnect: true, // Force reconnect to ensure clean connection
       );
@@ -377,18 +378,26 @@ class StaffProvider with ChangeNotifier {
 
   // Clear all staff data (called during logout)
   void clearStaffData() {
-    // Cancel subscriptions
+    print('[StaffProvider] Clearing staff data and disconnecting WebSocket');
+
+    // Cancel subscriptions first
     _orderNotificationSubscription?.cancel();
     _connectionStatusSubscription?.cancel();
     _orderNotificationSubscription = null;
     _connectionStatusSubscription = null;
 
+    // Disconnect WebSocket - important to prevent reconnection
+    _webSocketService.disconnect();
+
+    // Clear all data
     _allOrders = [];
     _isLoading = false;
     _error = null;
     _isConnected = false;
     _staffName = null;
+
     notifyListeners();
+    print('[StaffProvider] Staff data cleared');
   }
 
   // Dispose resources
