@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng ký - T2K Coffee</title>
+  <link rel="stylesheet" href="../assets/css/login.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-logo">
+      <img src="../assets/images/logo.png" alt="T2K Coffee Logo">
+    </div>
+    <h2>Đăng ký</h2>
+    <form id="registerForm">
+      <div class="form-group">
+        <label for="username">Tên đăng nhập</label>
+        <input type="text" id="username" placeholder="Nhập tên đăng nhập" required>
+      </div>
+      <div class="form-group">
+        <label for="fullName">Họ và tên</label>
+        <input type="text" id="fullName" placeholder="Nhập họ và tên" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Mật khẩu</label>
+        <input type="password" id="password" placeholder="Nhập mật khẩu" required>
+      </div>
+      <div class="form-group">
+        <label for="confirmPassword">Xác nhận mật khẩu</label>
+        <input type="password" id="confirmPassword" placeholder="Nhập lại mật khẩu" required>
+      </div>
+      <div class="form-group">
+        <label for="phone">Số điện thoại</label>
+        <input type="tel" id="phone" placeholder="Nhập số điện thoại">
+      </div>
+      <div class="form-group">
+        <label for="address">Địa chỉ</label>
+        <input type="text" id="address" placeholder="Nhập địa chỉ">
+      </div>
+      
+      <button type="submit" class="btn-login">Đăng ký</button>
+    </form>
+    <div id="errorMsg" class="error-message"></div>
+    
+    <div class="separator">
+      <hr>
+      <span>hoặc</span>
+      <hr>
+    </div>
+    
+    <div class="social-login">
+      <div class="social-btn">
+        <i class="fab fa-google"></i>
+      </div>
+      <div class="social-btn">
+        <i class="fab fa-facebook-f"></i>
+      </div>
+      <div class="social-btn">
+        <i class="fab fa-apple"></i>
+      </div>
+    </div>
+    
+    <div class="create-account">
+      Đã có tài khoản? <a href="login.html">Đăng nhập ngay</a>
+    </div>
+    
+    <div class="home-link">
+      <a href="../index.html"><i class="fas fa-home"></i> Quay về trang chủ</a>
+    </div>
+  </div>
+
+  <script src="../assets/js/register.js"></script>
+</body>
+</html> 

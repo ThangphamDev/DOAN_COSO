@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý nhân viên - T2K Coffee Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/admin.css">
+    <link rel="stylesheet" href="../assets/css/admin-modules.css">
+    <style>
+        .form-error-container {
+            background-color: #ffebee;
+            border-left: 4px solid #f44336;
+            border-radius: 4px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .form-error-message {
+            color: #d32f2f;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+        }
+        
+        .form-error-message i {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+        
+        /* Style for image hints */
+        .image-hint {
+            display: block;
+            margin-top: 8px;
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .image-hint i {
+            color: #2196f3;
+            margin-right: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div id="loader" class="loader-overlay">
+            <div class="loader"></div>
+            <div class="loader-message">Đang tải...</div>
+        </div>
+
+        <header class="admin-header">
+            <div class="logo">
+                <img src="../assets/images/logo.png" alt="T2K Coffee Logo">
+                <h1>T2K Coffee</h1>
+            </div>
+            <div class="header-actions">
+                <button class="btn-notification" title="Thông báo">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge">3</span>
+                </button>
+                <div class="admin-profile">
+                    <img src="../assets/images/logo.png" alt="Admin" class="avatar">
+                    <span id="adminName">Admin</span>
+                    <div class="dropdown-menu">
+                        <a href="profile.html"><i class="fas fa-user"></i> Hồ sơ</a>
+                        <a href="settings.html"><i class="fas fa-cog"></i> Cài đặt</a>
+                        <hr>
+                        <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="admin-container">
+            <div class="sidebar-container">
+                <!-- Sidebar sẽ được load bằng JavaScript -->
+            </div>
+
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-users"></i> Quản lý nhân viên</h1>
+                    <div class="breadcrumb">
+                        <a href="dashboard.html">Trang chủ</a> / <span>Quản lý nhân viên</span>
+                    </div>
+                </div>
+
+                <!-- Thanh công cụ -->
+                <div class="action-bar">
+                    <button id="addStaffBtn" class="btn-primary">
+                        <i class="fas fa-plus"></i> Thêm nhân viên mới
+                    </button>
+                    <div class="search-box">
+                        <input type="text" id="staffSearchInput" placeholder="Tìm kiếm nhân viên...">
+                        <button class="search-btn"><i class="fas fa-search"></i></button>
+                    </div>
+                    <div class="filter-dropdown">
+                        <button class="btn-secondary dropdown-toggle">
+                            <i class="fas fa-filter"></i> Lọc <i class="fas fa-caret-down"></i>
+                        </button>
+                        <div class="dropdown-menu">
+                            <label>Vai trò:</label>
+                            <select id="staffRoleFilter">
+                                <option value="all">Tất cả vai trò</option>
+                                <option value="admin">Quản trị viên</option>
+                                <option value="manager">Quản lý</option>
+                                <option value="staff">Nhân viên</option>
+                            </select>                          
+                           
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bảng danh sách nhân viên -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2>Danh sách nhân viên</h2>
+                        <div class="card-actions">
+                            <button id="refreshStaffBtn" class="btn-refresh" title="Làm mới">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="staffTable">
+                            <thead>
+                                <tr>
+                                    <th>Mã NV</th>
+                                    <th>Ảnh</th>
+                                    <th>Họ và tên</th>
+                                    <th>Tên đăng nhập</th>
+                                    <th>Vai trò</th>
+                                    <th>Liên hệ</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="staffTableBody">
+                                <!-- Dữ liệu sẽ được nạp bằng JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-footer">
+                        <div class="pagination">
+                            <button class="page-btn" id="prevPage" disabled><i class="fas fa-chevron-left"></i></button>
+                            <span id="currentPage">Trang 1</span>
+                            <button class="page-btn" id="nextPage"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                        <div class="items-per-page">
+                            <label for="itemsPerPage">Hiển thị:</label>
+                            <select id="itemsPerPage">
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Modal thêm/sửa nhân viên -->
+        <div class="modal" id="staffModal">
+            <div class="modal-content">
+                <span class="close-btn">&times;</span>
+                <h2 id="staffModalTitle"><i class="fas fa-user-plus"></i> Thêm nhân viên mới</h2>
+                <form id="staffForm">
+                    <input type="hidden" id="staffId">
+                    <div class="form-error-container" id="formErrorContainer" style="display: none;">
+                        <div class="form-error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span id="formErrorMessage">Lỗi khi lưu thông tin</span>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="userName">Tên đăng nhập <span class="required">*</span></label>
+                            <input type="text" id="userName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="fullName">Họ và tên <span class="required">*</span></label>
+                            <input type="text" id="fullName" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="password">Mật khẩu <span id="passwordRequired" class="required">*</span></label>
+                            <input type="password" id="password">
+                            <small id="passwordHint">Mật khẩu phải có ít nhất 6 ký tự</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Số điện thoại</label>
+                            <input type="tel" id="phone">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="role">Vai trò <span class="required">*</span></label>
+                            <select id="role" required>
+                                <option value="staff">Nhân viên</option>
+                                <option value="admin">Quản trị viên</option>
+                                <option value="customer">Khách hàng</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="address">Địa chỉ</label>
+                            <input type="text" id="address">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email">
+                        </div>
+                        <div class="form-group">
+                            <label for="staffStatus">Trạng thái</label>
+                            <select id="staffStatus">
+                                <option value="active">Đang làm việc</option>
+                                <option value="inactive">Nghỉ việc</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="staffImage">Ảnh đại diện</label>
+                        <input type="file" id="staffImage" accept="image/*">
+                        <div class="image-preview" id="staffImagePreview">
+                            <span id="previewPlaceholder">Chọn ảnh để xem trước</span>
+                        </div>
+                        <small class="image-hint">
+                            <i class="fas fa-info-circle"></i> 
+                            Khuyến nghị: Hãy chọn ảnh nhỏ hơn 500KB và định dạng JPG/PNG.
+                        </small>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel" data-close-modal>Hủy</button>
+                        <button type="submit" class="btn-submit">Lưu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal xác nhận xóa -->
+        <div class="modal" id="deleteStaffModal">
+            <div class="modal-content delete-confirm">
+                <span class="close-btn">&times;</span>
+                <div class="confirm-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h2>Xác nhận xóa</h2>
+                <p>Bạn có chắc chắn muốn xóa nhân viên <strong id="deleteStaffName"></strong>?</p>
+                <p class="warning-text">Lưu ý: Hành động này không thể hoàn tác!</p>
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" data-close-modal>Hủy</button>
+                    <button type="button" id="confirmDeleteBtn" class="btn-danger">Xóa</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/js/api-client.js"></script>
+    <script src="../assets/js/admin-core.js"></script>
+    <script src="../assets/js/admin-staff.js"></script>
+
+    <!-- Thêm đoạn script để kiểm tra kết nối API ngay khi trang tải xong -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Kiểm tra kết nối API
+            checkApiConnection();
+        });
+
+        // Hàm kiểm tra kết nối API
+        function checkApiConnection() {
+            fetch('http://localhost:8081/api/accounts?role=staff')
+                .then(response => {
+                    if (response.ok) {
+                        console.log('Kết nối API thành công!');
+                        if (window.AdminCore) {
+                            window.AdminCore.showNotification('Kết nối thành công đến máy chủ API', 'success');
+                        }
+                    } else {
+                        console.warn('API trả về lỗi:', response.status);
+                        if (response.status !== 401) {
+                            showApiError('API trả về mã lỗi: ' + response.status);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Không thể kết nối đến API:', error);
+                    showApiError('Không thể kết nối đến máy chủ API. Dữ liệu sẽ được tải từ bộ nhớ cục bộ.');
+                });
+        }
+
+        function showApiError(message) {
+            if (message.includes('401')) {
+                console.log('');
+                return;
+            }
+            
+            if (window.AdminCore && window.AdminCore.showNotification) {
+                window.AdminCore.showNotification(message, 'warning');
+            }
+            
+            const tableBody = document.getElementById('staffTableBody');
+            if (tableBody) {
+                const existingWarning = document.querySelector('.api-warning');
+                if (existingWarning) {
+                    existingWarning.remove();
+                }
+                
+                const apiWarning = document.createElement('div');
+                apiWarning.className = 'api-warning';
+                apiWarning.innerHTML = `
+                    <div class="alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Cảnh báo:</strong> ${message}
+                        <p>Hệ thống sẽ sử dụng dữ liệu mẫu để hiển thị.</p>
+                    </div>
+                `;
+                
+                const staffTable = tableBody.closest('.data-table');
+                if (staffTable && staffTable.parentNode) {
+                    staffTable.parentNode.insertBefore(apiWarning, staffTable);
+                }
+            }
+
+            const style = document.createElement('style');
+            style.innerHTML = `
+                .api-warning {
+                    margin-bottom: 20px;
+                }
+                .alert-warning {
+                    background-color: #fff3cd;
+                    color: #856404;
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    border-left: 5px solid #ffc107;
+                    font-size: 14px;
+                    line-height: 1.5;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                }
+                .alert-warning i {
+                    margin-right: 8px;
+                    color: #ffc107;
+                }
+                .alert-warning strong {
+                    font-weight: 600;
+                    margin-right: 5px;
+                }
+                .alert-warning p {
+                    margin: 5px 0 0 25px;
+                    font-size: 13px;
+                    opacity: 0.9;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    </script>
+
+    <!-- Thêm style cho bảng và các nút -->
+    <style>
+        /* Cải thiện hiển thị bảng nhân viên */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .data-table th {
+            background-color: #6b4226;
+            color: white;
+            font-weight: 600;
+            text-align: left;
+            padding: 12px 15px;
+        }
+        
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e8e8e8;
+            vertical-align: middle;
+        }
+        
+        .data-table tr:hover {
+            background-color: #f9f5f1;
+        }
+        
+        /* Hiển thị ảnh nhân viên */
+        .staff-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            overflow: hidden;
+            background-color: #e5e5e5;
+        }
+        
+        .staff-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        /* Hiển thị vai trò */
+        .role-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .role-admin {
+            background-color: #e1f5fe;
+            color: #0288d1;
+        }
+        
+        .role-staff {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+        
+        .role-customer {
+            background-color: #f3e5f5;
+            color: #8e24aa;
+        }
+        
+        /* Hiển thị trạng thái */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+        
+        .status-inactive {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+        
+        /* Hiển thị thông tin liên hệ */
+        .staff-contact p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .staff-contact i {
+            width: 18px;
+            margin-right: 5px;
+            color: #6b4226;
+        }
+        
+        /* Nút thao tác */
+        .actions {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+        
+        .btn-edit {
+            background-color: #2196f3;
+            color: white;
+        }
+        
+        .btn-delete {
+            background-color: #f44336;
+            color: white;
+        }
+        
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-icon:hover {
+            opacity: 0.9;
+            transform: scale(1.05);
+        }
+        
+        /* Preview ảnh trong form */
+        .image-preview {
+            width: 120px;
+            height: 120px;
+            border-radius: 8px;
+            border: 2px dashed #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 10px;
+            overflow: hidden;
+            background-color: #f5f5f5;
+        }
+        
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        #previewPlaceholder {
+            font-size: 13px;
+            color: #999;
+            text-align: center;
+            padding: 0 10px;
+        }
+    </style>
+</body>
+
+</html> 

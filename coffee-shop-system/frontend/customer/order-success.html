@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đặt Hàng Thành Công - T2K Coffee</title>
+  <link rel="icon" href="../assets/images/logo.png" type="image/png">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/components.css">
+  <link rel="stylesheet" href="../assets/css/order-success.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/load-components.js"></script>
+  <style>
+    .order-success-page {
+      padding: 80px 0 60px;
+      background: #f8f9fa;
+      min-height: 100vh;
+    }
+
+    .order-success-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      padding: 40px 30px 30px;
+      text-align: center;
+    }
+
+    .order-success-icon {
+      font-size: 3.5rem;
+      color: #2ecc71;
+      margin-bottom: 18px;
+    }
+
+    .order-success-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+
+    .order-success-desc {
+      color: #666;
+      margin-bottom: 30px;
+    }
+
+    .order-info-table {
+      width: 100%;
+      margin: 0 auto 25px;
+      border-collapse: collapse;
+    }
+
+    .order-info-table td {
+      padding: 8px 0;
+      color: #333;
+      font-size: 1rem;
+    }
+
+    .order-info-table .label {
+      font-weight: 600;
+      color: #888;
+      width: 40%;
+      text-align: left;
+    }
+
+    .order-info-table .value {
+      text-align: right;
+      width: 60%;
+    }
+
+    .order-items-list {
+      text-align: left;
+      margin-bottom: 20px;
+    }
+
+    .order-items-list li {
+      margin-bottom: 6px;
+      font-size: 1rem;
+    }
+
+    .order-success-actions {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 30px;
+    }
+
+    .order-success-actions button, .order-success-actions a {
+      padding: 12px 28px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .btn-menu {
+      background: #e67e22;
+      color: #fff;
+    }
+
+    .btn-menu:hover {
+      background: #d35400;
+    }
+
+    .btn-history {
+      background: #f1f1f1;
+      color: #333;
+    }
+
+    .btn-history:hover {
+      background: #e0e0e0;
+    }
+    
+    .btn-print {
+      background: #3498db;
+      color: #fff;
+    }
+    
+    .btn-print:hover {
+      background: #2980b9;
+    }
+    
+    /* Định dạng CSS cho bản in */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      .order-success-container, .order-success-container * {
+        visibility: visible;
+      }
+      .order-success-container {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        box-shadow: none !important;
+        max-width: 100%;
+      }
+      .order-success-actions {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <div id="header-container"></div>
+    
+    <main class="order-success-page">
+      <div class="order-success-container">
+        <div class="order-success-icon">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="order-success-title">Đặt hàng thành công!</div>
+        <div class="order-success-desc">Cảm ơn bạn đã đặt hàng tại T2K Coffee.<br>Thông tin đơn hàng của bạn:</div>
+        <table class="order-info-table" id="orderInfoTable">
+          <!-- Thông tin đơn hàng sẽ được render ở đây -->
+        </table>
+        <div class="order-items-list" id="orderItemsList">
+          <!-- Danh sách món sẽ được render ở đây -->
+        </div>
+        <div class="order-success-actions">
+          <a href="menu.html" class="btn-menu"><i class="fas fa-arrow-left"></i> Về trang menu</a>
+          <button class="btn-print" id="btnPrint"><i class="fas fa-print"></i> In hóa đơn</button>
+        </div>
+      </div>
+    </main>
+    
+    <div id="footer-container"></div>
+  </div>
+  
+  <script>
+    // Tải header/footer
+    document.addEventListener('DOMContentLoaded', function() {
+      fetch('../components/header.html').then(r=>r.text()).then(h=>document.getElementById('header-container').innerHTML=h);
+      fetch('../components/footer.html').then(r=>r.text()).then(h=>document.getElementById('footer-container').innerHTML=h);
+      renderOrderSuccess();
+      
+      // Thêm sự kiện cho nút in hóa đơn
+      document.getElementById('btnPrint').addEventListener('click', function() {
+        window.print();
+      });
+    });
+    
+    function formatPrice(price) {
+      if (typeof price !== 'number' || isNaN(price)) price = 0;
+      return price.toLocaleString('vi-VN') + ' đ';
+    }
+    
+    function renderOrderSuccess() {
+      // Lấy đơn hàng từ localStorage
+      let order = JSON.parse(localStorage.getItem('currentOrder'));
+      if (!order) {
+        // Nếu không có, thử lấy theo lastOrderId
+        const lastOrderId = localStorage.getItem('lastOrderId');
+        const orders = JSON.parse(localStorage.getItem('orders')||'[]');
+        order = orders.find(o => o.idOrder == lastOrderId || o.id == lastOrderId);
+      }
+      if (!order) {
+        document.getElementById('orderInfoTable').innerHTML = '<tr><td colspan="2">Không tìm thấy thông tin đơn hàng!</td></tr>';
+        return;
+      }
+      // Hiển thị thông tin đơn hàng
+      const infoTable = document.getElementById('orderInfoTable');
+      let priceRows = '';
+      
+      // Kiểm tra nếu có điểm thưởng đã đổi
+      const hasRedeemedPoints = order.redeemedPoints && order.redeemedPoints > 0;
+      
+      // Nếu có giá gốc và giá sau khuyến mãi
+      if (order.originalTotal && order.originalTotal > order.totalAmount) {
+        // Nếu có cả khuyến mãi và điểm thưởng
+        if (hasRedeemedPoints) {
+          priceRows = `
+            <tr><td class="label">Giá gốc:</td><td class="value"><s style='color:#888'>${formatPrice(order.originalTotal)}</s></td></tr>
+            <tr><td class="label">Giá sau khuyến mãi:</td><td class="value">${formatPrice(order.totalAmount)}</td></tr>
+            <tr><td class="label">Điểm thưởng đã dùng:</td><td class="value">${order.redeemedPoints} điểm</td></tr>
+            <tr><td class="label">Giảm giá từ điểm:</td><td class="value">${formatPrice(order.redeemedDiscount)}</td></tr>
+            <tr><td class="label">Tổng thanh toán:</td><td class="value" style='color:#e67e22;font-weight:600;'>${formatPrice(order.finalTotal)}</td></tr>
+          `;
+        } else {
+          priceRows = `
+            <tr><td class="label">Giá gốc:</td><td class="value"><s style='color:#888'>${formatPrice(order.originalTotal)}</s></td></tr>
+            <tr><td class="label">Tổng thanh toán:</td><td class="value" style='color:#e67e22;font-weight:600;'>${formatPrice(order.totalAmount)}</td></tr>
+          `;
+        }
+      } else {
+        // Nếu chỉ có điểm thưởng mà không có khuyến mãi
+        if (hasRedeemedPoints) {
+          priceRows = `
+            <tr><td class="label">Giá gốc:</td><td class="value"><s style='color:#888'>${formatPrice(order.totalAmount)}</s></td></tr>
+            <tr><td class="label">Điểm thưởng đã dùng:</td><td class="value">${order.redeemedPoints} điểm</td></tr>
+            <tr><td class="label">Giảm giá từ điểm:</td><td class="value">${formatPrice(order.redeemedDiscount)}</td></tr>
+            <tr><td class="label">Tổng thanh toán:</td><td class="value" style='color:#e67e22;font-weight:600;'>${formatPrice(order.finalTotal)}</td></tr>
+          `;
+        } else {
+          priceRows = `<tr><td class="label">Tổng thanh toán:</td><td class="value" style='color:#e67e22;font-weight:600;'>${formatPrice(order.totalAmount)}</td></tr>`;
+        }
+      }
+      
+      infoTable.innerHTML = `
+        <tr><td class="label">Mã đơn hàng:</td><td class="value">${order.idOrder || order.id || ''}</td></tr>
+        <tr><td class="label">Bàn:</td><td class="value">${order.tableNumber ? (order.tableNumber==='takeaway'?'Mang đi':order.tableNumber) : '---'}</td></tr>
+        <tr><td class="label">Thời gian đặt:</td><td class="value">${order.orderTime ? (new Date(order.orderTime)).toLocaleString('vi-VN') : ''}</td></tr>
+        ${priceRows}
+        <tr><td class="label">Phương thức thanh toán:</td><td class="value">${order.paymentMethod ? (order.paymentMethod==='transfer'?'Chuyển khoản':'Tiền mặt') : 'Tiền mặt'}</td></tr>
+        <tr><td class="label">Ghi chú:</td><td class="value">${order.note || order.notes || ''}</td></tr>
+      `;
+      
+      // Hiển thị danh sách món
+      const itemsList = document.getElementById('orderItemsList');
+      let items = order.items || order.orderDetails || [];
+      if (items.length === 0 && order.cart) items = order.cart;
+      
+      // Hiển thị danh sách món theo dạng bảng ngay ngắn
+      let html = `
+        <div style="width:100%; margin-bottom:20px;">
+          <div style="font-weight:600; color:#2c3e50; margin-bottom:8px;">Món đã gọi:</div>
+          <table style="width:100%; border-spacing:0; border-collapse:collapse;">
+            <tr style="border-bottom:1px solid #f0f0f0;">
+              <th style="padding:8px 5px; text-align:left; width:50%;">Tên món</th>
+              <th style="padding:8px 5px; text-align:center; width:20%;">Số lượng</th>
+              <th style="padding:8px 5px; text-align:right; width:30%;">Giá tiền</th>
+            </tr>
+      `;
+      
+      if (items.length === 0) {
+        html += '<tr><td colspan="3" style="padding:8px 5px; text-align:center;">Không có sản phẩm nào trong đơn hàng.</td></tr>';
+      } else {
+        html += items.map(item => {
+          const name = item.name || (item.product ? item.product.productName : 'Sản phẩm');
+          const qty = item.quantity || 1;
+          const price = item.price || item.unitPrice || (item.product ? item.product.price : 0);
+          
+          // Hiển thị variant chỉ khi có thông tin
+          let variantHtml = '';
+          if (item.variants) {
+            const v = item.variants;
+            
+            // Kiểm tra chặt chẽ hơn để chỉ hiển thị các variant có ý nghĩa
+            const hasIce = v.ice && v.ice !== '' && v.ice !== '100' && v.ice !== 100;
+            const hasSugar = v.sugar && v.sugar !== '' && v.sugar !== '100' && v.sugar !== 100;
+            const hasToppings = v.toppings && Array.isArray(v.toppings) && v.toppings.length > 0;
+            
+            // Kiểm tra đá/đường để dùng trong điều kiện hiển thị size
+            const hasIceOrSugar = hasIce || hasSugar;
+            
+            // Size chỉ hiển thị nếu có giá trị hợp lý và không phải là mặc định 'S' 
+            // hoặc nếu là S nhưng đi kèm với các tùy chọn khác
+            const showSize = v.size && v.size !== '' && v.size !== '100' && v.size !== 100 && 
+                            (v.size.toLowerCase() !== 's' || (v.size.toLowerCase() === 's' && (hasIceOrSugar || hasToppings)));
+            
+            // Chỉ hiển thị variant khi có ít nhất một tùy chọn đáng kể
+            const hasVariants = showSize || hasIce || hasSugar || hasToppings;
+            
+            if (hasVariants) {
+              const variantParts = [];
+              if (showSize) variantParts.push(`Size: ${v.size}`);
+              if (hasIce) variantParts.push(`Đá: ${v.ice}`);
+              if (hasSugar) variantParts.push(`Đường: ${v.sugar}`);
+              if (hasToppings) {
+                variantParts.push(`Topping: ${v.toppings.map(t=>t.name).join(', ')}`);
+              }
+              
+              if (variantParts.length > 0) {
+                variantHtml = `<div style="font-size:12px; color:#888; margin-top:3px;">${variantParts.join(' | ')}</div>`;
+              }
+            }
+          }
+          
+          return `
+            <tr style="border-bottom:1px solid #f0f0f0;">
+              <td style="padding:8px 5px; text-align:left;">
+                <div>${name}</div>
+                ${variantHtml}
+              </td>
+              <td style="padding:8px 5px; text-align:center;">${qty}</td>
+              <td style="padding:8px 5px; text-align:right; font-weight:500; color:#e67e22;">${formatPrice(price*qty)}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+      
+      html += `</table></div>`;
+      itemsList.innerHTML = html;
+      
+      // Xóa giỏ hàng sau khi hiển thị thành công
+      localStorage.removeItem('cart');
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liên Hệ - T2K Coffee</title>
+    <link rel="icon" href="../assets/images/logo.png" type="image/png">
+    <link rel="stylesheet" href="../assets/css/components.css">
+    <link rel="stylesheet" href="../assets/css/contact.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/load-components.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #7b4f28;
+            --secondary-color: #f5e9da;
+            --accent-color: #e67e22;
+            --text-color: #333;
+            --light-text: #777;
+            --white: #fff;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: #f9f9f9;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .contact-hero {
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/assets/images/contact/bgr.jpg');
+            background-size: cover;
+            background-position: center;
+            text-align: center;
+            color: var(--white);
+            padding: 80px 20px;
+            margin-bottom: 60px;
+        }
+        
+        .contact-hero h1 {
+            font-size: 40px;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .contact-hero p {
+            font-size: 18px;
+            max-width: 700px;
+            margin: 0 auto;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        .contact-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 50px;
+            margin-bottom: 80px;
+        }
+        
+        .contact-info {
+            background-color: var(--white);
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: var(--shadow);
+        }
+        
+        .contact-info h2 {
+            font-size: 28px;
+            color: var(--primary-color);
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .contact-info h2::after {
+            content: '';
+            display: block;
+            width: 50px;
+            height: 3px;
+            background-color: var(--accent-color);
+            margin-top: 15px;
+        }
+        
+        .contact-details {
+            margin-top: 30px;
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 25px;
+        }
+        
+        .contact-icon {
+            color: var(--accent-color);
+            font-size: 20px;
+            min-width: 40px;
+            margin-top: 5px;
+        }
+        
+        .contact-text h3 {
+            font-size: 18px;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        
+        .contact-text p, .contact-text a {
+            color: var(--light-text);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .contact-text a:hover {
+            color: var(--accent-color);
+        }
+        
+        .social-links {
+            margin-top: 30px;
+        }
+        
+        .social-links h3 {
+            font-size: 18px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        .social-icons {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .social-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
+            border-radius: 50%;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+        
+        .social-icon:hover {
+            background-color: var(--primary-color);
+            color: var(--white);
+            transform: translateY(-3px);
+        }
+        
+        .contact-form {
+            background-color: var(--white);
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: var(--shadow);
+        }
+        
+        .contact-form h2 {
+            font-size: 28px;
+            color: var(--primary-color);
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .contact-form h2::after {
+            content: '';
+            display: block;
+            width: 50px;
+            height: 3px;
+            background-color: var(--accent-color);
+            margin-top: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-color);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+        
+        textarea.form-control {
+            min-height: 150px;
+            resize: vertical;
+        }
+        
+        .submit-btn {
+            display: inline-block;
+            width: 100%;
+            background-color: var(--primary-color);
+            color: var(--white);
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .submit-btn:hover {
+            background-color: #60391f;
+        }
+        
+        .map-section {
+            margin-bottom: 80px;
+            text-align: center;
+        }
+        
+        .map-section h2 {
+            font-size: 28px;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .map-section h2::after {
+            content: '';
+            display: block;
+            width: 50px;
+            height: 3px;
+            background-color: var(--accent-color);
+            margin: 15px auto 0;
+        }
+        
+        .map-container {
+            height: 400px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        
+        .map-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .branch-section {
+            margin-bottom: 80px;
+            text-align: center;
+        }
+        
+        .branch-section h2 {
+            font-size: 28px;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .branch-section h2::after {
+            content: '';
+            display: block;
+            width: 50px;
+            height: 3px;
+            background-color: var(--accent-color);
+            margin: 15px auto 0;
+        }
+        
+        .branches {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+        
+        .branch-card {
+            background-color: var(--white);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
+        }
+        
+        .branch-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .branch-image {
+            height: 200px;
+            overflow: hidden;
+        }
+        
+        .branch-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .branch-card:hover .branch-image img {
+            transform: scale(1.05);
+        }
+        
+        .branch-info {
+            padding: 20px;
+            text-align: left;
+        }
+        
+        .branch-info h3 {
+            font-size: 20px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        .branch-info p {
+            margin-bottom: 10px;
+            color: var(--light-text);
+            display: flex;
+            align-items: center;
+        }
+        
+        .branch-info p i {
+            color: var(--accent-color);
+            margin-right: 10px;
+            min-width: 18px;
+        }
+        
+        .branch-link {
+            display: inline-block;
+            color: var(--primary-color);
+            font-weight: 500;
+            margin-top: 10px;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .branch-link i {
+            margin-left: 5px;
+            transition: transform 0.3s;
+        }
+        
+        .branch-link:hover {
+            color: var(--accent-color);
+        }
+        
+        .branch-link:hover i {
+            transform: translateX(3px);
+        }
+        
+        @media (max-width: 768px) {
+            .contact-hero {
+                padding: 60px 20px;
+            }
+            
+            .contact-hero h1 {
+                font-size: 32px;
+            }
+            
+            .contact-hero p {
+                font-size: 16px;
+            }
+            
+            .contact-info, .contact-form {
+                padding: 30px;
+            }
+            
+            .map-container {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Include Header -->
+    <div id="header-container"></div>
+    
+    <div class="contact-hero">
+        <h1>Liên Hệ Với Chúng Tôi</h1>
+        <p>Chúng tôi luôn sẵn sàng lắng nghe và phục vụ bạn. Hãy chia sẻ ý kiến, thắc mắc hoặc đề xuất của bạn với T2K Coffee.</p>
+    </div>
+    
+    <div class="container">
+        <div class="contact-section">
+            <div class="contact-info">
+                <h2>Thông Tin Liên Hệ</h2>
+                <p>Bạn có thể liên hệ với chúng tôi qua các kênh sau hoặc ghé thăm cửa hàng gần nhất.</p>
+                
+                <div class="contact-details">
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="contact-text">
+                            <h3>Địa Chỉ Chính</h3>
+                            <p>123 Nguyễn Huệ, Quận 1, TP.HCM</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="fas fa-phone-alt"></i>
+                        </div>
+                        <div class="contact-text">
+                            <h3>Điện Thoại</h3>
+                            <p><a href="tel:+84901234567">090 123 4567</a></p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div class="contact-text">
+                            <h3>Email</h3>
+                            <p><a href="mailto:info@t2kcoffee.com">info@t2kcoffee.com</a></p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="contact-text">
+                            <h3>Giờ Mở Cửa</h3>
+                            <p>Thứ Hai - Chủ Nhật: 7:00 - 22:00</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="social-links">
+                    <h3>Kết Nối Với Chúng Tôi</h3>
+                    <div class="social-icons">
+                        <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-tiktok"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="contact-form">
+                <h2>Gửi Tin Nhắn</h2>
+                <form id="contactForm">
+                    <div class="form-group">
+                        <label for="name">Họ và Tên</label>
+                        <input type="text" id="name" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone">Số Điện Thoại</label>
+                        <input type="tel" id="phone" class="form-control">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="subject">Chủ Đề</label>
+                        <select id="subject" class="form-control" required>
+                            <option value="" selected disabled>-- Chọn chủ đề --</option>
+                            <option value="feedback">Phản hồi về dịch vụ</option>
+                            <option value="question">Câu hỏi chung</option>
+                            <option value="partnership">Hợp tác kinh doanh</option>
+                            <option value="other">Vấn đề khác</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message">Tin Nhắn</label>
+                        <textarea id="message" class="form-control" required></textarea>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">Gửi Tin Nhắn</button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="map-section">
+            <h2>Vị Trí Của Chúng Tôi</h2>
+            <div class="map-container">
+                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.394853348344!2d106.70113077421291!3d10.78029895899814!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f4670702e31%3A0xa5777fb3a5bb9424!2sNguyen%20Hue%20Walking%20Street!5e0!3m2!1sen!2s!4v1690380020561!5m2!1sen!2s" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            </div>
+        </div>
+        
+        <div class="branch-section">
+            <h2>Các Chi Nhánh</h2>
+            <div class="branches">
+                <div class="branch-card">
+                    <div class="branch-image">
+                        <img src="/assets/images/contact/chinhanh1.jpg" alt="Chi nhánh quận 1">
+                    </div>
+                    <div class="branch-info">
+                        <h3>T2K Coffee Quận 1</h3>
+                        <p><i class="fas fa-map-marker-alt"></i> 123 Nguyễn Huệ, Quận 1</p>
+                        <p><i class="fas fa-phone-alt"></i> 090 123 4567</p>
+                        <p><i class="fas fa-clock"></i> 7:00 - 22:00</p>
+                        <a href="#" class="branch-link">Xem Chỉ Đường <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+                
+                <div class="branch-card">
+                    <div class="branch-image">
+                        <img src="/assets/images/contact/chinhanh2.jpg" alt="Chi nhánh quận 3">
+                    </div>
+                    <div class="branch-info">
+                        <h3>T2K Coffee Quận 3</h3>
+                        <p><i class="fas fa-map-marker-alt"></i> 45 Võ Văn Tần, Quận 3</p>
+                        <p><i class="fas fa-phone-alt"></i> 090 234 5678</p>
+                        <p><i class="fas fa-clock"></i> 7:00 - 22:00</p>
+                        <a href="#" class="branch-link">Xem Chỉ Đường <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+                
+                <div class="branch-card">
+                    <div class="branch-image">
+                        <img src="/assets/images/contact/chinhanh3.jpg" alt="Chi nhánh quận 7">
+                    </div>
+                    <div class="branch-info">
+                        <h3>T2K Coffee Quận 7</h3>
+                        <p><i class="fas fa-map-marker-alt"></i> 123 Nguyễn Lương Bằng, Quận 7</p>
+                        <p><i class="fas fa-phone-alt"></i> 090 345 6789</p>
+                        <p><i class="fas fa-clock"></i> 7:00 - 22:00</p>
+                        <a href="#" class="branch-link">Xem Chỉ Đường <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Include Footer -->
+    <div id="footer-container"></div>
+    
+    <script>
+        // Form Submission
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('contactForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                // Normally you would send the form data to a server here
+                // For demonstration, we'll just show an alert
+                alert('Cảm ơn bạn đã liên hệ với T2K Coffee. Chúng tôi sẽ phản hồi sớm nhất có thể!');
+                this.reset();
+            });
+        });
+    </script>
+</body>
+</html> 

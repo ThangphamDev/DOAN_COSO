@@ -1,31 +1,86 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Table Management - T2K Coffee</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
-    <link rel="stylesheet" href="../assets/css/staff-tables.css">
+    <title>Quản lý Bàn - T2K Coffee</title>
+    <link rel="stylesheet" href="../assets/css/table.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
 </head>
-<body>
-    <div id="app">
-        <!-- Header will be injected here -->
-        <main class="staff-page">
-            <div class="container">
-                <h1>Table Management</h1>
-                
-                <div class="table-grid" id="tablesGrid">
-                    <!-- Tables will be loaded here via JavaScript -->
-                </div>
-                
-                <div class="table-details" id="tableDetails">
-                    <!-- Table details will be shown here when a table is selected -->
-                </div>
-            </div>
-        </main>
 
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="../assets/images/logo.png" alt="T2K Logo" />
+                <h2>T2K Coffee</h2>
+            </div>
+            <ul class="menu">
+                <li><a href="dashboard.html"><i class="fa fa-home"></i> Tổng quan</a></li>
+                <li><a href="order.html"><i class="fa fa-receipt"></i> Gọi món</a></li>
+                <li class="active"><i class="fa fa-chair"></i> Quản lý bàn</li>
+                <li><a href="order-history.html"><i class="fa fa-money-bill"></i> Lịch sử đơn hàng</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div>Trang chủ / Quản lý bàn</div>
+                <div class="user-info">
+                    <i class="fa fa-bell"></i><span class="badge">2</span>
+                    <img src="../assets/images/default-avatar.png" alt="avatar">
+                    <span>Staff</span>
+                </div>
+            </header>
+
+            <section class="table-management">
+                <div class="action-bar">
+                    <div class="search-box">
+                        <input type="text" id="table-search" placeholder="Tìm kiếm bàn...">
+                        <button class="action-btn search-btn"><i class="fa fa-search"></i></button>
+                    </div>
+                    <div class="filter">
+                        <select id="areaFilter" onchange="filterTables()">
+                            <option value="all">Tất cả khu vực</option>
+                            <option value="Ground Floor">Tầng trệt</option>
+                            <option value="First Floor">Tầng 1</option>
+                            <option value="Outdoor">Sân vườn</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-stats">
+                    <div class="stat-card">
+                        <i class="fa fa-table"></i>
+                        <div>
+                            <h3 id="total-tables">0</h3>
+                            <p>Tổng số bàn</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa fa-check-circle"></i>
+                        <div>
+                            <h3 id="available-tables">0</h3>
+                            <p>Bàn trống</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa fa-users"></i>
+                        <div>
+                            <h3 id="occupied-tables">0</h3>
+                            <p>Bàn đang phục vụ</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tables-grid" id="tablesGrid">
+                    <!-- Bàn sẽ được render vào đây -->
+                </div>
+            </section>
+        </main>
     </div>
-    <script src="../assets/js/main.js"></script>
-    <script src="../assets/js/staff-tables.js"></script>
+
+    <script src="../assets/js/table.js"></script>
 </body>
 </html>

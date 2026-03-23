@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch sử đơn hàng - T2K Coffee</title>
+    <link rel="stylesheet" href="../assets/css/order-history.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="../assets/images/logo.png" alt="T2K Logo" />
+                <h2>T2K Coffee</h2>
+            </div>
+            <ul class="menu">
+                <li><a href="dashboard.html"><i class="fa fa-home"></i> Tổng quan</a></li>
+                <li><a href="order.html"><i class="fa fa-receipt"></i> Gọi món</a></li>
+                <li><a href="table.html"><i class="fa fa-chair"></i> Quản lý bàn</a></li>
+                <li class="active"><i class="fa fa-money-bill"></i> Lịch sử đơn hàng</li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div>Trang chủ / Lịch sử đơn hàng</div>
+                <div class="user-info">
+                    <i class="fa fa-bell"></i><span class="badge">2</span>
+                    <img src="../assets/images/default-avatar.png" alt="avatar">
+                    <span>Staff</span>
+                </div>
+            </header>
+
+            <section class="payment-section">
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Tìm kiếm theo ID hoặc bàn...">
+                    <button class="action-btn search-btn" onclick="filterPayments()">
+                        <i class="fa fa-search"></i> Tìm kiếm
+                    </button>
+                </div>
+                <div class="filter">
+                    <select id="statusFilter" onchange="filterPayments()">
+                        <option value="all">Tất cả trạng thái</option>
+                        <option value="processing">Đang xử lý</option>
+                        <option value="completed">Hoàn thành</option>
+                        <option value="cancelled">Đã hủy</option>
+                    </select>
+                    <select id="methodFilter" onchange="filterPayments()">
+                        <option value="all">Tất cả phương thức</option>
+                        <option value="cash">Tiền mặt</option>
+                        <option value="transfer">Chuyển khoản</option>
+                    </select>
+                    <select id="pageSize" onchange="changePageSize()">
+                        <option value="10">10 dòng</option>
+                        <option value="20">20 dòng</option>
+                        <option value="50">50 dòng</option>
+                        <option value="100">100 dòng</option>
+                    </select>
+                </div>
+                <table id="paymentsTable">
+                    <thead>
+                        <tr>
+                            <th>ID Đơn hàng</th>
+                            <th>Bàn</th>
+                            <th>Tổng tiền</th>
+                            <th>Phương thức</th>
+                            <th>Trạng thái</th>
+                            <th>Thời gian</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Order history will be loaded here -->
+                    </tbody>
+                </table>
+                <div class="pagination">
+                    <div class="pagination-info">
+                        Hiển thị <span id="startIndex">0</span> - <span id="endIndex">0</span> của <span id="totalItems">0</span> đơn hàng
+                    </div>
+                    <div class="pagination-controls">
+                        <button id="prevPage" class="action-btn" onclick="previousPage()" disabled>
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <span id="currentPage">Trang 1</span>
+                        <button id="nextPage" class="action-btn" onclick="nextPage()" disabled>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal for viewing order details -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modalTitle"></h2>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="../assets/js/order-history.js"></script>
+</body>
+</html>

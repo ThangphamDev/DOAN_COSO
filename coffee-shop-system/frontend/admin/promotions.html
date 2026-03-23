@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý khuyến mãi - T2K Coffee Admin</title>
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- CSS Libraries -->
+    <link rel="stylesheet" href="../assets/vendor/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../assets/vendor/flatpickr/flatpickr.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../assets/css/admin.css">
+    <link rel="stylesheet" href="../assets/css/admin-modules.css">
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
+</head>
+
+<body>
+    <div id="app">
+        <div id="loader" class="loader-overlay">
+            <div class="loader"></div>
+        </div>
+
+        <header class="admin-header">
+            <div class="logo">
+                <img src="../assets/images/logo.png" alt="T2K Coffee Logo">
+                <h1>T2K Coffee</h1>
+            </div>
+            <div class="header-actions">
+                <button class="btn-notification" title="Thông báo">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge">3</span>
+                </button>
+                <div class="admin-profile">
+                    <img src="../assets/images/default-avatar.png" alt="Admin" class="avatar">
+                    <span id="adminName">Admin</span>
+                    <div class="dropdown-menu">
+                        <a href="profile.html"><i class="fas fa-user"></i> Hồ sơ</a>
+                        <a href="settings.html"><i class="fas fa-cog"></i> Cài đặt</a>
+                        <hr>
+                        <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="admin-container">
+            <div class="sidebar-container">
+                <!-- Sidebar sẽ được load bằng JavaScript -->
+            </div>
+
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-percent"></i> Quản lý khuyến mãi</h1>
+                    <div class="breadcrumb">
+                        <a href="dashboard.html">Trang chủ</a> / <span>Khuyến mãi</span>
+                    </div>
+                </div>
+
+                <div class="promotion-management">
+                    <div class="action-bar">
+                        <button id="addPromotionBtn" class="btn-primary"><i class="fas fa-plus"></i> Thêm khuyến mãi</button>
+                        <div class="search-box">
+                            <input type="text" id="searchPromotion" placeholder="Tìm kiếm khuyến mãi...">
+                            <button class="search-btn"><i class="fas fa-search"></i></button>
+                        </div>
+                        <div class="filter-dropdown">
+                            <button class="btn-secondary dropdown-toggle">
+                                <i class="fas fa-filter"></i> Lọc <i class="fas fa-caret-down"></i>
+                            </button>
+                            <div class="dropdown-menu">
+                                <label><input type="checkbox" value="active" checked> Đang áp dụng</label>
+                                <label><input type="checkbox" value="upcoming" checked> Sắp diễn ra</label>
+                                <label><input type="checkbox" value="expired"> Đã kết thúc</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="promotions-grid">
+                        <!-- Dữ liệu khuyến mãi sẽ được nạp từ JavaScript -->
+                    </div>
+
+                    <div class="tab-container promotion-tabs">
+                        <div class="tab-header">
+                            <button class="tab-btn active" data-tab="activePromotions">Đang áp dụng</button>
+                            <button class="tab-btn" data-tab="upcomingPromotions">Sắp diễn ra</button>
+                            <button class="tab-btn" data-tab="expiredPromotions">Đã kết thúc</button>
+                        </div>
+                        
+                        <div class="tab-content">
+                            <div id="activePromotions" class="tab-pane active">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Mã</th>
+                                            <th>Tên khuyến mãi</th>
+                                            <th>Loại</th>
+                                            <th>Giá trị</th>
+                                            <th>Thời hạn</th>
+                                            <th>Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="activePromotionTableBody">
+                                        <!-- Dữ liệu sẽ được nạp từ JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div id="upcomingPromotions" class="tab-pane">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Mã</th>
+                                            <th>Tên khuyến mãi</th>
+                                            <th>Loại</th>
+                                            <th>Giá trị</th>
+                                            <th>Thời hạn</th>
+                                            <th>Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="upcomingPromotionTableBody">
+                                        <!-- Dữ liệu sẽ được nạp từ JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div id="expiredPromotions" class="tab-pane">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Mã</th>
+                                            <th>Tên khuyến mãi</th>
+                                            <th>Loại</th>
+                                            <th>Giá trị</th>
+                                            <th>Thời hạn</th>
+                                            <th>Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="expiredPromotionTableBody">
+                                        <!-- Dữ liệu sẽ được nạp từ JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <!-- Promotion Modal (hidden by default) -->
+                    <div class="modal" id="promotionModal">
+                        <div class="modal-content">
+                            <span class="close-btn">&times;</span>
+                            <h2 id="modalPromotionTitle">Thêm khuyến mãi mới</h2>
+                            <form id="promotionForm">
+                                <input type="hidden" id="promotionId">
+                                <div class="form-group">
+                                    <label for="promotionCode">Mã khuyến mãi</label>
+                                    <input type="text" id="promotionCode" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="promotionName">Tên khuyến mãi</label>
+                                    <input type="text" id="promotionName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="promotionType">Loại khuyến mãi</label>
+                                    <select id="promotionType" required>
+                                        <option value="percentage">Giảm theo phần trăm</option>
+                                        <option value="fixed">Giảm số tiền cố định</option>
+                                        <option value="shipping">Miễn phí giao hàng</option>
+                                        <option value="bogo">Mua 1 tặng 1</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" id="valueGroup">
+                                    <label for="promotionValue">Giá trị</label>
+                                    <input type="number" id="promotionValue" min="0" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="minimumOrder">Giá trị đơn hàng tối thiểu</label>
+                                    <input type="number" id="minimumOrder" min="0">
+                                </div>
+                                <div class="form-group dates-container">
+                                    <div class="date-group">
+                                        <label for="startDate">Ngày bắt đầu</label>
+                                        <input type="text" id="startDate" class="datepicker" required>
+                                    </div>
+                                    <div class="date-group">
+                                        <label for="endDate">Ngày kết thúc</label>
+                                        <input type="text" id="endDate" class="datepicker" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="applyTo">Áp dụng cho</label>
+                                    <select id="applyTo">
+                                        <option value="all">Tất cả sản phẩm</option>
+                                        <option value="category">Danh mục cụ thể</option>
+                                        <option value="product">Sản phẩm cụ thể</option>
+                                    </select>
+                                </div>
+                                <div class="form-group hidden" id="categoryGroup">
+                                    <label for="categories">Chọn danh mục</label>
+                                    <select id="categories" multiple>
+                                        <!-- Các tùy chọn sẽ được nạp từ JavaScript -->
+                                    </select>
+                                </div>
+                                <div class="form-group hidden" id="productGroup">
+                                    <label for="products">Chọn sản phẩm</label>
+                                    <select id="products" multiple>
+                                        <!-- Các tùy chọn sẽ được nạp từ JavaScript -->
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="description">Mô tả</label>
+                                    <textarea id="description" rows="3"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="maxUses">Số lượt sử dụng tối đa</label>
+                                    <input type="number" id="maxUses" min="0">
+                                </div>
+                                <div class="form-group checkbox-group">
+                                    <label>
+                                        <input type="checkbox" id="isActive"> Kích hoạt khuyến mãi
+                                    </label>
+                                </div>
+                                <button type="submit" class="btn-primary">Lưu</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="../assets/js/api-client.js"></script>
+    <script src="../assets/js/admin-core.js"></script>
+    <script src="../assets/js/modules/promotion-manager.js"></script>
+</body>
+
+</html> 

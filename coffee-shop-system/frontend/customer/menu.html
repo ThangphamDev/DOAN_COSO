@@ -1,49 +1,105 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menu - T2K Coffee</title>
-    <link rel="stylesheet" href="../assets/css/style.css" />
-    <script src="../assets/js/main.js"></script>
+    <link rel="icon" href="../assets/images/logo.png" type="image/png">
+    <link rel="stylesheet" href="../assets/css/menu.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/components.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/load-components.js"></script>
+    <script src="../assets/js/customer/menu.js"></script>
 </head>
 
 <body>
-    <header>
-        <h1>Menu</h1>
-    </header>
-
-    <main>
-        <div id="product-list" class="menu-container">
-         
+    <div id="app">
+        <!-- Header will be loaded dynamically -->
+        <div id="header-container"></div>
+        
+        <main class="menu-page">
+            <div class="container">
+                <h1 class="page-title">T2K Coffee Menu</h1>
+                
+                <!-- Add toggle cart button for mobile -->
+                <div class="toggle-cart" id="toggleCartBtn">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count" id="mobileCartCount">0</span>
+                </div>
+                
+                <div class="category-tabs" id="categoryTabs">
+                    <!-- Categories will be loaded here -->
+                    <button class="category-tab active" data-category="all">Tất cả</button>
+                    <button class="category-tab" data-category="1">Cà phê</button>
+                    <button class="category-tab" data-category="2">Trà</button>
+                    <button class="category-tab" data-category="3">Bánh</button>
+                    <button class="category-tab" data-category="4">Tráng miệng</button>
+                    <button class="category-tab" data-category="5">Sinh tố</button>
+                </div>
+                
+                <div class="container-wrapper">
+                    <div class="menu-container">
+                        <div id="menuContainer">
+                            <div class="loading">
+                                <i class="fas fa-spinner"></i> Đang tải sản phẩm...
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Order Panel -->
+                    <div class="order-panel" id="orderPanel">
+                        <div class="cart-header">
+                            <div class="cart-title">
+                                <i class="fas fa-shopping-cart"></i> Giỏ hàng
+                                <span class="cart-badge" id="cartCountBadge">0</span>
+                            </div>
+                            <div class="order-panel-actions">
+                                <button id="clearCartBtn" title="Xóa giỏ hàng" style="background: none; border: none; cursor: pointer;">
+                                    <i class="fas fa-trash" style="color: #e74c3c;"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="cart-items">
+                            <div id="cartItemsPreview">
+                                <p style="text-align: center; color: #7f8c8d; padding: 20px 0;">
+                                    Giỏ hàng trống
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="table-selection">
+                            <label for="tableSelect">Số bàn (Tại chỗ - Tùy chọn):</label>
+                            <select id="tableSelect">
+                                <option value="">Tại chỗ (không chọn bàn cụ thể)</option>
+                                <option value="takeaway">Mang đi</option>
+                            </select>
+                        </div>
+                        
+                        <div class="order-summary">
+                            <div class="total-row">
+                                <span>Tổng:</span>
+                                <span id="orderTotal">0 đ</span>
+                            </div>
+                        </div>
+                        
+                        <button class="proceed-btn" id="proceedBtn">
+                            Thanh toán
+                        </button>
+                    </div>
+                </div>
         </div>
     </main>
+        
+        <!-- Footer will be loaded dynamically -->
+        <div id="footer-container"></div>
+    </div>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            fetch("http://localhost:8080/api/products")
-                .then(res => res.json())
-                .then(data => {
-                    const container = document.getElementById("menu-container");
-                    data.forEach(product => {
-                        const item = document.createElement("div");
-                        item.classList.add("menu-item");
-                        item.innerHTML = `
-                    <h3>${product.name}</h3>
-                    <p>${product.description}</p>
-                    <strong>$${product.price}</strong>
-                `;
-                        container.appendChild(item);
-                    });
-                })
-                .catch(err => console.error("Error fetching products:", err));
-        });
-
-
-        function addToCart(productId) {
-            alert('Added product ' + productId + ' to cart!');
-            // TODO: Implement real add-to-cart logic
-        }
+        
     </script>
 </body>
 

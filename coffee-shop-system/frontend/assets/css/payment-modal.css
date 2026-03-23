@@ -1,0 +1,304 @@
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.payment-modal {
+    width: 100%;
+    max-width: 600px;
+    margin: 20px;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+.modal-header {
+    padding: 20px;
+    background: #1abc9c;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.3s;
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.order-summary {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.order-summary h3 {
+    margin: 0 0 15px 0;
+    color: #2c3e50;
+    font-size: 1.2rem;
+}
+
+.table-info {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    display: flex;
+    gap: 10px;
+}
+
+.table-info .label {
+    color: #666;
+}
+
+.items-container {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.order-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.order-item:last-child {
+    border-bottom: none;
+}
+
+.item-info {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.item-name {
+    font-weight: 500;
+}
+
+.item-quantity {
+    color: #666;
+}
+
+.item-price {
+    color: #1abc9c;
+    font-weight: 500;
+}
+
+.payment-details {
+    padding: 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #eee;
+}
+
+.amount-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    color: #666;
+}
+
+.amount-row.total {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    color: #2c3e50;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.amount-row.total span:last-child {
+    color: #1abc9c;
+}
+
+.payment-method {
+    padding: 20px;
+}
+
+.payment-method h3 {
+    margin: 0 0 15px 0;
+    color: #2c3e50;
+    font-size: 1.2rem;
+}
+
+.method-options {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.method-option {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    border: 2px solid #eee;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.method-option:hover {
+    border-color: #1abc9c;
+}
+
+.method-option input[type="radio"] {
+    display: none;
+}
+
+.radio-custom {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ddd;
+    border-radius: 50%;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.method-option input[type="radio"]:checked + .radio-custom::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    background: #1abc9c;
+    border-radius: 50%;
+}
+
+.method-option input[type="radio"]:checked + .radio-custom {
+    border-color: #1abc9c;
+}
+
+.method-option i {
+    font-size: 1.2rem;
+    color: #666;
+}
+
+.transfer-info {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.qr-container {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.qr-container img {
+    width: 200px;
+    height: 200px;
+    margin-bottom: 10px;
+}
+
+.bank-details {
+    background: white;
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid #eee;
+}
+
+.bank-details p {
+    margin: 5px 0;
+    color: #666;
+}
+
+.bank-details p strong {
+    color: #2c3e50;
+}
+
+.modal-actions {
+    padding: 20px;
+    display: flex;
+    gap: 10px;
+    border-top: 1px solid #eee;
+}
+
+.modal-actions button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.cancel-btn {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.cancel-btn:hover {
+    background: #e2e8f0;
+}
+
+.confirm-btn {
+    background: #1abc9c;
+    color: white;
+}
+
+.confirm-btn:hover {
+    background: #16a085;
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #999;
+} 

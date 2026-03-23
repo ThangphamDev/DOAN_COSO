@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý danh mục - T2K Coffee Admin</title>
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../assets/css/admin.css">
+    <link rel="stylesheet" href="../assets/css/admin-modules.css">
+    <!-- Category Manager CSS -->
+    <link rel="stylesheet" href="../assets/css/modules/category-manager.css">
+</head>
+
+<body>
+    <div id="app">
+        <div id="loader" class="loader-overlay">
+            <div class="loader"></div>
+            <div class="loader-message">Đang tải...</div>
+        </div>
+
+        <header class="admin-header">
+            <div class="logo">
+                <img src="../assets/images/logo.png" alt="T2K Coffee Logo">
+                <h1>T2K Coffee</h1>
+            </div>
+            <div class="header-actions">
+                <button class="btn-notification" title="Thông báo">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge">3</span>
+                </button>
+                <div class="admin-profile">
+                    <img src="../assets/images/default-avatar.png" alt="Admin" class="avatar">
+                    <span id="adminName">Admin</span>
+                    <div class="dropdown-menu">
+                        <a href="profile.html"><i class="fas fa-user"></i> Hồ sơ</a>
+                        <a href="settings.html"><i class="fas fa-cog"></i> Cài đặt</a>
+                        <hr>
+                        <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="admin-container">
+            <div class="sidebar-container">
+                <!-- Sidebar sẽ được load bằng JavaScript -->
+            </div>
+
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-tags"></i> Quản lý danh mục</h1>
+                    <div class="breadcrumb">
+                        <a href="dashboard.html">Trang chủ</a> / <span>Danh mục</span>
+                    </div>
+                </div>
+
+                <div class="category-management">
+                    <div class="action-bar">
+                        <button id="addCategoryBtn" class="add-category-btn" ><i class="fas fa-plus"></i> Thêm danh mục</button>
+                        <div class="search-box">
+                            <button class="search-btn"><i class="fas fa-search"></i></button>
+                            <input type="text" id="searchCategory" placeholder="Tìm kiếm danh mục...">
+                        </div>
+                    </div>
+                    
+                    <div class="category-layout">
+                        <div class="main-content-area">
+                            <table class="category-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Tên danh mục</th>
+                                        <th>Mô tả</th>
+                                        <th>Số sản phẩm</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="categoryTableBody">
+                                    <!-- Dữ liệu sẽ được nạp từ JavaScript -->
+                                </tbody>
+                            </table>
+
+                            <div class="distribution-section">
+                                <h3>Phân bố sản phẩm theo danh mục</h3>
+                                <div class="distribution-chart">
+                                    <canvas id="categoryChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="sidebar-stats">
+                            <div class="stats-container">
+                                <div class="stats-card">
+                                    <div class="icon">
+                                        <i class="fas fa-tags"></i>
+                                    </div>
+                                    <div class="content">
+                                        <h3 id="totalCategories">5</h3>
+                                        <p>Tổng danh mục</p>
+                                    </div>
+                                </div>
+                                <div class="stats-card">
+                                    <div class="icon">
+                                        <i class="fas fa-trophy"></i>
+                                    </div>
+                                    <div class="content">
+                                        <h3 id="mostProductsCategory">Dessert (6 sản phẩm)</h3>
+                                        <p>Danh mục nhiều sản phẩm nhất</p>
+                                    </div>
+                                </div>
+                                <div class="stats-card">
+                                    <div class="icon">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                    </div>
+                                    <div class="content">
+                                        <h3 id="noProductsCategories">0</h3>
+                                        <p>Danh mục không có sản phẩm</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Modal (hidden by default) -->
+                <div class="modal" id="categoryModal">
+                    <div class="modal-content">
+                        <span class="close-btn">&times;</span>
+                        <h2 id="modalCategoryTitle">Thêm danh mục mới</h2>
+                        <form id="categoryForm">
+                            <input type="hidden" id="categoryId">
+                            <div class="form-group">
+                                <label for="categoryName">Tên danh mục</label>
+                                <input type="text" id="categoryName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="categoryDescription">Mô tả</label>
+                                <textarea id="categoryDescription" rows="3"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="categoryIcon">Icon</label>
+                                <select id="categoryIcon">
+                                    <option value="fa-coffee">Cà phê</option>
+                                    <option value="fa-mug-hot">Nước nóng</option>
+                                    <option value="fa-wine-glass">Đồ uống</option>
+                                    <option value="fa-ice-cream">Món tráng miệng</option>
+                                    <option value="fa-bread-slice">Bánh mì</option>
+                                    <option value="fa-cookie">Bánh ngọt</option>
+                                    <option value="fa-pizza-slice">Đồ ăn nhẹ</option>
+                                    <option value="fa-utensils">Khác</option>
+                                </select>
+                                <div class="icon-preview">
+                                    <i id="iconPreview" class="fas fa-coffee"></i>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="categoryOrder">Thứ tự hiển thị</label>
+                                <input type="number" id="categoryOrder" min="1" value="1">
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn-cancel">Hủy</button>
+                            <button type="submit" class="btn-primary">Lưu</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../assets/js/api-client.js"></script>
+    <script src="../assets/js/admin-core.js"></script>
+    
+    <script>
+        // Biến toàn cục để lưu trữ dữ liệu danh mục
+        let categories = [];
+        let chart;
+        
+        // Khi trang được tải
+        document.addEventListener('DOMContentLoaded', function() {
+            // Hiển thị loader
+            showLoader(true);
+            
+            // Thiết lập các sự kiện
+            setupEventListeners();
+            
+            // Tải dữ liệu danh mục từ API
+            loadCategories();
+            
+            // Thiết lập biểu đồ (nếu có)
+            setupCategoryChart();
+        });
+        
+        // Thiết lập các sự kiện
+        function setupEventListeners() {
+            // Mở modal thêm danh mục
+            const addCategoryBtn = document.getElementById('addCategoryBtn');
+            if (addCategoryBtn) {
+                addCategoryBtn.addEventListener('click', function() {
+                    // Reset form
+                    document.getElementById('categoryForm').reset();
+                    document.getElementById('categoryId').value = '';
+                    document.getElementById('categoryIcon').value = 'fa-coffee';
+                    updateIconPreview();
+                    
+                    // Cập nhật tiêu đề
+                    document.getElementById('modalCategoryTitle').textContent = 'Thêm danh mục mới';
+                    
+                    // Mở modal
+                    openModal('categoryModal');
+                });
+            }
+            
+            // Xử lý form danh mục
+            const categoryForm = document.getElementById('categoryForm');
+            if (categoryForm) {
+                categoryForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    saveCategoryData();
+                });
+            }
+            
+            // Cập nhật icon khi thay đổi
+            const iconSelect = document.getElementById('categoryIcon');
+            if (iconSelect) {
+                iconSelect.addEventListener('change', updateIconPreview);
+            }
+            
+            // Tìm kiếm danh mục
+            const searchInput = document.getElementById('searchCategory');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    const term = this.value.toLowerCase();
+                    filterCategories(term);
+                });
+            }
+            
+            // Đóng modal khi nhấn nút đóng hoặc nút hủy
+            const closeModalBtns = document.querySelectorAll('.close-btn, .btn-cancel');
+            closeModalBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    closeModal('categoryModal');
+                });
+            });
+        }
+        
+        // Tải danh sách danh mục từ API
+        async function loadCategories() {
+            try {
+                if (!window.ApiClient || !window.ApiClient.Category) {
+                    showNotification('API Client không khả dụng', 'error');
+                    showLoader(false);
+                    return;
+                }
+                
+                // Gọi API để lấy danh sách danh mục
+                const data = await ApiClient.Category.getAllCategories();
+                
+                console.log('Dữ liệu danh mục từ API:', data);
+                
+                // Kiểm tra dữ liệu trả về
+                if (Array.isArray(data)) {
+                    categories = data;
+                } else if (data && Array.isArray(data.categories)) {
+                    categories = data.categories;
+                } else if (data && typeof data === 'object') {
+                    categories = [data];
+                } else {
+                    categories = [];
+                    console.error('Không thể phân tích dữ liệu danh mục:', data);
+                }
+                
+                // Hiển thị danh mục
+                displayCategories();
+                
+                // Cập nhật thống kê
+                updateCategoryStats();
+                
+                // Cập nhật biểu đồ
+                updateCategoryChart();
+                
+                showLoader(false);
+                showNotification('Đã tải danh mục thành công', 'success');
+            } catch (error) {
+                console.error('Lỗi khi tải danh mục:', error);
+                showNotification('Không thể tải danh mục: ' + error.message, 'error');
+                showLoader(false);
+            }
+        }
+        
+        // Hiển thị danh mục trong bảng
+        function displayCategories() {
+            const tableBody = document.getElementById('categoryTableBody');
+            if (!tableBody) return;
+            
+            // Xóa dữ liệu cũ
+            tableBody.innerHTML = '';
+            
+            if (categories.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Không có danh mục nào</td></tr>';
+                return;
+            }
+            
+            // Thêm dữ liệu mới
+            categories.forEach(category => {
+                // Lấy ID danh mục - API có thể trả về id hoặc idCategory
+                const categoryId = category.id || category.idCategory || '';
+                
+                // Lấy tên danh mục - API có thể trả về name hoặc categoryName
+                const categoryName = category.name || category.categoryName || '';
+                
+                // Lấy mô tả
+                const description = category.description || '';
+                
+                // Đếm số sản phẩm
+                let productCount = 0;
+                if (category.products && Array.isArray(category.products)) {
+                    productCount = category.products.length;
+                } else if (category.productCount !== undefined) {
+                    productCount = category.productCount;
+                }
+                
+                // Tạo hàng mới
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${categoryId}</td>
+                    <td>
+                        <span class="category-icon">
+                            <i class="fas ${category.icon || 'fa-tag'}"></i>
+                        </span>
+                        ${categoryName}
+                    </td>
+                    <td>${description}</td>
+                    <td>${productCount}</td>
+                    <td class="actions">
+                        <button class="btn-icon edit-category" data-id="${categoryId}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-icon delete-category" data-id="${categoryId}" data-name="${categoryName}">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                `;
+                
+                
+                
+                tableBody.appendChild(row);
+            });
+            
+            // Gắn sự kiện cho các nút
+            attachCategoryButtonEvents();
+        }
+        
+        // Gắn sự kiện cho các nút trong bảng
+        function attachCategoryButtonEvents() {
+            // Nút chỉnh sửa
+            const editButtons = document.querySelectorAll('.edit-category');
+            editButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const categoryId = this.getAttribute('data-id');
+                    editCategory(categoryId);
+                });
+            });
+            
+            // Nút xóa
+            const deleteButtons = document.querySelectorAll('.delete-category');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const categoryId = this.getAttribute('data-id');
+                    const categoryName = this.getAttribute('data-name');
+                    if (confirm(`Bạn có chắc chắn muốn xóa danh mục "${categoryName}"?`)) {
+                        deleteCategory(categoryId);
+                    }
+                });
+            });
+        }
+        
+        // Chỉnh sửa danh mục
+        async function editCategory(categoryId) {
+            showLoader(true);
+            
+            try {
+                // Lấy thông tin danh mục từ API
+                const category = await ApiClient.Category.getCategoryById(categoryId);
+                
+                // Điền thông tin vào form
+                document.getElementById('categoryId').value = category.id || category.idCategory || '';
+                document.getElementById('categoryName').value = category.name || category.categoryName || '';
+                document.getElementById('categoryDescription').value = category.description || '';
+                
+                // Chọn icon
+                if (category.icon) {
+                    document.getElementById('categoryIcon').value = category.icon;
+                }
+                
+                // Thứ tự hiển thị
+                if (category.displayOrder) {
+                    document.getElementById('categoryOrder').value = category.displayOrder;
+                }
+                
+                // Cập nhật icon preview
+                updateIconPreview();
+                
+                // Cập nhật tiêu đề
+                document.getElementById('modalCategoryTitle').textContent = 'Chỉnh sửa danh mục';
+                
+                // Mở modal
+                openModal('categoryModal');
+                
+                showLoader(false);
+            } catch (error) {
+                console.error('Lỗi khi lấy thông tin danh mục:', error);
+                showNotification('Không thể lấy thông tin danh mục: ' + error.message, 'error');
+                showLoader(false);
+            }
+        }
+        
+        // Xóa danh mục
+        async function deleteCategory(categoryId) {
+            showLoader(true);
+            
+            try {
+                // Gọi API xóa danh mục
+                await ApiClient.Category.deleteCategory(categoryId);
+                
+                // Xóa danh mục khỏi mảng categories
+                categories = categories.filter(category => 
+                    category.id !== categoryId && 
+                    category.idCategory !== categoryId
+                );
+                
+                // Cập nhật giao diện
+                displayCategories();
+                updateCategoryStats();
+                updateCategoryChart();
+                
+                // Xóa cache để đảm bảo dữ liệu mới nhất
+                if (typeof ApiClient.clearCache === 'function') {
+                    ApiClient.clearCache();
+                }
+                
+                showLoader(false);
+                showNotification('Xóa danh mục thành công', 'success');
+            } catch (error) {
+                console.error('Lỗi khi xóa danh mục:', error);
+                showNotification('Không thể xóa danh mục: ' + error.message, 'error');
+                showLoader(false);
+            }
+        }
+        
+        // Lưu dữ liệu danh mục
+        async function saveCategoryData() {
+            showLoader(true);
+            
+            try {
+                // Thu thập dữ liệu từ form
+                const categoryId = document.getElementById('categoryId').value;
+                const categoryName = document.getElementById('categoryName').value;
+                const categoryDescription = document.getElementById('categoryDescription').value;
+                const categoryIcon = document.getElementById('categoryIcon').value;
+                const displayOrder = parseInt(document.getElementById('categoryOrder').value) || 1;
+                
+                // Kiểm tra tên danh mục
+                if (!categoryName.trim()) {
+                    showNotification('Vui lòng nhập tên danh mục', 'error');
+                    showLoader(false);
+                    return;
+                }
+                
+                // Chuẩn bị dữ liệu để gửi API
+                const categoryData = {
+                    name: categoryName,
+                    categoryName: categoryName, // Đảm bảo tương thích với API
+                    description: categoryDescription,
+                    icon: categoryIcon,
+                    displayOrder: displayOrder
+                };
+                
+                let result;
+                
+                if (categoryId) {
+                    // Cập nhật danh mục đã tồn tại
+                    result = await ApiClient.Category.updateCategory(categoryId, categoryData);
+                    showNotification('Cập nhật danh mục thành công', 'success');
+                } else {
+                    // Thêm danh mục mới
+                    result = await ApiClient.Category.createCategory(categoryData);
+                    showNotification('Thêm danh mục mới thành công', 'success');
+                }
+                
+                // Đóng modal
+                closeModal('categoryModal');
+                
+                // Xóa cache để đảm bảo dữ liệu mới nhất
+                if (typeof ApiClient.clearCache === 'function') {
+                    ApiClient.clearCache();
+                }
+                
+                // Tải lại danh sách danh mục
+                await loadCategories();
+                
+                showLoader(false);
+            } catch (error) {
+                console.error('Lỗi khi lưu danh mục:', error);
+                showNotification('Không thể lưu danh mục: ' + error.message, 'error');
+                showLoader(false);
+            }
+        }
+        
+        // Cập nhật xem trước icon
+        function updateIconPreview() {
+            const iconSelect = document.getElementById('categoryIcon');
+            const iconPreview = document.getElementById('iconPreview');
+            
+            if (iconSelect && iconPreview) {
+                iconPreview.className = 'fas ' + iconSelect.value;
+            }
+        }
+        
+        // Lọc danh mục theo từ khóa
+        function filterCategories(term) {
+            if (!term) {
+                displayCategories();
+                return;
+            }
+            
+            // Lọc danh mục theo tên hoặc mô tả
+            const filtered = categories.filter(category => {
+                const name = (category.name || category.categoryName || '').toLowerCase();
+                const desc = (category.description || '').toLowerCase();
+                return name.includes(term) || desc.includes(term);
+            });
+            
+            // Lưu trữ danh sách gốc
+            const original = categories;
+            
+            // Tạm thời thay thế danh sách để hiển thị
+            categories = filtered;
+            displayCategories();
+            
+            // Khôi phục danh sách gốc
+            categories = original;
+        }
+        
+        // Cập nhật thống kê danh mục
+        function updateCategoryStats() {
+            // Tổng số danh mục
+            const totalCategories = document.getElementById('totalCategories');
+            if (totalCategories) {
+                totalCategories.textContent = categories.length;
+            }
+            
+            // Tìm danh mục có nhiều sản phẩm nhất
+            let maxCount = 0;
+            let maxCategory = null;
+            let noProductsCount = 0;
+            
+            categories.forEach(category => {
+                let productCount = 0;
+                if (category.products && Array.isArray(category.products)) {
+                    productCount = category.products.length;
+                } else if (category.productCount !== undefined) {
+                    productCount = category.productCount;
+                }
+                
+                if (productCount > maxCount) {
+                    maxCount = productCount;
+                    maxCategory = category;
+                }
+                
+                if (productCount === 0) {
+                    noProductsCount++;
+                }
+            });
+            
+            // Hiển thị danh mục có nhiều sản phẩm nhất
+            const mostProductsCategory = document.getElementById('mostProductsCategory');
+            if (mostProductsCategory) {
+                if (maxCategory) {
+                    const categoryName = maxCategory.name || maxCategory.categoryName || '';
+                    mostProductsCategory.textContent = `${categoryName} (${maxCount} sản phẩm)`;
+                } else {
+                    mostProductsCategory.textContent = '-';
+                }
+            }
+            
+            // Hiển thị số danh mục không có sản phẩm
+            const noProductsCategories = document.getElementById('noProductsCategories');
+            if (noProductsCategories) {
+                noProductsCategories.textContent = noProductsCount;
+            }
+        }
+        
+        // Thiết lập biểu đồ
+        function setupCategoryChart() {
+            const ctx = document.getElementById('categoryChart');
+            if (!ctx) return;
+            
+            // Tạo biểu đồ rỗng
+            chart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [
+                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+                            '#9966FF', '#FF9F40', '#8AC249', '#EA5545',
+                            '#87BC45', '#27AEEF'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        },
+                        title: {
+                            display: false,
+                            text: 'Phân bố sản phẩm theo danh mục'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Cập nhật biểu đồ với dữ liệu mới
+        function updateCategoryChart() {
+            if (!chart) return;
+            
+            // Thu thập dữ liệu cho biểu đồ
+            const labels = [];
+            const data = [];
+            
+            // Chỉ hiển thị tối đa 10 danh mục có nhiều sản phẩm nhất
+            const sortedCategories = [...categories].sort((a, b) => {
+                const aCount = a.products ? a.products.length : (a.productCount || 0);
+                const bCount = b.products ? b.products.length : (b.productCount || 0);
+                return bCount - aCount;
+            }).slice(0, 10);
+            
+            sortedCategories.forEach(category => {
+                const name = category.name || category.categoryName || '';
+                const count = category.products ? category.products.length : (category.productCount || 0);
+                
+                if (name) {
+                    labels.push(name);
+                    data.push(count);
+                }
+            });
+            
+            // Nếu không có dữ liệu
+            if (labels.length === 0) {
+                labels.push('Không có dữ liệu');
+                data.push(1);
+            }
+            
+            // Cập nhật dữ liệu biểu đồ
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = data;
+            chart.update();
+        }
+        
+        // Mở modal
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden'; // Ngăn scroll trang
+                
+                // Căn giữa modal
+                const modalContent = modal.querySelector('.modal-content');
+                if (modalContent) {
+                    // Đảm bảo modal được hiển thị chính giữa
+                    const windowHeight = window.innerHeight;
+                    const modalHeight = modalContent.offsetHeight;
+                    
+                    if (modalHeight > windowHeight * 0.9) {
+                        modalContent.style.height = '90vh';
+                        modalContent.style.overflowY = 'auto';
+                    } else {
+                        modalContent.style.overflowY = 'visible';
+                    }
+                }
+            }
+        }
+        
+        // Đóng modal
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = ''; // Khôi phục scroll trang
+            }
+        }
+        
+        // Hiển thị hoặc ẩn loader
+        function showLoader(show) {
+            const loader = document.getElementById('loader');
+            if (loader) {
+                loader.style.display = show ? 'flex' : 'none';
+            }
+        }
+        
+        // Hiển thị thông báo
+        function showNotification(message, type) {
+            if (window.AdminCore && window.AdminCore.showNotification) {
+                window.AdminCore.showNotification(message, type);
+            } else {
+                alert(message);
+            }
+        }
+    </script>
+    <style>
+        .add-category-btn {
+            background-color: rgb(83, 50, 7);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</body>
+
+</html> 

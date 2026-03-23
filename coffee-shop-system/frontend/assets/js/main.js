@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Tính đường dẫn tới components/ theo vị trí trang hiện tại
     const currentPath = window.location.pathname;
     let basePath = "";
 
@@ -9,18 +8,25 @@ document.addEventListener('DOMContentLoaded', function() {
         basePath = "./components/";
     }
 
-    // Load header và footer
-    loadComponent(basePath + 'header.html', '.main-header');
-    loadComponent(basePath + 'footer.html', '.main-footer');
+    if (document.querySelector('.main-header')) {
+        loadComponent(basePath + 'header.html', '.main-header');
+    }
+    if (document.querySelector('.main-footer')) {
+        loadComponent(basePath + 'footer.html', '.main-footer');
+    }
+    if (document.getElementById('header-container')) {
+        loadComponent(basePath + 'header.html', '#header-container');
+    }
+    if (document.getElementById('footer-container')) {
+        loadComponent(basePath + 'footer.html', '#footer-container');
+    }
     
-    // Initialize common features
     initCommonFeatures();
 });
 
 function loadComponent(path, targetSelector) {
-    const targetElement = document.querySelector(targetSelector);
+    const targetElement = document.querySelector(targetSelector) || document.getElementById(targetSelector.replace('#',''));
     if (!targetElement) {
-        console.error(`Target element not found: ${targetSelector}`);
         return;
     }
     
@@ -35,8 +41,6 @@ function loadComponent(path, targetSelector) {
             targetElement.outerHTML = html;
         })
         .catch(error => {
-            console.error(`Error loading component from ${path}:`, error);
-            // Fallback
             targetElement.outerHTML = `<div class="component-error">Failed to load component</div>`;
         });
 }

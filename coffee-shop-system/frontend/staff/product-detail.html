@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết sản phẩm - T2K Coffee</title>
+    <link rel="stylesheet" href="../assets/css/product-details.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="../assets/images/logo.png" alt="T2K Logo">
+                <h2>T2K Coffee</h2>
+            </div>
+            <ul class="menu">
+                <li><a href="dashboard.html"><i class="fa fa-home"></i> Tổng quan</a></li>
+                <li><a href="order.html"><i class="fa fa-receipt"></i> Gọi món</a></li>
+                <li><a href="table.html"><i class="fa fa-chair"></i> Quản lý bàn</a></li>
+                <li><a href="order-history.html"><i class="fa fa-history"></i> Lịch sử đơn hàng</a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="header">
+                <div>
+                    <button class="back-btn" onclick="window.location.href='order.html'">
+                        <i class="fa fa-arrow-left"></i> Quay lại
+                    </button>
+                    <span style="margin-left: 16px;">Trang chủ / Gọi món / Chi tiết sản phẩm</span>
+                </div>
+                <div class="user-info">
+                    <i class="fa fa-bell"></i><span class="badge">0</span>
+                    <img src="../assets/images/default-avatar.png" alt="avatar">
+                    <span>Staff</span>
+                </div>
+            </header>
+
+            <div class="product-detail-container">
+                <div class="product-image">
+                    <img id="productImage" src="../assets/images/no-image.png" alt="Product Image">
+                </div>
+                
+                <div class="product-info">
+                    <h1 id="productName">Loading...</h1>
+                    <div class="product-meta">
+                        <span id="productCategory">Loading...</span>
+                        <span id="productStatus" class="status">Loading...</span>
+                    </div>
+                    
+                    <div class="product-price" id="productPrice">0đ</div>
+                    <p class="product-description" id="productDescription">Loading...</p>
+                    
+                    <div class="variants-section">
+                        <div class="size-options">
+                            <span class="option-label">Kích cỡ:</span>
+                            <div class="option-buttons" id="sizeOptions"></div>
+                        </div>
+                        <div class="ice-options">
+                            <span class="option-label">Đá:</span>
+                            <div class="option-buttons" id="iceOptions"></div>
+                        </div>
+                        <div class="sugar-options">
+                            <span class="option-label">Đường:</span>
+                            <div class="option-buttons" id="sugarOptions"></div>
+                        </div>
+                        <div class="toppings-section">
+                            <span class="option-label">Topping:</span>
+                            <div class="option-buttons" id="toppingOptions"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="quantity-section">
+                        <span class="option-label">Số lượng:</span>
+                        <div class="quantity-controls">
+                            <button class="quantity-btn" onclick="updateQuantity(-1)">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" id="quantity" value="1" min="1" max="99">
+                            <button class="quantity-btn" onclick="updateQuantity(1)">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="primary-btn" onclick="addToOrder()">
+                            <i class="fas fa-plus"></i>
+                            Thêm vào đơn hàng
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/staff/product-detail.js"></script>
+</body>
+</html> 

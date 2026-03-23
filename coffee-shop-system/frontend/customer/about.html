@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giới Thiệu - T2K Coffee</title>    
+    <link rel="icon" href="../assets/images/logo.png" type="image/png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/components.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/load-components.js"></script>
+    <style>
+        :root {
+            --primary-color: #7b4f28;
+            --secondary-color: #f5e9da;
+            --accent-color: #e67e22;
+            --text-color: #333;
+            --light-text: #777;
+            --white: #fff;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: #f9f9f9;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .about-hero {
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/assets/images/about/bgr.jpg');
+            background-size: cover;
+            background-position: center;
+            text-align: center;
+            color: var(--white);
+            padding: 100px 20px;
+            margin-bottom: 60px;
+        }
+        
+        .about-hero h1 {
+            font-size: 40px;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .about-hero p {
+            font-size: 18px;
+            max-width: 700px;
+            margin: 0 auto;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        .about-section {
+            margin-bottom: 80px;
+        }
+        
+        .about-section-title {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .about-section-title h2 {
+            font-size: 32px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .about-section-title h2::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 3px;
+            background-color: var(--accent-color);
+            margin: 15px auto 0;
+        }
+        
+        .about-section-title p {
+            color: var(--light-text);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .story-content {
+            display: flex;
+            align-items: center;
+            gap: 50px;
+            margin-bottom: 60px;
+        }
+        
+        .story-text {
+            flex: 1;
+        }
+        
+        .story-text h3 {
+            font-size: 24px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        .story-text p {
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+        
+        .story-image {
+            flex: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        
+        .story-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .values-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 30px;
+        }
+        
+        .value-card {
+            background-color: var(--white);
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
+        }
+        
+        .value-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .value-icon {
+            font-size: 36px;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+        }
+        
+        .value-card h3 {
+            font-size: 20px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        .value-card p {
+            color: var(--light-text);
+        }
+        
+        .team-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+        }
+        
+        .team-card {
+            width: 300px;
+            margin-bottom: 30px;
+            background-color: var(--white);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+        
+        .team-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+        
+        .team-image {
+            height: 250px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .team-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .team-card:hover .team-image img {
+            transform: scale(1.05);
+        }
+        
+        .team-info {
+            padding: 25px 20px;
+            text-align: center;
+            background-color: var(--white);
+        }
+        
+        .team-info h3 {
+            font-size: 22px;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .team-info p {
+            color: var(--light-text);
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        
+        .team-social {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .team-social a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        
+        .team-social a:hover {
+            background-color: var(--primary-color);
+            color: var(--white);
+            transform: translateY(-5px);
+        }
+        
+        .cta-section {
+            background-color: var(--secondary-color);
+            text-align: center;
+            padding: 60px 20px;
+            border-radius: 8px;
+            margin-bottom: 60px;
+        }
+        
+        .cta-section h2 {
+            color: var(--primary-color);
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        
+        .cta-section p {
+            max-width: 700px;
+            margin: 0 auto 30px;
+            color: var(--text-color);
+        }
+        
+        .cta-btn {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: var(--white);
+            padding: 12px 30px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+        
+        .cta-btn:hover {
+            background-color: #60391f;
+        }
+        
+        @media (max-width: 992px) {
+            .story-content {
+                flex-direction: column;
+                gap: 30px;
+            }
+            
+            .story-image {
+                order: -1; /* Image first on mobile */
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .about-hero {
+                padding: 80px 20px;
+            }
+            
+            .about-hero h1 {
+                font-size: 32px;
+            }
+            
+            .about-section-title h2 {
+                font-size: 28px;
+            }
+            
+            .story-text h3 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Include Header -->
+    <div id="header-container"></div>
+    
+    <div class="about-hero">
+        <h1>Giới Thiệu Về T2K Coffee</h1>
+        <p>Hành trình mang đến những tách cà phê chất lượng và không gian thưởng thức trọn vẹn</p>
+    </div>
+    
+    <div class="container">
+        <section class="about-section">
+            <div class="about-section-title">
+                <h2>Câu Chuyện Của Chúng Tôi</h2>
+                <p>Khởi nguồn từ tình yêu với cà phê và khát vọng tạo nên không gian gặp gỡ ấm cúng</p>
+            </div>
+            
+            <div class="story-content">
+                <div class="story-text">
+                    <h3>Sứ Mệnh & Tầm Nhìn</h3>
+                    <p>T2K Coffee được thành lập vào năm 2015 bởi nhóm bạn trẻ đam mê cà phê. Chúng tôi bắt đầu với một quán nhỏ tại trung tâm Thành phố Hồ Chí Minh, với mục tiêu mang đến những tách cà phê chất lượng từ các vùng nguyên liệu nổi tiếng của Việt Nam.</p>
+                    <p>Chúng tôi mong muốn T2K Coffee không chỉ là nơi thưởng thức cà phê ngon mà còn là điểm hẹn văn hóa, nơi mọi người có thể kết nối, chia sẻ và tận hưởng những khoảnh khắc đẹp trong cuộc sống.</p>
+                </div>
+                <div class="story-image">
+                    <img src="/assets/images/about/cauchuyen.jpg" alt="Câu chuyện T2K Coffee">
+                </div>
+            </div>
+            
+            <div class="story-content">
+                <div class="story-image">
+                    <img src="/assets/images/about/phattrien.jpg" alt="Hạt cà phê T2K">
+                </div>
+                <div class="story-text">
+                    <h3>Hành Trình Phát Triển</h3>
+                    <p>Sau 8 năm phát triển, T2K Coffee đã mở rộng với 15 chi nhánh trên toàn quốc. Từ một quán cà phê nhỏ, chúng tôi đã trở thành điểm đến quen thuộc của nhiều người yêu cà phê. Thành công của chúng tôi đến từ sự tận tâm với chất lượng và dịch vụ khách hàng.</p>
+                    <p>Mỗi quán T2K Coffee đều được thiết kế với phong cách riêng biệt nhưng vẫn mang đậm dấu ấn ấm cúng, thân thiện. Chúng tôi tạo ra không gian nơi mọi người có thể trò chuyện, làm việc hoặc thư giãn trong không khí thoải mái.</p>
+                </div>
+            </div>
+        </section>
+        
+        <section class="about-section">
+            <div class="about-section-title">
+                <h2>Giá Trị Cốt Lõi</h2>
+                <p>Những giá trị định hướng mọi hoạt động của T2K Coffee</p>
+            </div>
+            
+            <div class="values-grid">
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="fas fa-coffee"></i>
+                    </div>
+                    <h3>Chất Lượng</h3>
+                    <p>Chúng tôi cam kết mang đến những sản phẩm có chất lượng tốt nhất từ nguồn nguyên liệu đến quy trình chế biến.</p>
+                </div>
+                
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <h3>Tận Tâm</h3>
+                    <p>Mỗi khách hàng đều được phục vụ với sự tận tâm, chu đáo như người thân trong gia đình T2K Coffee.</p>
+                </div>
+                
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="fas fa-leaf"></i>
+                    </div>
+                    <h3>Bền Vững</h3>
+                    <p>Chúng tôi ưu tiên các hoạt động kinh doanh bền vững, thân thiện với môi trường và có trách nhiệm với cộng đồng.</p>
+                </div>
+                
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <h3>Sáng Tạo</h3>
+                    <p>Không ngừng sáng tạo, đổi mới để mang đến những trải nghiệm mới mẻ, độc đáo cho khách hàng.</p>
+                </div>
+            </div>
+        </section>
+        
+        <section class="about-section">
+            <div class="about-section-title">
+                <h2>Đội Ngũ Của Chúng Tôi</h2>
+                <p>Những con người tài năng và đam mê phía sau thành công của T2K Coffee</p>
+            </div>
+            
+            <div class="team-grid">
+                <div class="team-card">
+                    <div class="team-image">
+                        <img src="/assets/images/me.jpg" alt="Nhà sáng lập">
+                    </div>
+                    <div class="team-info">
+                        <h3>Phạm Xuân Thắng</h3>
+                        <p>Đồng sáng lập thương hiệu</p>
+                        <div class="team-social">
+                            <a href="https://www.facebook.com/thangthang097" target="_blank"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#"><i class="fab fa-twitter"></i></a>
+                            <a href="https://www.instagram.com/thangthang097/" target="_blank"><i class="fab fa-instagram"></i></a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="team-card">
+                    <div class="team-image">
+                        <img src="/assets/images/Kiet.png" alt="Giám đốc điều hành">
+                    </div>
+                    <div class="team-info">
+                        <h3>Nguyễn Bảo Kiệt</h3>
+                        <p>Đồng sáng lập thương hiệu</p>
+                        <div class="team-social">
+                            <a href="#"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#"><i class="fab fa-twitter"></i></a>
+                            <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="team-card">
+                    <div class="team-image">
+                        <img src="/assets/images/Kien.png" alt="Bếp trưởng">
+                    </div>
+                    <div class="team-info">
+                        <h3>Nguyễn Trung Kiên</h3>
+                        <p>Đồng sáng lập thương hiệu</p>
+                        <div class="team-social">
+                            <a href="#"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#"><i class="fab fa-twitter"></i></a>
+                            <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+        
+        <div class="cta-section">
+            <h2>Đến Thăm T2K Coffee</h2>
+            <p>Hãy ghé thăm quán cà phê của chúng tôi để trải nghiệm không gian ấm cúng và thưởng thức những tách cà phê thơm ngon. Chúng tôi luôn chào đón bạn!</p>
+            <a href="/customer/contact.html" class="cta-btn">Tìm Chi Nhánh Gần Nhất</a>
+        </div>
+    </div>
+    
+    <!-- Include Footer -->
+    <div id="footer-container"></div>
+</body>
+</html> 

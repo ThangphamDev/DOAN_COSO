@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khuyến Mãi - T2K Coffee</title>
+    <link rel="icon" href="../assets/images/logo.png" type="image/png">
+    <link rel="stylesheet" href="../assets/css/components.css">
+    <link rel="stylesheet" href="../assets/css/promo.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/load-components.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #7b4f28;
+            --secondary-color: #f5e9da;
+            --accent-color: #e67e22;
+            --text-color: #333;
+            --light-text: #777;
+            --white: #fff;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: #f9f9f9;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .promo-hero {
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1500&q=80');
+            background-size: cover;
+            background-position: center;
+            text-align: center;
+            color: var(--white);
+            padding: 80px 20px;
+            margin-bottom: 40px;
+        }
+        
+        .promo-hero h1 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .promo-hero p {
+            font-size: 18px;
+            max-width: 700px;
+            margin: 0 auto;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        .promo-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+        
+        .promo-card {
+            background-color: var(--white);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
+        }
+        
+        .promo-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .promo-card-img {
+            height: 200px;
+            overflow: hidden;
+        }
+        
+        .promo-card-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .promo-card:hover .promo-card-img img {
+            transform: scale(1.05);
+        }
+        
+        .promo-card-content {
+            padding: 20px;
+        }
+        
+        .promo-card-badge {
+            display: inline-block;
+            background-color: var(--accent-color);
+            color: var(--white);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .promo-card h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        
+        .promo-card p {
+            color: var(--light-text);
+            margin-bottom: 15px;
+        }
+        
+        .promo-dates {
+            display: flex;
+            align-items: center;
+            color: var(--light-text);
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .promo-dates i {
+            margin-right: 5px;
+            color: var(--accent-color);
+        }
+        
+        .promo-btn {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: var(--white);
+            padding: 8px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+        
+        .promo-btn:hover {
+            background-color: #60391f;
+        }
+        
+        .newsletter {
+            background-color: var(--secondary-color);
+            padding: 60px 20px;
+            text-align: center;
+            margin-bottom: 60px;
+            border-radius: 8px;
+        }
+        
+        .newsletter h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        
+        .newsletter p {
+            max-width: 600px;
+            margin: 0 auto 30px;
+            color: var(--text-color);
+        }
+        
+        .newsletter-form {
+            display: flex;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .newsletter-form input {
+            flex-grow: 1;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 4px 0 0 4px;
+            font-size: 16px;
+            outline: none;
+        }
+        
+        .newsletter-form button {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 0 25px;
+            border-radius: 0 4px 4px 0;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .newsletter-form button:hover {
+            background-color: #60391f;
+        }
+        
+        /* Media Queries */
+        @media (max-width: 768px) {
+            .promo-hero {
+                padding: 60px 20px;
+            }
+            
+            .promo-hero h1 {
+                font-size: 28px;
+            }
+            
+            .promo-hero p {
+                font-size: 16px;
+            }
+            
+            .newsletter-form {
+                flex-direction: column;
+            }
+            
+            .newsletter-form input {
+                border-radius: 4px;
+                margin-bottom: 10px;
+            }
+            
+            .newsletter-form button {
+                border-radius: 4px;
+                padding: 12px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Include Header -->
+    <div id="header-container"></div>
+    
+    <div class="promo-hero">
+        <h1>Khuyến Mãi Đặc Biệt</h1>
+        <p>Khám phá các ưu đãi hấp dẫn tại T2K Coffee. Cùng thưởng thức hương vị cà phê đặc trưng với giá cực kỳ hấp dẫn.</p>
+    </div>
+    
+    <div class="container">
+        <div class="promo-cards" id="promotionList">
+            <!-- Danh sách khuyến mãi sẽ được render ở đây bằng JS -->
+        </div>
+        
+        <div class="newsletter">
+            <h2>Đăng Ký Nhận Thông Tin Khuyến Mãi</h2>
+            <p>Hãy đăng ký để không bỏ lỡ các chương trình khuyến mãi mới nhất từ T2K Coffee. Chúng tôi sẽ gửi thông báo đến bạn trước khi mọi người biết!</p>
+            <form class="newsletter-form">
+                <input type="email" placeholder="Nhập địa chỉ email của bạn" required>
+                <button type="submit">Đăng ký</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Include Footer -->
+    <div id="footer-container"></div>
+    
+    <script>
+        // Newsletter form submission
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelector('.newsletter-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const email = e.target.querySelector('input[type="email"]').value;
+                alert(`Cảm ơn bạn đã đăng ký nhận tin khuyến mãi với email: ${email}`);
+                e.target.reset();
+            });
+
+            // Fetch and render promotions
+            fetch('http://localhost:8081/api/promotions')
+                .then(res => res.json())
+                .then(promotions => {
+                    const container = document.getElementById('promotionList');
+                    if (!container) return;
+                    if (!Array.isArray(promotions) || promotions.length === 0) {
+                        container.innerHTML = '<p>Hiện chưa có chương trình khuyến mãi nào.</p>';
+                        return;
+                    }
+                    container.innerHTML = promotions.map(promo => `
+                        <div class="promo-card">
+                            <div class="promo-card-img">
+                                <img src="../assets/images/promo-default.jpg" alt="${promo.namePromotion || 'Khuyến mãi'}">
+                            </div>
+                            <div class="promo-card-content">
+                                <span class="promo-card-badge">${promo.isActive ? 'Đang diễn ra' : 'Đã kết thúc'}</span>
+                                <h3>${promo.namePromotion || ''}</h3>
+                                <p>${promo.description || ''}</p>
+                                <div class="promo-dates">
+                                    <i class="far fa-calendar-alt"></i>
+                                    <span>${promo.startDate || ''} - ${promo.endDate || ''}</span>
+                                </div>
+                                <p><b>Mã:</b> <span style="color:#e67e22;font-weight:600;">${promo.code}</span></p>
+                                <p><b>Loại:</b> ${promo.discountType === 'PERCENT' ? 'Giảm %' : 'Giảm tiền'}</p>
+                                <p><b>Giá trị:</b> ${promo.discountType === 'PERCENT' ? promo.discountValue + '%' : (promo.discountValue ? promo.discountValue.toLocaleString('vi-VN') + 'đ' : '')}</p>
+                                <p><b>Đơn tối thiểu:</b> ${promo.minimumOrderAmount ? promo.minimumOrderAmount.toLocaleString('vi-VN') + 'đ' : 'Không'}</p>
+                                <a href="#" class="promo-btn">Sao chép mã</a>
+                            </div>
+                        </div>
+                    `).join('');
+                    // Thêm sự kiện copy mã khuyến mãi
+                    container.querySelectorAll('.promo-btn').forEach((btn, idx) => {
+                        btn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            const code = promotions[idx].code;
+                            navigator.clipboard.writeText(code);
+                            btn.textContent = 'Đã sao chép!';
+                            setTimeout(() => btn.textContent = 'Sao chép mã', 1500);
+                        });
+                    });
+                })
+                .catch(() => {
+                    const container = document.getElementById('promotionList');
+                    if (container) container.innerHTML = '<p>Không thể tải danh sách khuyến mãi. Vui lòng thử lại sau.</p>';
+                });
+        });
+    </script>
+</body>
+</html> 

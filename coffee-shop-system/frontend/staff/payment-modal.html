@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh toán - T2K Coffee</title>
+    <link rel="stylesheet" href="../assets/css/payment-modal.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .promotion-code-container {
+            margin: 20px;
+            padding: 15px;
+            border: 1px dashed #e69c53;
+            border-radius: 8px;
+            background-color: #fff9f2;
+        }
+        
+        .promotion-code-container h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #e67e22;
+            font-size: 18px;
+        }
+        
+        .promotion-input {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .promotion-input input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .btn-apply-promo {
+            background-color: #e67e22;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .btn-apply-promo:hover {
+            background-color: #d35400;
+        }
+        
+        .promotion-message {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        .promotion-success {
+            color: #27ae60;
+        }
+        
+        .promotion-error {
+            color: #e74c3c;
+        }
+        
+        .discount-info {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #e69c53;
+        }
+        
+        .discount-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .discount-amount {
+            font-weight: bold;
+            color: #e67e22;
+        }
+    </style>
+</head>
+<body>
+    <div class="payment-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-money-bill-wave"></i> Thanh toán</h2>
+                <button class="close-btn" onclick="window.close()">&times;</button>
+            </div>
+            
+            <div class="order-summary">
+                <h3>Thông tin đơn hàng</h3>
+                <div class="order-details">
+                    <div class="table-info">
+                        <span class="label">Bàn:</span>
+                        <span id="tableNumber">--</span>
+                    </div>
+                    <div class="items-container">
+                        <!-- Items will be inserted here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thêm phần mã khuyến mãi -->
+            <div class="promotion-code-container">
+                <h3>Mã khuyến mãi</h3>
+                <div class="promotion-input">
+                    <input type="text" id="promotionCode" placeholder="Nhập mã khuyến mãi của bạn">
+                    <button id="applyPromotion" class="btn-apply-promo">Áp dụng</button>
+                </div>
+                <div id="promotionMessage" class="promotion-message"></div>
+                <div id="discountInfo" class="discount-info" style="display: none;">
+                    <div class="discount-row">
+                        <span>Giảm giá:</span>
+                        <span id="discountAmount" class="discount-amount">0đ</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="payment-details">
+                <div class="amount-row">
+                    <span>Tổng tiền hàng:</span>
+                    <span id="subtotal">0đ</span>
+                </div>
+                <div class="amount-row total">
+                    <span>Tổng thanh toán:</span>
+                    <span id="total">0đ</span>
+                </div>
+            </div>
+
+            <div class="payment-method">
+                <h3>Phương thức thanh toán</h3>
+                <div class="method-options">
+                    <label class="method-option">
+                        <input type="radio" name="paymentMethod" value="cash" checked>
+                        <span class="radio-custom"></span>
+                        <i class="fas fa-money-bill"></i>
+                        Tiền mặt
+                    </label>
+                    <label class="method-option">
+                        <input type="radio" name="paymentMethod" value="transfer">
+                        <span class="radio-custom"></span>
+                        <i class="fas fa-qrcode"></i>
+                        Chuyển khoản
+                    </label>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="cancel-btn" onclick="window.close()">
+                    <i class="fas fa-times"></i> Hủy bỏ
+                </button>
+                <button class="confirm-btn" onclick="confirmPayment()">
+                    <i class="fas fa-check"></i> Xác nhận thanh toán
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get order data from localStorage
+        const currentOrder = JSON.parse(localStorage.getItem('T2K_CURRENT_ORDER'));
+        
+        // Format currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(amount);
+        }
+
+        // Populate order details
+        function populateOrderDetails() {
+            if (!currentOrder) return;
+
+            // Set table number
+            const tableText = currentOrder.tableInfo 
+                ? `Bàn ${currentOrder.tableInfo.tableNumber} - ${currentOrder.tableInfo.location}`
+                : 'Mang về';
+            document.getElementById('tableNumber').textContent = tableText;
+
+            // Populate items
+            const itemsContainer = document.querySelector('.items-container');
+            itemsContainer.innerHTML = currentOrder.items.map(item => `
+                <div class="order-item">
+                    <div class="item-info">
+                        <span class="item-name">${item.name}</span>
+                        <span class="item-quantity">x${item.quantity}</span>
+                    </div>
+                    <span class="item-price">${formatCurrency(item.price * item.quantity)}</span>
+                </div>
+            `).join('');
+
+            updateTotalDisplay(currentOrder.total);
+        }
+
+        function updateTotalDisplay(total, discount = 0) {
+            const subtotalElement = document.getElementById('subtotal');
+            const totalElement = document.getElementById('total');
+            
+            subtotalElement.textContent = formatCurrency(total);
+            totalElement.textContent = formatCurrency(total - discount);
+            
+            // Cập nhật tổng tiền trong currentOrder
+            currentOrder.total = total - discount;
+        }
+
+        // Hàm trợ giúp để lấy token từ localStorage
+        function getAuthToken() {
+            return localStorage.getItem('token');
+        }
+
+        // Hàm trợ giúp để tạo headers với token xác thực
+        function getAuthHeaders() {
+            const token = getAuthToken();
+            const headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
+            return headers;
+        }
+
+        // Toggle payment method
+        document.querySelectorAll('input[name="paymentMethod"]').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const transferInfo = document.getElementById('transferInfo');
+                if (transferInfo) {
+                    transferInfo.style.display = e.target.value === 'transfer' ? 'block' : 'none';
+                }
+            });
+        });
+
+        // Xử lý mã khuyến mãi
+        const promotionCodeInput = document.getElementById('promotionCode');
+        const applyPromoButton = document.getElementById('applyPromotion');
+        const promotionMessage = document.getElementById('promotionMessage');
+        const discountInfo = document.getElementById('discountInfo');
+        const discountAmount = document.getElementById('discountAmount');
+
+        applyPromoButton.addEventListener('click', function() {
+            const code = promotionCodeInput.value.trim();
+            if (!code) {
+                showPromoMessage('Vui lòng nhập mã khuyến mãi', 'error');
+                return;
+            }
+
+            // Validate promotion code
+            fetch(`http://localhost:8081/api/promotions/validate/${code}`, {
+                method: 'GET',
+                headers: getAuthHeaders()
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.valid) {
+                        calculateDiscount(code, currentOrder.total);
+                    } else {
+                        showPromoMessage('Mã khuyến mãi không hợp lệ hoặc đã hết hạn', 'error');
+                        hideDiscountInfo();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showPromoMessage('Có lỗi xảy ra, vui lòng thử lại sau', 'error');
+                });
+        });
+
+        function showPromoMessage(message, type) {
+            promotionMessage.textContent = message;
+            promotionMessage.className = 'promotion-message promotion-' + type;
+        }
+
+        function showDiscountInfo(amount) {
+            discountInfo.style.display = 'block';
+            discountAmount.textContent = formatCurrency(amount);
+        }
+
+        function hideDiscountInfo() {
+            discountInfo.style.display = 'none';
+            localStorage.removeItem('appliedPromotion');
+            updateTotalDisplay(currentOrder.total, 0);
+        }
+
+        function calculateDiscount(code, totalAmount) {
+            fetch(`http://localhost:8081/api/promotions/calculate-discount?code=${code}&orderTotal=${totalAmount}`, {
+                method: 'GET',
+                headers: getAuthHeaders()
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.valid) {
+                        localStorage.setItem('appliedPromotion', JSON.stringify({
+                            code: code,
+                            discountAmount: data.discountAmount,
+                            finalTotal: data.finalTotal
+                        }));
+                        showPromoMessage(`Đã áp dụng mã "${code}" thành công!`, 'success');
+                        showDiscountInfo(data.discountAmount);
+                        updateTotalDisplay(totalAmount, data.discountAmount);
+                    } else {
+                        showPromoMessage('Mã khuyến mãi không áp dụng được cho đơn hàng này', 'error');
+                        hideDiscountInfo();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showPromoMessage('Có lỗi xảy ra khi tính giảm giá', 'error');
+                });
+        }
+
+        // Confirm payment
+        async function confirmPayment() {
+            const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+            
+            try {
+                if (!currentOrder || !currentOrder.items || currentOrder.items.length === 0) {
+                    throw new Error('Không có sản phẩm trong đơn hàng');
+                }
+
+                // Update table status to Occupied first if table was selected
+                if (currentOrder.tableId) {
+                    const tableResponse = await fetch(`http://localhost:8081/api/tables/${currentOrder.tableId}/status?status=Occupied`, {
+                        method: 'PATCH',
+                        headers: getAuthHeaders()
+                    });
+
+                    if (!tableResponse.ok) {
+                        throw new Error('Không thể cập nhật trạng thái bàn');
+                    }
+                }
+
+                // Get applied promotion if any
+                const appliedPromotion = JSON.parse(localStorage.getItem('appliedPromotion'));
+
+                // Prepare order data
+                const orderData = {
+                    totalAmount: parseFloat(currentOrder.total),
+                    note: currentOrder.notes || '',
+                    status: 'processing',
+                    orderTime: new Date().toISOString(),
+                    payment: {
+                        paymentMethod: paymentMethod.toLowerCase(),
+                        paymentStatus: 'pending',
+                        createAt: new Date().toISOString(),
+                        amount: parseFloat(currentOrder.total)
+                    }
+                };
+
+                // Add promotion if applied
+                if (appliedPromotion) {
+                    orderData.promotion = {
+                        code: appliedPromotion.code
+                    };
+                    orderData.discountAmount = appliedPromotion.discountAmount;
+                }
+
+                // Add table information if selected
+                if (currentOrder.tableId) {
+                    orderData.table = {
+                        idTable: parseInt(currentOrder.tableId)
+                    };
+                }
+
+                // Add product items
+                orderData.productItems = currentOrder.items.map(item => ({
+                    productId: parseInt(item.id),
+                    quantity: parseInt(item.quantity),
+                    unitPrice: parseFloat(item.price)
+                }));
+
+                // Submit order
+                const response = await fetch('http://localhost:8081/api/orders', {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(orderData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => null);
+                    throw new Error(errorData?.message || `Lỗi thanh toán: ${response.status}`);
+                }
+
+                const orderResponse = await response.json();
+
+                // Save to order history with additional details
+                const orderHistory = JSON.parse(localStorage.getItem('T2K_ORDER_HISTORY') || '[]');
+                orderHistory.push({
+                    ...orderData,
+                    id: orderResponse.idOrder,
+                    tableInfo: currentOrder.tableInfo,
+                    timestamp: new Date().toISOString(),
+                    items: currentOrder.items
+                });
+                localStorage.setItem('T2K_ORDER_HISTORY', JSON.stringify(orderHistory));
+
+                // Clear the current order and promotion
+                localStorage.removeItem('T2K_CURRENT_ORDER');
+                localStorage.removeItem('appliedPromotion');
+
+                // Show success message and close
+                alert('Thanh toán thành công!');
+                window.opener.location.reload();
+                window.close();
+            } catch (error) {
+                console.error('Payment error:', error);
+                alert(error.message || 'Không thể hoàn tất thanh toán. Vui lòng thử lại.');
+            }
+        }
+
+        // Initialize
+        populateOrderDetails();
+    </script>
+</body>
+</html> 
